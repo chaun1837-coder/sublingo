@@ -476,7 +476,9 @@ textarea.field { resize: vertical; line-height: 1.55; }
     currentUser = user || null;
     $('googleSignInButton').style.display = currentUser ? 'none' : 'flex';
     $('userState').classList.toggle('visible', !!currentUser);
-    document.querySelector('.provider[data-provider="openai"]').disabled = !currentUser;
+    const openaiTab = document.querySelector('.provider[data-provider="openai"]');
+    openaiTab.disabled = !currentUser;
+    openaiTab.textContent = currentUser ? '✳ ChatGPT' : '✳ ChatGPT · cần đăng nhập';
     if (!currentUser && provider === 'openai') {
       document.querySelector('.provider[data-provider="gemini"]').click();
     } else {
