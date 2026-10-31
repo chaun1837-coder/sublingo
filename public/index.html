@@ -170,7 +170,11 @@ textarea.field { resize: vertical; line-height: 1.55; }
 .selection-box { position: absolute; border: 2px solid #4AC3AD; background: rgba(28, 167, 143, .16); box-shadow: 0 0 0 9999px rgba(0,0,0,.30); pointer-events: none; }
 .video-settings { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
 .video-status { min-height: 18px; color: light-dark(#627188, #A9B7C9); font-size: 11px; line-height: 1.5; }
-.ocr-progress { height: 9px; overflow: hidden; background: light-dark(#E7EDF3, #2D3B50); border-radius: 99px; display: none; }
+.ocr-progress-head { display: none; justify-content: space-between; align-items: center; gap: 10px; color: light-dark(#627188, #A9B7C9); font-size: 11px; font-weight: 750; }
+.ocr-progress-head strong { color: light-dark(#24796E, #9BDED1); font-size: 13px; font-variant-numeric: tabular-nums; }
+.ocr-progress-head.visible { display: flex; }
+.ocr-progress { height: 12px; overflow: hidden; background: light-dark(#E7EDF3, #2D3B50); border-radius: 99px; display: none; }
+.ocr-progress.visible { display: block; }
 .ocr-progress.visible { display: block; }
 .ocr-progress > div { height: 100%; width: 0; background: linear-gradient(90deg,#43A995,#75C8B8); transition: width .15s ease; }
 .cue-time-edit { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; }
@@ -291,6 +295,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
           <div><label class="form-label" for="ocrInterval">Khoảng quét khung hình</label><select class="field" id="ocrInterval"><option value="100">100 mili giây · chính xác hơn</option><option value="250" selected>250 mili giây · cân bằng</option><option value="500">500 mili giây · nhanh hơn</option><option value="1000">1 giây · nhanh nhất</option></select></div>
           <div><label class="form-label">Vùng quét</label><div class="field" id="ocrRegionSize" style="display:flex;align-items:center">Mặc định: 90% ngang · 25% cao</div></div>
         </div>
+        <div class="ocr-progress-head"><span>Tiến độ quét video</span><strong id="ocrProgressPercent">0%</strong></div>
         <div class="ocr-progress" id="ocrProgress"><div id="ocrProgressFill"></div></div>
         <div class="video-status" id="ocrStatus" role="status" aria-live="polite">Mốc SRT được xuất dạng HH:MM:SS,mmm. Độ chính xác thực tế phụ thuộc khoảng quét bạn chọn và tốc độ khung hình video.</div>
         <div class="bottom-actions"><button class="btn btn-ghost" id="selectVideoRegion" type="button" disabled>Chọn vùng quét trên video</button><button class="btn btn-primary" id="startOcrBtn" type="button" disabled>Quét chữ và tạo SRT</button><button class="btn btn-ghost" id="stopOcrBtn" type="button" hidden>Dừng quét</button></div>
@@ -725,6 +730,9 @@ textarea.field { resize: vertical; line-height: 1.55; }
     $('startOcrBtn').disabled = true;
     $('stopOcrBtn').hidden = false;
     $('ocrProgress').classList.add('visible');
+    $('ocrProgressPercent').textContent = '0%';
+    $('ocrProgressFill').style.width = '0%';
+    $('ocrProgress').previousElementSibling.classList.add('visible');
     const intervalMs = Number($('ocrInterval').value) || 250;
     const stepSeconds = intervalMs / 1000;
     const totalSteps = Math.ceil(ocrVideo.duration / stepSeconds);
@@ -783,14 +791,22 @@ textarea.field { resize: vertical; line-height: 1.55; }
             blankFrames = 0;
           }
         }
-        $('ocrProgressFill').style.width = Math.round(((index + 1) / totalSteps) * 100) + '%';
+        const progressPercent = Math.min(100, Math.round(((index + 1) / totalSteps) * 100));
+        $('ocrProgressFill').style.width = progressPercent + '%';
+        $('ocrProgressPercent').textContent = progressPercent + '%';
         if (index % 10 === 0 || index === totalSteps - 1) {
           $('ocrStatus').textContent = 'Đã quét ' + Math.min(ocrVideo.duration, atSeconds).toFixed(2) + ' / ' + ocrVideo.duration.toFixed(2) + ' giây · tìm thấy ' + (segments.length + (activeSegment ? 1 : 0)) + ' đoạn chữ.';
         }
         await new Promise((resolve) => setTimeout(resolve, 0));
       }
       if (activeSegment) segments.push(activeSegment);
-      if (ocrStopRequested) $('ocrStatus').textContent = 'Đã dừng quét. Đang tạo file từ các đoạn đã nhận diện...';
+      if (ocrStopRequested) {
+        const stoppedAt = $('ocrProgressPercent').textContent;
+        $('ocrStatus').textContent = 'Đã dừng quét ở ' + stoppedAt + '. Đang tạo file từ các đoạn đã nhận diện...';
+      } else {
+        $('ocrProgressFill').style.width = '100%';
+        $('ocrProgressPercent').textContent = '100%';
+      }
       const validSegments = segments.filter((segment) => segment.endMs - segment.startMs >= 150 && segment.text);
       if (!validSegments.length) {
         $('ocrStatus').textContent = 'Chưa nhận diện được phụ đề. Hãy thử khoanh lại vùng chữ hoặc chọn ngôn ngữ OCR phù hợp.';
@@ -805,7 +821,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
       }
     } catch (error) {
       console.error('Video OCR failed:', error);
-      $('ocrStatus').textContent = 'Quét video gặp lỗi: ' + (error.message || 'Lỗi không xác định');
+      $('ocrStatus').textContent = 'Quét video gặp lỗi ở ' + $('ocrProgressPercent').textContent + ': ' + (error.message || 'Lỗi không xác định');
       toast('Không thể quét video. Hãy kiểm tra kết nối và thử lại.');
     } finally {
       if (worker) await worker.terminate().catch(() => {});
