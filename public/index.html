@@ -564,6 +564,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
     const action = link.dataset.menuAction;
     const targetId = action === 'snapany' ? 'video-download' : 'video-ocr';
     const target = $(targetId);
+    document.querySelectorAll('.tool-panel').forEach((panel) => panel.classList.remove('feature-open'));
     target.classList.add('feature-open');
     menuPopover.classList.remove('open');
     menuToggle.setAttribute('aria-expanded', 'false');
