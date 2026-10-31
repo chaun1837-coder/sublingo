@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="/config.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<title>SubLingo — Dịch phụ đề SRT</title>
+<style>
+:root {
+  --site-primary: #183153;
+  --site-on-primary: #FFFFFF;
+  --site-secondary: #DDF2EE;
+  --site-on-secondary: #173F3A;
+  --site-background: #F3F6FA;
+  --site-on-background: #172438;
+  --site-font-body: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --site-font-heading: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --site-heading-scale: 1;
+  --site-spacing-scale: 1;
+  --site-radius-scale: 1;
+  --site-decoration-opacity: 1;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; font-family: var(--site-font-body); }
+body { background: var(--site-background); }
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+#app {
+  min-height: 100vh;
+  width: 100%;
+  color: light-dark(#172438, #E7EDF6);
+  background-color: light-dark(var(--site-background), #101827);
+  color-scheme: light dark;
+}
+.topbar {
+  min-height: 74px;
+  background: var(--site-primary);
+  color: var(--site-on-primary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(14px * var(--site-spacing-scale)) clamp(18px, 4vw, 58px);
+  gap: 18px;
+}
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.logo-mark { width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; background: #DDF2EE; color: #183153; flex: 0 0 auto; }
+.brand-name { font-family: var(--site-font-heading); font-size: calc(1.22rem * var(--site-heading-scale)); font-weight: 800; letter-spacing: -0.04em; }
+.brand-sub { font-size: 11px; opacity: .74; margin-top: 2px; }
+.top-actions { display: flex; align-items: center; gap: 10px; }
+.user-state { display: none; align-items: center; gap: 9px; color: #FFFFFF; font-size: 12px; }
+.user-state.visible { display: flex; }
+.user-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; background: #DDF2EE; }
+.google-login-wrap { min-width: 190px; display: flex; justify-content: flex-end; }
+.progress-track { height: 5px; margin-top: 10px; border-radius: 99px; background: light-dark(#E7EDF3, #2D3B50); overflow: hidden; display: none; }
+.progress-track.visible { display: block; }
+.progress-fill { height: 100%; width: 0; background: #43A995; transition: width .2s ease; }
+.btn { border: 1px solid transparent; border-radius: calc(11px * var(--site-radius-scale)); padding: 10px 14px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; font-weight: 700; transition: .18s ease; }
+.btn:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid #68B8AD; outline-offset: 2px; }
+.btn-light { background: #FFFFFF; color: #183153; }
+.btn-light:hover { background: #E8F2F3; }
+.btn-primary { background: var(--site-primary); color: #FFFFFF; }
+.btn-primary:hover { background: #24486F; transform: translateY(-1px); }
+.btn-secondary { background: var(--site-secondary); color: var(--site-on-secondary); border-color: #C3E2DC; }
+.btn-secondary:hover { background: #CBEAE4; }
+.btn-ghost { background: transparent; border-color: light-dark(#D7DFE9, #39465A); color: light-dark(#31445D, #D5DFEC); }
+.btn-ghost:hover { background: light-dark(#EEF3F8, #202D40); }
+.btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+.page { max-width: 1500px; margin: 0 auto; padding: clamp(22px, 3vw, 42px) clamp(16px, 3.5vw, 54px) 56px; }
+.hero { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; margin-bottom: 25px; }
+.eyebrow { color: #2F887C; text-transform: uppercase; letter-spacing: .13em; font-size: 10px; font-weight: 800; margin-bottom: 8px; }
+h1 { margin: 0; font-family: var(--site-font-heading); font-size: calc(clamp(1.65rem, 3vw, 2.35rem) * var(--site-heading-scale)); line-height: 1.12; letter-spacing: -.045em; color: light-dark(#172B45, #F0F5FB); }
+.hero p { margin: 9px 0 0; color: light-dark(#627188, #A9B7C9); font-size: 13px; line-height: 1.55; max-width: 650px; }
+.status-pill { display: inline-flex; align-items: center; gap: 7px; padding: 8px 11px; border: 1px solid light-dark(#CFE4DF, #31564F); background: light-dark(#ECF7F4, #172D2A); color: light-dark(#25685F, #A7D8CF); border-radius: 999px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; background: #43A995; }
+.workspace { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 20px; align-items: start; }
+.panel { background: light-dark(#FFFFFF, #182335); border: 1px solid light-dark(#E0E7EF, #2B394D); border-radius: calc(17px * var(--site-radius-scale)); overflow: hidden; }
+.panel-head { padding: calc(17px * var(--site-spacing-scale)) calc(19px * var(--site-spacing-scale)); border-bottom: 1px solid light-dark(#E7ECF2, #2A384B); display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.panel-title { font-size: 13px; font-weight: 800; color: light-dark(#23374F, #E6EDF6); display: flex; align-items: center; gap: 9px; }
+.step { background: #E5F3F0; color: #27796E; width: 23px; height: 23px; display: inline-grid; place-items: center; border-radius: 8px; font-size: 11px; }
+.panel-body { padding: 18px; }
+.form-label { display: block; color: light-dark(#506177, #B4C0CF); font-size: 11px; font-weight: 800; margin: 0 0 7px; }
+.field { width: 100%; min-height: 41px; padding: 10px 11px; border: 1px solid light-dark(#DCE4ED, #39485D); border-radius: calc(9px * var(--site-radius-scale)); background: light-dark(#FBFCFE, #111B2B); color: light-dark(#203149, #E9EFF7); outline: none; font-size: 12px; }
+.field:focus { border-color: #56A99C; box-shadow: 0 0 0 3px rgba(75, 166, 151, .13); }
+textarea.field { resize: vertical; line-height: 1.55; }
+.form-group { margin-bottom: 16px; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.input-wrap { position: relative; }
+.input-wrap .field { padding-right: 43px; }
+.reveal { position: absolute; right: 7px; top: 6px; border: 0; color: light-dark(#708096, #A1B1C5); background: transparent; padding: 6px; font-size: 11px; font-weight: 700; }
+.helper { color: light-dark(#8A97A8, #8999AE); font-size: 10px; line-height: 1.5; margin-top: 6px; }
+.divider { height: 1px; background: light-dark(#E8EDF3, #2A394D); margin: 18px 0; }
+.provider-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.provider { border: 1px solid light-dark(#DDE5ED, #3B4A60); background: light-dark(#FAFBFD, #131F30); color: light-dark(#586A80, #B6C2D1); border-radius: 9px; padding: 10px 8px; font-size: 11px; font-weight: 800; }
+.provider.active { border-color: #65AFA4; background: light-dark(#EAF6F3, #1B3935); color: light-dark(#256B61, #A6DED5); box-shadow: inset 0 0 0 1px #65AFA4; }
+.upload-zone { border: 1.5px dashed light-dark(#B9C9D8, #53647B); background: light-dark(#F8FBFD, #142133); border-radius: calc(13px * var(--site-radius-scale)); padding: 24px 15px; text-align: center; transition: .18s ease; }
+.upload-zone.drag { border-color: #38A18F; background: light-dark(#ECF8F5, #193631); }
+.upload-icon { width: 42px; height: 42px; display: grid; place-items: center; margin: 0 auto 10px; color: #2E8B7D; background: light-dark(#E4F3F0, #203C39); border-radius: 13px; }
+.upload-zone strong { display: block; color: light-dark(#30445D, #D7E2EF); font-size: 12px; margin-bottom: 5px; }
+.upload-zone span { color: light-dark(#8997A8, #91A0B4); font-size: 10px; }
+.upload-zone .btn { margin-top: 13px; }
+.file-meta { display: none; margin-top: 12px; align-items: center; justify-content: space-between; gap: 8px; padding: 10px; background: light-dark(#EFF7F5, #1A332F); border: 1px solid light-dark(#D1E8E2, #31584F); border-radius: 10px; }
+.file-meta.visible { display: flex; }
+.file-meta strong { display: block; color: light-dark(#2D5D55, #BCE4DB); font-size: 11px; max-width: 190px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.file-meta small { display: block; color: light-dark(#77928C, #8EB7AE); font-size: 10px; margin-top: 3px; }
+.file-clear { background: none; border: none; color: #B45A5A; font-size: 11px; font-weight: 800; }
+.editor-panel { min-width: 0; }
+.editor-tools { display: flex; align-items: center; gap: 8px; }
+.count { color: light-dark(#7D8A9B, #9BAABD); font-size: 10px; font-weight: 700; }
+.empty-state { padding: 62px 24px; text-align: center; }
+.empty-illustration { width: 74px; height: 74px; background: light-dark(#EAF3F5, #203547); color: #3E8E91; border-radius: 23px; display: grid; place-items: center; margin: 0 auto 18px; }
+.empty-state h2 { color: light-dark(#31445C, #DFE8F3); font-size: 15px; margin: 0 0 8px; }
+.empty-state p { color: light-dark(#8794A5, #97A7BA); font-size: 11px; max-width: 380px; margin: 0 auto; line-height: 1.65; }
+.cue-list { display: none; padding: 14px; }
+.cue-card { display: grid; grid-template-columns: 48px minmax(0, 1fr) minmax(0, 1fr); gap: 12px; padding: 13px 0; border-bottom: 1px solid light-dark(#E9EEF3, #2A384B); }
+.cue-card:last-child { border-bottom: 0; }
+.cue-index { font-size: 11px; font-weight: 800; color: #398A80; padding-top: 10px; text-align: center; }
+.cue-content { min-width: 0; }
+.cue-top { display: flex; justify-content: space-between; gap: 8px; align-items: center; margin-bottom: 7px; }
+.cue-label { color: light-dark(#8B98A8, #9EADBF); font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
+.timecode { font-variant-numeric: tabular-nums; font-size: 9px; color: light-dark(#748499, #A4B2C4); background: light-dark(#F0F4F8, #202D40); padding: 4px 6px; border-radius: 5px; }
+.cue-text { min-height: 76px; font-size: 11px; }
+.cue-text.original { background: light-dark(#F7F9FC, #121D2D); }
+.cue-text.translation { border-color: light-dark(#C8E3DD, #3B675F); background: light-dark(#FBFEFD, #142923); }
+.cue-text.translation::placeholder { color: light-dark(#A4B0BE, #718678); }
+.bottom-bar { padding: 14px 18px; border-top: 1px solid light-dark(#E7ECF2, #2A384B); background: light-dark(#FBFCFE, #151F30); display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; }
+.bottom-note { font-size: 10px; color: light-dark(#8492A3, #94A4B8); line-height: 1.5; }
+.bottom-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.notice { margin-top: 18px; padding: 13px 15px; border: 1px solid light-dark(#DCE8EF, #34455B); background: light-dark(#F8FBFD, #172437); border-radius: 12px; color: light-dark(#64768A, #B2C0D0); font-size: 10px; line-height: 1.6; display: flex; gap: 10px; align-items: flex-start; }
+.notice b { color: light-dark(#3A526D, #D5E0EC); }
+.toast { position: fixed; right: 22px; bottom: 22px; max-width: min(420px, calc(100vw - 44px)); background: #183153; color: #FFFFFF; border: 1px solid #355576; border-radius: 12px; padding: 13px 16px; font-size: 12px; line-height: 1.5; box-shadow: 0 12px 36px rgba(10, 27, 48, .22); opacity: 0; transform: translateY(12px); pointer-events: none; transition: .22s ease; z-index: 20; }
+.toast.show { opacity: 1; transform: translateY(0); }
+.modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(9, 20, 34, .48); z-index: 30; align-items: center; justify-content: center; padding: 18px; }
+.modal-backdrop.open { display: flex; }
+.modal { background: light-dark(#FFFFFF, #182335); color: light-dark(#203149, #E8EEF6); border: 1px solid light-dark(#E0E7EF, #35445A); border-radius: 17px; max-width: 440px; width: 100%; padding: 22px; }
+.modal h3 { font-size: 16px; margin: 0 0 8px; }
+.modal p { color: light-dark(#718096, #AAB8C9); font-size: 12px; line-height: 1.65; margin: 0 0 17px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.decor { position: fixed; pointer-events: none; opacity: var(--site-decoration-opacity); inset: auto 0 0 auto; width: 240px; height: 240px; background: radial-gradient(circle, rgba(92, 176, 160, .11), transparent 68%); z-index: 0; }
+@media (max-width: 980px) { .workspace { grid-template-columns: 300px minmax(0, 1fr); } .cue-card { grid-template-columns: 35px minmax(0, 1fr); } .cue-content.translation-col { grid-column: 2; } }
+@media (max-width: 760px) { .workspace { grid-template-columns: 1fr; } .hero { align-items: flex-start; flex-direction: column; } .topbar { padding-inline: 16px; } .brand-sub { display: none; } .top-actions .btn { padding: 9px 10px; font-size: 11px; } .page { padding-top: 24px; } }
+@media (max-width: 480px) { .cue-card { grid-template-columns: 30px minmax(0, 1fr); gap: 7px; } .cue-content.translation-col { grid-column: 2; } .field-row { grid-template-columns: 1fr; } .bottom-actions { width: 100%; } .bottom-actions .btn { flex: 1; } }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo-mark" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 5.5C4 4.67 4.67 4 5.5 4h13c.83 0 1.5.67 1.5 1.5v9c0 .83-.67 1.5-1.5 1.5H11l-4.5 4v-4H5.5C4.67 16 4 15.33 4 14.5v-9Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 8.5h8M8 11.5h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
+      <div><div class="brand-name">SubLingo</div><div class="brand-sub">SUBTITLE WORKSPACE · SRT TRANSLATOR</div></div>
+    </div>
+    <div class="top-actions">
+      <div class="google-login-wrap" id="googleSignInButton"></div>
+      <div class="user-state" id="userState"><img class="user-avatar" id="userAvatar" alt=""><span id="userName"></span><button class="btn btn-light" id="logoutBtn" type="button">Đăng xuất</button></div>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="hero">
+      <div><div class="eyebrow">Không mất cấu trúc · Không lệch thời gian</div><h1>Dịch phụ đề, giữ nguyên<br>từng khung hình.</h1><p>Tải file SRT lên, chọn AI và phong cách dịch. SubLingo tách riêng phần lời thoại để số thứ tự, timestamp và cấu trúc gốc luôn được giữ nguyên khi xuất file.</p></div>
+      <div class="status-pill"><span class="status-dot"></span> Bảo toàn cấu trúc SRT</div>
+    </section>
+
+    <section class="workspace">
+      <aside class="panel">
+        <div class="panel-head"><div class="panel-title"><span class="step">01</span> Thiết lập bản dịch</div></div>
+        <div class="panel-body">
+          <div class="form-group">
+            <label class="form-label">Chọn công cụ AI</label>
+            <div class="provider-tabs"><button class="provider active" data-provider="openai">✳ ChatGPT</button><button class="provider" data-provider="gemini">✦ Google Gemini</button></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" id="keyLabel" for="apiKey">OpenAI API key</label>
+            <div class="input-wrap"><input class="field" id="apiKey" type="password" placeholder="Dán API key tại đây" autocomplete="off"><button class="reveal" id="toggleKey" type="button">Hiện</button></div>
+            <div class="helper">Key chỉ được giữ tạm trong phiên xem trước này, không lưu vào trình duyệt.</div>
+          </div>
+          <div class="divider"></div>
+          <div class="form-group">
+            <label class="form-label">Ngôn ngữ</label>
+            <div class="field-row">
+              <div><label class="helper" for="sourceLang">Ngôn ngữ gốc</label><select class="field" id="sourceLang"><option value="auto">Tự động nhận diện</option><option>Tiếng Anh</option><option>Tiếng Nhật</option><option>Tiếng Hàn</option><option>Tiếng Trung</option><option>Tiếng Việt</option><option>Tiếng Pháp</option><option>Tiếng Tây Ban Nha</option><option>Tiếng Đức</option><option>Tiếng Thái</option></select></div>
+              <div><label class="helper" for="targetLang">Dịch sang</label><select class="field" id="targetLang"><option>Tiếng Việt</option><option>Tiếng Anh</option><option>Tiếng Nhật</option><option>Tiếng Hàn</option><option>Tiếng Trung</option><option>Tiếng Pháp</option><option>Tiếng Tây Ban Nha</option><option>Tiếng Đức</option><option>Tiếng Thái</option><option>Tiếng Indonesia</option></select></div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="style">Văn phong & chỉ dẫn riêng</label>
+            <textarea class="field" id="style" rows="4" placeholder="Ví dụ: Dịch tự nhiên như lời thoại phim, thân mật, ngắn gọn. Giữ nguyên tên riêng và thuật ngữ...">Dịch tự nhiên như lời thoại phim. Ưu tiên câu ngắn gọn, đúng ngữ cảnh, giữ nguyên tên riêng và thuật ngữ.</textarea>
+            <div class="helper">Bạn có thể yêu cầu văn phong hài hước, trang trọng, cổ trang, anime, chuyên ngành...</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="model">Mô hình</label>
+            <select class="field" id="model"><option value="gpt-4.1-mini">GPT-4.1 mini</option><option value="gpt-4.1">GPT-4.1</option></select>
+          </div>
+          <button class="btn btn-primary" id="translateBtn" style="width:100%">✦ Dịch phụ đề bằng AI</button>
+          <div class="progress-track" id="translateProgress"><div class="progress-fill" id="translateProgressFill"></div></div>
+          <div class="helper" id="translateHelp" style="text-align:center;margin-top:8px">Đăng nhập Google, nhập API key của bạn rồi bắt đầu dịch.</div>
+        </div>
+      </aside>
+
+      <section class="panel editor-panel">
+        <div class="panel-head">
+          <div class="panel-title"><span class="step">02</span> Nội dung phụ đề</div>
+          <div class="editor-tools"><span class="count" id="cueCount">Chưa có file</span></div>
+        </div>
+        <div class="panel-body" id="uploadArea">
+          <div class="upload-zone" id="dropZone">
+            <div class="upload-icon"><svg width="23" height="23" viewBox="0 0 24 24" fill="none"><path d="M12 15V3m0 0L7.5 7.5M12 3l4.5 4.5M4 14.5v4A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5v-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <strong>Kéo thả file SRT vào đây</strong><span>hoặc chọn file từ máy tính · Hỗ trợ .srt, UTF-8</span><br>
+            <button class="btn btn-secondary" id="chooseFile" type="button">Chọn file SRT</button>
+            <input type="file" id="fileInput" accept=".srt,application/x-subrip,text/plain" hidden>
+          </div>
+          <div class="file-meta" id="fileMeta"><div><strong id="fileName"></strong><small id="fileDetails"></small></div><button class="file-clear" id="removeFile" type="button">Gỡ file</button></div>
+        </div>
+        <div class="empty-state" id="emptyState">
+          <div class="empty-illustration"><svg width="34" height="34" viewBox="0 0 24 24" fill="none"><path d="M5 4.75h14A1.75 1.75 0 0 1 20.75 6.5v11A1.75 1.75 0 0 1 19 19.25H5A1.75 1.75 0 0 1 3.25 17.5v-11A1.75 1.75 0 0 1 5 4.75Z" stroke="currentColor" stroke-width="1.5"/><path d="M7 9h10M7 12h7M7 15h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+          <h2>Phụ đề của bạn sẽ xuất hiện tại đây</h2><p>Sau khi tải file SRT lên, nội dung gốc và bản dịch sẽ được đặt cạnh nhau để bạn dễ rà soát từng câu.</p>
+        </div>
+        <div class="cue-list" id="cueList" aria-live="polite"></div>
+        <div class="bottom-bar">
+          <div class="bottom-note" id="preserveNote">🔒 Số thứ tự và mốc thời gian được khóa, không cho chỉnh sửa.</div>
+          <div class="bottom-actions"><button class="btn btn-ghost" id="loadSample">Dùng file mẫu</button><button class="btn btn-primary" id="downloadBtn" disabled>↓ Tải SRT đã dịch</button></div>
+        </div>
+      </section>
+    </section>
+    <div class="notice"><span>ⓘ</span><div><b>Cơ chế bảo vệ file:</b> Trình đọc chỉ cho phép chỉnh sửa vùng lời thoại. Số thứ tự, dòng thời gian, phần metadata và dấu phân cách được giữ lại từ file gốc khi xuất. Bản triển khai gửi từng nhóm lời thoại tới backend để gọi AI; backend không lưu API key hay file phụ đề. Số thứ tự, timestamp và phần metadata luôn được giữ ở trình duyệt.</div></div>
+  </main>
+  <div class="decor" aria-hidden="true"></div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal"><h3 id="modalTitle">Kết nối dịch vụ</h3><p id="modalText"></p><div class="modal-actions"><button class="btn btn-ghost" id="modalClose">Để sau</button><button class="btn btn-primary" id="modalOk">Đã hiểu</button></div></div>
+</div>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  let provider = 'openai';
+  let fileName = '';
+  let originalText = '';
+  let chunks = [];
+  let cues = [];
+  let toastTimer;
+
+  function toast(message) {
+    const el = $('toast');
+    el.textContent = message;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 3600);
+  }
+  function modal(title, message) {
+    $('modalTitle').textContent = title;
+    $('modalText').textContent = message;
+    $('modalBackdrop').classList.add('open');
+  }
+  $('modalClose').addEventListener('click', () => $('modalBackdrop').classList.remove('open'));
+  $('modalOk').addEventListener('click', () => $('modalBackdrop').classList.remove('open'));
+  $('modalBackdrop').addEventListener('click', (e) => { if (e.target === $('modalBackdrop')) $('modalBackdrop').classList.remove('open'); });
+
+  function parseSrt(text) {
+    const split = text.split(/(\r?\n[ \t]*\r?\n+)/);
+    const parsedChunks = [];
+    const parsedCues = [];
+    const timePattern = /(?:^|\r\n|\n|\r)(\d{2}:\d{2}:\d{2}[,.]\d{3}\s*-->\s*\d{2}:\d{2}:\d{2}[,.]\d{3}[^\r\n]*)(\r\n|\n|\r)/;
+    for (let i = 0; i < split.length; i += 2) {
+      const raw = split[i];
+      const separator = split[i + 1] || '';
+      if (raw === '') { parsedChunks.push({ raw, separator, cue: null }); continue; }
+      const match = timePattern.exec(raw);
+      if (!match) { parsedChunks.push({ raw, separator, cue: null }); continue; }
+      const prefixEnd = match.index + match[0].length;
+      const prefix = raw.slice(0, prefixEnd);
+      const source = raw.slice(prefixEnd);
+      const cue = { id: parsedCues.length, prefix, source, translation: source, time: match[1], separator };
+      parsedCues.push(cue);
+      parsedChunks.push({ raw, separator, cue });
+    }
+    return { parsedChunks, parsedCues };
+  }
+  function renderCues() {
+    const list = $('cueList');
+    list.innerHTML = '';
+    cues.forEach((cue, idx) => {
+      const card = document.createElement('div');
+      card.className = 'cue-card';
+      const index = document.createElement('div');
+      index.className = 'cue-index';
+      index.textContent = String(idx + 1).padStart(2, '0');
+      const left = document.createElement('div');
+      left.className = 'cue-content';
+      const leftTop = document.createElement('div');
+      leftTop.className = 'cue-top';
+      const leftLabel = document.createElement('span'); leftLabel.className = 'cue-label'; leftLabel.textContent = 'Bản gốc';
+      const time = document.createElement('span'); time.className = 'timecode'; time.textContent = cue.time;
+      leftTop.append(leftLabel, time);
+      const source = document.createElement('textarea');
+      source.className = 'field cue-text original'; source.rows = 3; source.readOnly = true; source.value = cue.source;
+      left.append(leftTop, source);
+      const right = document.createElement('div');
+      right.className = 'cue-content translation-col';
+      const rightTop = document.createElement('div'); rightTop.className = 'cue-top';
+      const rightLabel = document.createElement('span'); rightLabel.className = 'cue-label'; rightLabel.textContent = 'Bản dịch';
+      const target = document.createElement('span'); target.className = 'timecode'; target.textContent = $('targetLang').value;
+      rightTop.append(rightLabel, target);
+      const translated = document.createElement('textarea');
+      translated.className = 'field cue-text translation'; translated.rows = 3; translated.placeholder = 'Nhập hoặc dán nội dung đã dịch...'; translated.value = cue.translation;
+      translated.setAttribute('aria-label', `Bản dịch câu ${idx + 1}`);
+      translated.addEventListener('input', () => { cues[idx].translation = translated.value; });
+      right.append(rightTop, translated);
+      card.append(index, left, right);
+      list.append(card);
+    });
+    $('cueCount').textContent = `${cues.length} câu phụ đề`;
+    $('emptyState').style.display = cues.length ? 'none' : 'block';
+    list.style.display = cues.length ? 'block' : 'none';
+    $('downloadBtn').disabled = cues.length === 0;
+  }
+  function loadText(text, name) {
+    originalText = text;
+    fileName = name;
+    const result = parseSrt(text);
+    chunks = result.parsedChunks;
+    cues = result.parsedCues;
+    $('fileName').textContent = name;
+    $('fileDetails').textContent = `${(new Blob([text]).size / 1024).toFixed(1)} KB · ${cues.length} cue hợp lệ`;
+    $('fileMeta').classList.add('visible');
+    $('cueCount').textContent = `${cues.length} câu phụ đề`;
+    if (!cues.length) {
+      $('fileMeta').classList.remove('visible');
+      toast('Không tìm thấy cue SRT hợp lệ. Hãy kiểm tra định dạng file.');
+      return;
+    }
+    renderCues();
+    $('preserveNote').textContent = '🔒 Đã khóa số thứ tự, timestamp và cấu trúc gốc.';
+    toast(`Đã đọc ${cues.length} cue. Cấu trúc gốc được giữ nguyên.`);
+  }
+  function handleFile(file) {
+    if (!file) return;
+    if (!/\.srt$/i.test(file.name)) { toast('Vui lòng chọn file có đuôi .srt.'); return; }
+    const reader = new FileReader();
+    reader.onload = () => loadText(String(reader.result || ''), file.name);
+    reader.onerror = () => toast('Không thể đọc file. Vui lòng thử lại.');
+    reader.readAsText(file, 'UTF-8');
+  }
+  $('chooseFile').addEventListener('click', () => $('fileInput').click());
+  $('fileInput').addEventListener('change', (e) => { handleFile(e.target.files[0]); e.target.value = ''; });
+  $('dropZone').addEventListener('dragover', (e) => { e.preventDefault(); $('dropZone').classList.add('drag'); });
+  $('dropZone').addEventListener('dragleave', () => $('dropZone').classList.remove('drag'));
+  $('dropZone').addEventListener('drop', (e) => { e.preventDefault(); $('dropZone').classList.remove('drag'); handleFile(e.dataTransfer.files[0]); });
+  $('removeFile').addEventListener('click', () => {
+    fileName = ''; originalText = ''; chunks = []; cues = [];
+    $('fileMeta').classList.remove('visible'); $('fileInput').value = '';
+    $('cueList').innerHTML = ''; $('cueList').style.display = 'none'; $('emptyState').style.display = 'block';
+    $('cueCount').textContent = 'Chưa có file'; $('downloadBtn').disabled = true;
+    $('preserveNote').textContent = '🔒 Số thứ tự và mốc thời gian được khóa, không cho chỉnh sửa.';
+  });
+  function formatCueText(cue, value) {
+    const normalized = String(value ?? '').replace(/\r\n?/g, '\n').replace(/\n[ \t]*\n+/g, '\n');
+    if (/^\s*\d{2}:\d{2}:\d{2}[,.]\d{3}\s*-->/m.test(normalized)) return null;
+    const lineEnding = cue.prefix.includes('\r\n') || cue.separator.includes('\r\n') ? '\r\n' : '\n';
+    return normalized.replace(/\n/g, lineEnding);
+  }
+  $('downloadBtn').addEventListener('click', () => {
+    if (!cues.length) return;
+    let invalidCue = false;
+    const output = chunks.map((chunk) => {
+      if (!chunk.cue) return chunk.raw + chunk.separator;
+      const cue = chunk.cue;
+      const value = formatCueText(cue, cues[cue.id].translation);
+      if (value === null) invalidCue = true;
+      return cue.prefix + (value === null ? cues[cue.id].translation : value) + chunk.separator;
+    }).join('');
+    if (invalidCue) {
+      toast('Một bản dịch có chứa dòng timestamp. Hãy sửa nội dung đó trước khi xuất để tránh hỏng cấu trúc SRT.');
+      return;
+    }
+    const blob = new Blob([output], { type: 'application/x-subrip;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const base = (fileName || 'subtitle.srt').replace(/\.srt$/i, '');
+    a.href = url; a.download = `${base}_${$('targetLang').value.toLowerCase().replace(/\s+/g, '_')}.srt`;
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    toast('Đã xuất file SRT. Số thứ tự và timestamp được giữ nguyên.');
+  });
+  $('loadSample').addEventListener('click', () => {
+    const sample = '1\r\n00:00:01,000 --> 00:00:03,200\r\nI never thought we would meet again.\r\n\r\n2\r\n00:00:04,000 --> 00:00:06,500\r\nBut here we are, standing in the rain.\r\n\r\n3\r\n00:00:07,100 --> 00:00:09,000\r\nAre you ready to go?\r\n';
+    loadText(sample, 'demo-subtitles.srt');
+  });
+  document.querySelectorAll('.provider').forEach((button) => button.addEventListener('click', () => {
+    provider = button.dataset.provider;
+    document.querySelectorAll('.provider').forEach((item) => item.classList.toggle('active', item === button));
+    $('keyLabel').textContent = provider === 'openai' ? 'OpenAI API key' : 'Google Gemini API key';
+    $('apiKey').placeholder = provider === 'openai' ? 'sk-••••••••••••••••' : 'AIza••••••••••••••••';
+    $('model').innerHTML = provider === 'openai'
+      ? '<option value="gpt-4.1-mini">GPT-4.1 mini</option><option value="gpt-4.1">GPT-4.1</option>'
+      : '<option value="gemini-3.8-flash">Gemini 3.8 Flash</option><option value="gemini-3.5-flash-lite">Gemini 3.5 Flash-Lite</option>';
+  }));
+  $('toggleKey').addEventListener('click', () => {
+    const input = $('apiKey');
+    input.type = input.type === 'password' ? 'text' : 'password';
+    $('toggleKey').textContent = input.type === 'password' ? 'Hiện' : 'Ẩn';
+  });
+  let currentUser = null;
+  let translating = false;
+
+  function setLoggedIn(user) {
+    currentUser = user || null;
+    $('googleSignInButton').style.display = currentUser ? 'none' : 'flex';
+    $('userState').classList.toggle('visible', !!currentUser);
+    if (currentUser) {
+      $('userName').textContent = currentUser.name || currentUser.email || 'Đã đăng nhập';
+      $('userAvatar').src = currentUser.picture || '';
+      $('userAvatar').style.display = currentUser.picture ? 'block' : 'none';
+    }
+  }
+
+  async function refreshSession() {
+    try {
+      const response = await fetch('/api/me', { credentials: 'same-origin' });
+      const data = await response.json();
+      setLoggedIn(response.ok ? data.user : null);
+    } catch (_) {
+      setLoggedIn(null);
+    }
+  }
+
+  async function googleCredentialCallback(response) {
+    try {
+      const result = await fetch('/api/auth/google', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credential: response.credential })
+      });
+      const data = await result.json();
+      if (!result.ok) throw new Error(data.error || 'Không thể đăng nhập Google.');
+      setLoggedIn(data.user);
+      toast('Đăng nhập Google thành công.');
+    } catch (error) {
+      toast(error.message || 'Đăng nhập Google thất bại.');
+    }
+  }
+
+  async function initializeGoogleSignIn() {
+    const clientId = window.SUBLINGO_CONFIG && window.SUBLINGO_CONFIG.googleClientId;
+    if (!clientId) {
+      $('googleSignInButton').innerHTML = '<span style="color:#FFE5B4;font-size:11px">Chưa cấu hình Google Client ID</span>';
+      return;
+    }
+    if (!window.google || !window.google.accounts || !window.google.accounts.id) {
+      setTimeout(initializeGoogleSignIn, 400);
+      return;
+    }
+    try {
+      const nonceResponse = await fetch('/api/auth/nonce', { credentials: 'same-origin' });
+      const nonceData = await nonceResponse.json();
+      if (!nonceResponse.ok || !nonceData.nonce) throw new Error('Không khởi tạo được phiên Google.');
+      window.google.accounts.id.initialize({ client_id: clientId, nonce: nonceData.nonce, callback: googleCredentialCallback, auto_select: false });
+      window.google.accounts.id.renderButton($('googleSignInButton'), {
+        type: 'standard', theme: 'outline', size: 'large', text: 'signin_with', shape: 'rectangular',
+        logo_alignment: 'left', width: 190
+      });
+    } catch (error) {
+      $('googleSignInButton').innerHTML = '<span style="color:#FFE5B4;font-size:11px">Không tải được đăng nhập Google</span>';
+    }
+  }
+
+  $('logoutBtn').addEventListener('click', async () => {
+    try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' }); }
+    finally { setLoggedIn(null); toast('Bạn đã đăng xuất.'); }
+  });
+
+  async function translateAll() {
+    if (translating) return;
+    if (!cues.length) { toast('Hãy tải file SRT lên trước khi dịch.'); return; }
+    if (!currentUser) { toast('Vui lòng đăng nhập Google trước khi dịch.'); return; }
+    const apiKey = $('apiKey').value.trim();
+    if (!apiKey) { toast('Bạn cần nhập API key trong phần thiết lập.'); $('apiKey').focus(); return; }
+
+    translating = true;
+    const button = $('translateBtn');
+    const progress = $('translateProgress');
+    const fill = $('translateProgressFill');
+    const batchSize = 12;
+    const totalBatches = Math.ceil(cues.length / batchSize);
+    button.disabled = true;
+    progress.classList.add('visible');
+    fill.style.width = '0%';
+    let completed = 0;
+    try {
+      for (let start = 0; start < cues.length; start += batchSize) {
+        const batch = cues.slice(start, start + batchSize).map((cue) => ({ id: cue.id, text: cue.source }));
+        const response = await fetch('/api/translate', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            provider,
+            apiKey,
+            model: $('model').value,
+            sourceLang: $('sourceLang').value,
+            targetLang: $('targetLang').value,
+            style: $('style').value,
+            cues: batch
+          })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Lỗi khi dịch phụ đề.');
+        const byId = new Map((data.translations || []).map((item) => [item.id, item.text]));
+        for (const cue of batch) {
+          if (!byId.has(cue.id) || typeof byId.get(cue.id) !== 'string') {
+            throw new Error('AI trả về thiếu câu phụ đề. Các câu đã dịch trước đó vẫn được giữ lại.');
+          }
+        }
+        for (const cue of batch) cues[cue.id].translation = byId.get(cue.id);
+        completed += 1;
+        fill.style.width = `${Math.round((completed / totalBatches) * 100)}%`;
+        button.textContent = `Đang dịch ${Math.min(start + batchSize, cues.length)}/${cues.length}...`;
+      }
+      renderCues();
+      toast(`Đã dịch xong ${cues.length} câu. Hãy rà soát trước khi tải file.`);
+    } catch (error) {
+      renderCues();
+      toast(error.message || 'Có lỗi khi dịch. Vui lòng thử lại.');
+    } finally {
+      translating = false;
+      button.disabled = false;
+      button.textContent = '✦ Dịch phụ đề bằng AI';
+      setTimeout(() => progress.classList.remove('visible'), 900);
+    }
+  }
+
+  $('translateBtn').addEventListener('click', translateAll);
+  refreshSession();
+  initializeGoogleSignIn();
+  $('targetLang').addEventListener('change', () => {
+    document.querySelectorAll('.cue-content.translation-col .timecode').forEach((el) => { el.textContent = $('targetLang').value; });
+  });
+})();
+</script>
+</body>
+</html>
