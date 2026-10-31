@@ -634,7 +634,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
   $('selectVideoRegion').addEventListener('click', () => {
     selectionLayer.classList.add('selecting');
     $('videoRegionHelp').textContent = 'Đang chọn vùng: kéo chuột trên video để khoanh khu vực chứa phụ đề.';
-    $('ocrRegionHelp').textContent = 'Đang chọn vùng: kéo chuột trên video để khoanh khu vực chứa phụ đề.';
+    $('videoRegionHelp').textContent = 'Đang chọn vùng: kéo chuột trên video để khoanh khu vực chứa phụ đề.';
   });
   selectionLayer.addEventListener('pointerdown', (event) => {
     const rect = selectionLayer.getBoundingClientRect();
