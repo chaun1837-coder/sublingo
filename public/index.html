@@ -163,6 +163,14 @@ textarea.field { resize: vertical; line-height: 1.55; }
       <div class="status-pill"><span class="status-dot"></span> Bảo toàn cấu trúc SRT</div>
     </section>
 
+    <section class="panel" style="margin-bottom:20px">
+      <div class="panel-head"><div class="panel-title"><span class="step">↗</span> Tải video đa nền tảng</div></div>
+      <div class="panel-body" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+        <div><strong style="display:block;font-size:13px;margin-bottom:5px">Tải video từ nhiều trang web</strong><span class="helper">Mở SnapAny để dán liên kết video và tải xuống. Việc tải video được thực hiện trên website SnapAny.</span></div>
+        <a class="btn btn-primary" href="https://snapany.com/fr" target="_blank" rel="noopener noreferrer">Mở SnapAny ↗</a>
+      </div>
+    </section>
+
     <section class="workspace">
       <aside class="panel">
         <div class="panel-head"><div class="panel-title"><span class="step">01</span> Thiết lập bản dịch</div></div>
@@ -174,7 +182,12 @@ textarea.field { resize: vertical; line-height: 1.55; }
           <div class="form-group">
             <label class="form-label" id="keyLabel" for="apiKey">OpenAI API key</label>
             <div class="input-wrap"><input class="field" id="apiKey" type="password" placeholder="Dán API key tại đây" autocomplete="off"><button class="reveal" id="toggleKey" type="button">Hiện</button></div>
-            <div class="helper">Key chỉ được giữ tạm trong phiên xem trước này, không lưu vào trình duyệt.</div>
+            <div class="field-row" style="margin-top:9px">
+              <button class="btn btn-secondary" id="saveKeyBtn" type="button">Lưu key trên thiết bị</button>
+              <button class="btn btn-ghost" id="clearKeyBtn" type="button">Xóa key đã lưu</button>
+            </div>
+            <div class="helper">Key được lưu trong trình duyệt trên thiết bị này để dùng lại sau khi tải lại trang. Không nên lưu trên máy tính dùng chung.</div>
+            <div class="helper"><a id="keyGuideLink" href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">Hướng dẫn lấy OpenAI API key</a></div>
           </div>
           <div class="divider"></div>
           <div class="form-group">
@@ -393,15 +406,45 @@ textarea.field { resize: vertical; line-height: 1.55; }
     document.querySelectorAll('.provider').forEach((item) => item.classList.toggle('active', item === button));
     $('keyLabel').textContent = provider === 'openai' ? 'OpenAI API key' : 'Google Gemini API key';
     $('apiKey').placeholder = provider === 'openai' ? 'sk-••••••••••••••••' : 'AIza••••••••••••••••';
+    $('keyGuideLink').href = provider === 'openai' ? 'https://platform.openai.com/api-keys' : 'https://aistudio.google.com/app/apikey';
+    $('keyGuideLink').textContent = provider === 'openai' ? 'Hướng dẫn lấy OpenAI API key' : 'Hướng dẫn lấy Google Gemini API key';
+    $('apiKey').value = loadSavedKey(provider);
     $('model').innerHTML = provider === 'openai'
       ? '<option value="gpt-4.1-mini">GPT-4.1 mini</option><option value="gpt-4.1">GPT-4.1</option>'
       : '<option value="gemini-3.8-flash">Gemini 3.8 Flash</option><option value="gemini-3.5-flash-lite">Gemini 3.5 Flash-Lite</option>';
   }));
+  function savedKeyStorageName(providerName) { return 'sublingo_saved_api_key_' + providerName; }
+  function loadSavedKey(providerName) {
+    try { return localStorage.getItem(savedKeyStorageName(providerName)) || ''; }
+    catch (_) { return ''; }
+  }
+  $('saveKeyBtn').addEventListener('click', () => {
+    const key = $('apiKey').value.trim();
+    if (!key) { toast('Hãy nhập API key trước khi lưu.'); $('apiKey').focus(); return; }
+    try {
+      localStorage.setItem(savedKeyStorageName(provider), key);
+      toast('Đã lưu API key trên trình duyệt của thiết bị này.');
+    } catch (_) {
+      toast('Trình duyệt không cho phép lưu key. Hãy kiểm tra cài đặt bộ nhớ.');
+    }
+  });
+  $('clearKeyBtn').addEventListener('click', () => {
+    try {
+      localStorage.removeItem(savedKeyStorageName(provider));
+      $('apiKey').value = '';
+      toast('Đã xóa API key đã lưu trên thiết bị này.');
+    } catch (_) {
+      toast('Không thể xóa key đã lưu trong trình duyệt.');
+    }
+  });
   $('toggleKey').addEventListener('click', () => {
     const input = $('apiKey');
     input.type = input.type === 'password' ? 'text' : 'password';
     $('toggleKey').textContent = input.type === 'password' ? 'Hiện' : 'Ẩn';
   });
+  $('keyGuideLink').href = 'https://platform.openai.com/api-keys';
+  $('apiKey').value = loadSavedKey(provider);
+
   let currentUser = null;
   let translating = false;
 
