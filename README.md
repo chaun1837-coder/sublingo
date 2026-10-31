@@ -43,7 +43,7 @@ Người dùng nhập OpenAI API key hoặc Gemini API key ngay trong giao diệ
 - Bắt buộc dùng HTTPS khi public website. Render cấp HTTPS cho miền `onrender.com`.
 - Không commit `.env`, API key, OAuth client secret hoặc `SESSION_SECRET` vào GitHub.
 - Đổi `SESSION_SECRET` sẽ đăng xuất các phiên hiện tại.
-- Giao diện chia file thành các nhóm 60 cue/lượt khi dịch Gemini và nghỉ 4,5 giây giữa các request Gemini. Backend chấp nhận tối đa 80 cue/request và giới hạn tổng văn bản mỗi request ở 30.000 ký tự. Tiến độ và trạng thái hoàn thành được theo dõi riêng, kể cả khi bản dịch trùng với câu gốc.
+- Giao diện chia file thành các nhóm 60 cue/lượt khi dịch Gemini và nghỉ 4,5 giây giữa các request Gemini. Khi gặp lỗi tạm thời như 408, 429, 5xx hoặc lỗi mạng, ứng dụng thử lại tối đa 3 lần với thời gian chờ tăng dần; lỗi key/model không hợp lệ sẽ dừng sớm để người dùng sửa. Backend chấp nhận tối đa 80 cue/request và giới hạn tổng văn bản mỗi request ở 30.000 ký tự. Tiến độ và trạng thái hoàn thành được theo dõi riêng, kể cả khi bản dịch trùng với câu gốc.
 - Giới hạn rate hiện tại là 120 request/15 phút/IP; cần điều chỉnh khi có nhiều người dùng thật.
 - Bản này không có cơ sở dữ liệu người dùng vì đăng nhập chỉ dùng để xác thực phiên. Nếu cần lịch sử dịch, phân quyền, gói trả phí hoặc quản trị, cần bổ sung database.
 - Bản này không tự động publish. Chủ tài khoản phải kết nối repository và cấu hình biến môi trường trên Render.
