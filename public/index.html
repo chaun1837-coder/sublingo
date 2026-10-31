@@ -287,7 +287,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
       const prefixEnd = match.index + match[0].length;
       const prefix = raw.slice(0, prefixEnd);
       const source = raw.slice(prefixEnd);
-      const cue = { id: parsedCues.length, prefix, source, translation: source, time: match[1], separator };
+      const cue = { id: parsedCues.length, prefix, source, translation: source, translated: false, time: match[1], separator };
       parsedCues.push(cue);
       parsedChunks.push({ raw, separator, cue });
     }
@@ -321,7 +321,8 @@ textarea.field { resize: vertical; line-height: 1.55; }
       const translated = document.createElement('textarea');
       translated.className = 'field cue-text translation'; translated.rows = 3; translated.placeholder = 'Nhập hoặc dán nội dung đã dịch...'; translated.value = cue.translation;
       translated.setAttribute('aria-label', `Bản dịch câu ${idx + 1}`);
-      translated.addEventListener('input', () => { cues[idx].translation = translated.value; });
+      translated.addEventListener('input', () => { cues[idx].translation = translated.value; cues[idx].translated = true; });
+      translated.disabled = translating;
       right.append(rightTop, translated);
       card.append(index, left, right);
       list.append(card);
@@ -342,7 +343,16 @@ textarea.field { resize: vertical; line-height: 1.55; }
     $('fileMeta').classList.add('visible');
     $('cueCount').textContent = `${cues.length} câu phụ đề`;
     if (!cues.length) {
+      chunks = [];
+      fileName = '';
+      originalText = '';
       $('fileMeta').classList.remove('visible');
+      $('cueList').innerHTML = '';
+      $('cueList').style.display = 'none';
+      $('emptyState').style.display = 'block';
+      $('cueCount').textContent = 'Chưa có file hợp lệ';
+      $('downloadBtn').disabled = true;
+      $('preserveNote').textContent = '🔒 Số thứ tự và mốc thời gian được khóa, không cho chỉnh sửa.';
       toast('Không tìm thấy cue SRT hợp lệ. Hãy kiểm tra định dạng file.');
       return;
     }
@@ -562,6 +572,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
     if (!apiKey) { toast('Bạn cần nhập API key trong phần thiết lập.'); $('apiKey').focus(); return; }
 
     translating = true;
+    document.querySelectorAll('.cue-text.translation').forEach((field) => { field.disabled = true; });
     const button = $('translateBtn');
     const progress = $('translateProgress');
     const fill = $('translateProgressFill');
@@ -570,7 +581,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
     const total = cues.length;
     const failedRanges = [];
     const updateProgress = () => {
-      const done = cues.filter((cue) => cue.translation !== cue.source).length;
+      const done = cues.filter((cue) => cue.translated).length;
       const percent = Math.round((done / total) * 100);
       fill.style.width = percent + '%';
       progress.setAttribute('aria-valuenow', String(percent));
@@ -585,7 +596,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
     let geminiRequestsSent = 0;
     try {
       for (let start = 0; start < cues.length; start += batchSize) {
-        const batch = cues.slice(start, start + batchSize).filter((cue) => cue.translation === cue.source).map((cue) => ({ id: cue.id, text: cue.source }));
+        const batch = cues.slice(start, start + batchSize).filter((cue) => !cue.translated).map((cue) => ({ id: cue.id, text: cue.source }));
         if (!batch.length) continue;
         let lastError = null;
         let succeeded = false;
@@ -605,7 +616,10 @@ textarea.field { resize: vertical; line-height: 1.55; }
             if (!response.ok) throw new Error(data.error || 'Lỗi khi dịch phụ đề.');
             const byId = new Map((data.translations || []).map((item) => [item.id, item.text]));
             for (const cue of batch) if (!byId.has(cue.id) || typeof byId.get(cue.id) !== 'string') throw new Error('AI trả về thiếu câu phụ đề.');
-            for (const cue of batch) cues[cue.id].translation = byId.get(cue.id);
+            for (const cue of batch) {
+              cues[cue.id].translation = byId.get(cue.id);
+              cues[cue.id].translated = true;
+            }
             succeeded = true; updateProgress(); break;
           } catch (error) {
             lastError = error;
@@ -619,13 +633,16 @@ textarea.field { resize: vertical; line-height: 1.55; }
         renderCues(); updateProgress();
         button.textContent = 'Đã xử lý đến ' + Math.min(start + batchSize, cues.length) + '/' + total + '...';
       }
-      const remaining = cues.filter((cue) => cue.translation === cue.source).length;
+      const remaining = cues.filter((cue) => !cue.translated).length;
       if (remaining) toast('Đã dịch ' + (total - remaining) + '/' + total + ' câu. Nhóm lỗi: ' + failedRanges.join(', ') + '. Bấm dịch lại để thử các câu còn thiếu.');
       else toast('Đã dịch xong ' + total + ' câu. Hãy rà soát trước khi tải file.');
     } catch (error) {
       renderCues(); toast(error.message || 'Có lỗi khi dịch. Vui lòng thử lại.');
     } finally {
-      translating = false; button.disabled = false; button.textContent = '✦ Dịch phụ đề bằng AI';
+      translating = false;
+      document.querySelectorAll('.cue-text.translation').forEach((field) => { field.disabled = false; });
+      button.disabled = false;
+      button.textContent = '✦ Dịch phụ đề bằng AI';
     }
   }
 
