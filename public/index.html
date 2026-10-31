@@ -34,7 +34,6 @@ button { cursor: pointer; }
   color-scheme: light dark;
 }
 .topbar {
-  position: relative;
   min-height: 74px;
   background: var(--site-primary);
   color: var(--site-on-primary);
@@ -45,22 +44,6 @@ button { cursor: pointer; }
   gap: 18px;
 }
 .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.menu-toggle { width: 40px; height: 40px; flex: 0 0 auto; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.22); border-radius: 11px; color: #FFFFFF; background: rgba(255,255,255,.08); }
-.menu-toggle:hover { background: rgba(255,255,255,.16); }
-.menu-popover { display: none; position: absolute; z-index: 40; left: clamp(12px, 3vw, 38px); top: calc(100% - 4px); width: min(300px, calc(100vw - 24px)); padding: 9px; background: light-dark(#FFFFFF, #182335); border: 1px solid light-dark(#DDE5ED, #39485D); border-radius: 14px; box-shadow: 0 18px 44px rgba(9,24,43,.22); }
-.menu-popover.open { display: grid; gap: 4px; }
-.menu-popover a { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 9px; color: light-dark(#31445D, #DFE8F3); font-size: 12px; font-weight: 750; text-decoration: none; }
-.menu-popover a:hover { background: light-dark(#EDF5F7, #243449); }
-.menu-caption { padding: 7px 12px 4px; color: light-dark(#8A97A8, #95A6BA); font-size: 9px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
-.key-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin-top: 9px; }
-.key-actions .btn { padding: 8px 10px; font-size: 10px; }
-.key-link { color: #2E897D; font-size: 10px; font-weight: 800; text-decoration: none; }
-.key-link:hover { text-decoration: underline; }
-.tool-panel { margin-top: 18px; display: none; }
-.tool-panel.feature-open { display: block; }
-.tool-panel .panel-body { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 14px; align-items: end; }
-.tool-panel .helper { max-width: 650px; }
-@media (max-width: 600px) { .tool-panel .panel-body { grid-template-columns: 1fr; } .tool-panel .panel-body > .btn { width: 100%; } }
 .logo-mark { width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; background: #DDF2EE; color: #183153; flex: 0 0 auto; }
 .brand-name { font-family: var(--site-font-heading); font-size: calc(1.22rem * var(--site-heading-scale)); font-weight: 800; letter-spacing: -0.04em; }
 .brand-sub { font-size: 11px; opacity: .74; margin-top: 2px; }
@@ -159,37 +142,13 @@ textarea.field { resize: vertical; line-height: 1.55; }
 @media (max-width: 980px) { .workspace { grid-template-columns: 300px minmax(0, 1fr); } .cue-card { grid-template-columns: 35px minmax(0, 1fr); } .cue-content.translation-col { grid-column: 2; } }
 @media (max-width: 760px) { .workspace { grid-template-columns: 1fr; } .hero { align-items: flex-start; flex-direction: column; } .topbar { padding-inline: 16px; } .brand-sub { display: none; } .top-actions .btn { padding: 9px 10px; font-size: 11px; } .page { padding-top: 24px; } }
 @media (max-width: 480px) { .cue-card { grid-template-columns: 30px minmax(0, 1fr); gap: 7px; } .cue-content.translation-col { grid-column: 2; } .field-row { grid-template-columns: 1fr; } .bottom-actions { width: 100%; } .bottom-actions .btn { flex: 1; } }
-/* Video OCR and precise cue timing */
-.video-tool-body { display: grid; gap: 14px; }
-.video-file-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-.video-file-row .field { max-width: 100%; flex: 1 1 280px; }
-.video-preview-wrap { display: none; position: relative; width: 100%; max-height: 62vh; overflow: hidden; border-radius: 12px; background: #07111D; }
-.video-preview-wrap video { display: block; width: 100%; max-height: 62vh; height: auto; object-fit: contain; }
-.selection-layer { position: absolute; inset: 0; pointer-events: none; cursor: crosshair; touch-action: none; }
-.selection-layer.selecting { pointer-events: auto; }
-.selection-box { position: absolute; border: 2px solid #4AC3AD; background: rgba(28, 167, 143, .16); box-shadow: 0 0 0 9999px rgba(0,0,0,.30); pointer-events: none; }
-.video-settings { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
-.video-status { min-height: 18px; color: light-dark(#627188, #A9B7C9); font-size: 11px; line-height: 1.5; }
-.ocr-progress-head { display: none; justify-content: space-between; align-items: center; gap: 10px; color: light-dark(#627188, #A9B7C9); font-size: 11px; font-weight: 750; }
-.ocr-progress-head strong { color: light-dark(#24796E, #9BDED1); font-size: 13px; font-variant-numeric: tabular-nums; }
-.ocr-progress-head.visible { display: flex; }
-.ocr-progress { height: 12px; overflow: hidden; background: light-dark(#E7EDF3, #2D3B50); border-radius: 99px; display: none; }
-.ocr-progress.visible { display: block; }
-.ocr-progress.visible { display: block; }
-.ocr-progress > div { height: 100%; width: 0; background: linear-gradient(90deg,#43A995,#75C8B8); transition: width .15s ease; }
-.cue-time-edit { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; }
-.cue-time-edit label { display: flex; align-items: center; gap: 4px; color: light-dark(#748499, #A4B2C4); font-size: 9px; }
-.cue-time-input { width: 108px; min-height: 29px; padding: 5px 6px; font-size: 10px; font-variant-numeric: tabular-nums; }
-@media (max-width: 760px) { .video-settings { grid-template-columns: 1fr 1fr; } }
-@media (max-width: 480px) { .video-settings { grid-template-columns: 1fr; } .cue-time-edit { align-items: flex-start; flex-direction: column; } .cue-time-input { width: 130px; } }
 </style>
 </head>
 <body>
 <div id="app">
   <header class="topbar">
-    <button class="menu-toggle" id="menuToggle" type="button" aria-label="Mở danh mục" aria-expanded="false"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
     <div class="brand">
-      <div class="logo-mark" aria-hidden="true"><svg width="25" height="25" viewBox="0 0 24 24" fill="none"><path d="M18.2 6.9C17 5.6 15.3 5 13.3 5H10c-2.1 0-3.8 1.2-3.8 3s1.3 2.8 3.7 3.4l4.2 1c2.3.6 3.7 1.8 3.7 3.7S16 19.5 13.6 19.5h-3.2c-2.1 0-3.8-.8-5-2.2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M5.4 7.1h.1M18.5 16.9h.1" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/></svg></div>
+      <div class="logo-mark" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 5.5C4 4.67 4.67 4 5.5 4h13c.83 0 1.5.67 1.5 1.5v9c0 .83-.67 1.5-1.5 1.5H11l-4.5 4v-4H5.5C4.67 16 4 15.33 4 14.5v-9Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 8.5h8M8 11.5h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
       <div><div class="brand-name">SubLingo</div><div class="brand-sub">SUBTITLE WORKSPACE · SRT TRANSLATOR</div></div>
     </div>
     <div class="top-actions">
@@ -197,13 +156,6 @@ textarea.field { resize: vertical; line-height: 1.55; }
       <div class="user-state" id="userState"><img class="user-avatar" id="userAvatar" alt=""><span id="userName"></span><button class="btn btn-light" id="logoutBtn" type="button">Đăng xuất</button></div>
     </div>
   </header>
-  <nav class="menu-popover" id="menuPopover" aria-label="Bốn tiện ích SubLingo">
-    <div class="menu-caption">Bốn tiện ích</div>
-    <a href="#video-ocr" data-menu-action="ocr">🎞 Quét chữ phụ đề từ video</a>
-    <a href="#video-ocr" data-menu-action="region">▣ Chọn vùng quét OCR</a>
-    <a href="#video-ocr" data-menu-action="orientation">↔ Nhận diện khung hình ngang / dọc</a>
-    <a href="#video-download" data-menu-action="snapany">⇩ Tải video qua SnapAny</a>
-  </nav>
 
   <main class="page">
     <section class="hero">
@@ -211,8 +163,8 @@ textarea.field { resize: vertical; line-height: 1.55; }
       <div class="status-pill"><span class="status-dot"></span> Bảo toàn cấu trúc SRT</div>
     </section>
 
-    <section class="workspace" id="translator">
-      <aside class="panel" id="api-settings">
+    <section class="workspace">
+      <aside class="panel">
         <div class="panel-head"><div class="panel-title"><span class="step">01</span> Thiết lập bản dịch</div></div>
         <div class="panel-body">
           <div class="form-group">
@@ -222,12 +174,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
           <div class="form-group">
             <label class="form-label" id="keyLabel" for="apiKey">OpenAI API key</label>
             <div class="input-wrap"><input class="field" id="apiKey" type="password" placeholder="Dán API key tại đây" autocomplete="off"><button class="reveal" id="toggleKey" type="button">Hiện</button></div>
-            <div class="key-actions">
-              <button class="btn btn-secondary" id="saveKeyBtn" type="button">Lưu key trong tab này</button>
-              <button class="btn btn-ghost" id="clearKeyBtn" type="button">Xóa key đã lưu</button>
-              <a class="key-link" id="keyHelpLink" href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">Lấy API key ↗</a>
-            </div>
-            <div class="helper" id="keySaveHelp">Key được lưu trong phiên tab hiện tại để không mất khi tải lại trang. Đóng tab sẽ xóa key đã lưu.</div>
+            <div class="helper">Key chỉ được giữ tạm trong phiên xem trước này, không lưu vào trình duyệt.</div>
           </div>
           <div class="divider"></div>
           <div class="form-group">
@@ -273,47 +220,12 @@ textarea.field { resize: vertical; line-height: 1.55; }
         </div>
         <div class="cue-list" id="cueList" aria-live="polite"></div>
         <div class="bottom-bar">
-          <div class="bottom-note" id="preserveNote">🔒 Số thứ tự được khóa; mốc thời gian chỉnh được đến mili giây.</div>
+          <div class="bottom-note" id="preserveNote">🔒 Số thứ tự và mốc thời gian được khóa, không cho chỉnh sửa.</div>
           <div class="bottom-actions"><button class="btn btn-ghost" id="loadSample">Dùng file mẫu</button><button class="btn btn-primary" id="downloadBtn" disabled>↓ Tải SRT đã dịch</button></div>
         </div>
       </section>
     </section>
-    <section class="panel tool-panel" id="video-ocr">
-      <div class="panel-head"><div class="panel-title"><span class="step">03</span> Quét phụ đề trực tiếp từ video</div><span class="count" id="videoOrientation">Chưa chọn video</span></div>
-      <div class="panel-body video-tool-body">
-        <div class="video-file-row">
-          <input class="field" id="videoFileInput" type="file" accept="video/*">
-          <span class="helper">Video được xử lý ngay trên máy của bạn, không tải lên máy chủ SubLingo.</span>
-        </div>
-        <div class="video-preview-wrap" id="videoPreviewWrap">
-          <video id="ocrVideo" controls playsinline preload="metadata"></video>
-          <div class="selection-layer" id="ocrSelectionLayer" aria-label="Kéo để chọn vùng phụ đề"><div class="selection-box" id="ocrSelectionBox"></div></div>
-        </div>
-        <div class="video-status" id="videoRegionHelp">Chọn video để xem khung hình. Bấm “Chọn vùng quét”, sau đó kéo chuột trên video để khoanh vùng có chữ phụ đề.</div>
-        <div class="video-settings">
-          <div><label class="form-label" for="ocrLanguage">Ngôn ngữ chữ trong video</label><select class="field" id="ocrLanguage"><option value="eng+vie">Tiếng Anh + Tiếng Việt</option><option value="eng">Tiếng Anh</option><option value="vie">Tiếng Việt</option><option value="jpn">Tiếng Nhật</option><option value="kor">Tiếng Hàn</option><option value="chi_sim">Tiếng Trung giản thể</option></select></div>
-          <div><label class="form-label" for="ocrInterval">Khoảng quét khung hình</label><select class="field" id="ocrInterval"><option value="100">100 mili giây · chính xác hơn</option><option value="250" selected>250 mili giây · cân bằng</option><option value="500">500 mili giây · nhanh hơn</option><option value="1000">1 giây · nhanh nhất</option></select></div>
-          <div><label class="form-label">Vùng quét</label><div class="field" id="ocrRegionSize" style="display:flex;align-items:center">Mặc định: 90% ngang · 25% cao</div></div>
-        </div>
-        <div class="ocr-progress-head"><span>Tiến độ quét video</span><strong id="ocrProgressPercent">0%</strong></div>
-        <div class="ocr-progress" id="ocrProgress"><div id="ocrProgressFill"></div></div>
-        <div class="video-status" id="ocrStatus" role="status" aria-live="polite">Mốc SRT được xuất dạng HH:MM:SS,mmm. Độ chính xác thực tế phụ thuộc khoảng quét bạn chọn và tốc độ khung hình video.</div>
-        <div class="bottom-actions"><button class="btn btn-ghost" id="selectVideoRegion" type="button" disabled>Chọn vùng quét trên video</button><button class="btn btn-primary" id="startOcrBtn" type="button" disabled>Quét chữ và tạo SRT</button><button class="btn btn-ghost" id="stopOcrBtn" type="button" hidden>Dừng quét</button></div>
-      </div>
-    </section>
-
-    <section class="panel tool-panel" id="video-download">
-      <div class="panel-head"><div class="panel-title"><span class="step">04</span> Tải video từ nền tảng khác</div><span class="count">Mở SnapAny</span></div>
-      <div class="panel-body">
-        <div>
-          <label class="form-label" for="snapAnyUrl">Đường dẫn video (không bắt buộc)</label>
-          <input class="field" id="snapAnyUrl" type="url" placeholder="Dán link video công khai tại đây">
-          <div class="helper">SubLingo sẽ mở SnapAny trong tab mới. Bạn có thể dán link vào SnapAny để tiếp tục tải theo các tùy chọn mà trang đó hỗ trợ.</div>
-        </div>
-        <button class="btn btn-primary" id="openSnapAny" type="button">Mở SnapAny ↗</button>
-      </div>
-    </section>
-    <div class="notice"><span>ⓘ</span><div><b>Cơ chế bảo vệ file:</b> Số thứ tự, metadata và dấu phân cách được giữ nguyên; lời thoại và mốc thời gian có thể chỉnh. Video được quét OCR ngay trên trình duyệt, không tải video lên máy chủ. Bản triển khai gửi từng nhóm lời thoại tới backend để gọi AI; backend không lưu API key hay file phụ đề. Số thứ tự, timestamp và phần metadata luôn được giữ ở trình duyệt.</div></div>
+    <div class="notice"><span>ⓘ</span><div><b>Cơ chế bảo vệ file:</b> Trình đọc chỉ cho phép chỉnh sửa vùng lời thoại. Số thứ tự, dòng thời gian, phần metadata và dấu phân cách được giữ lại từ file gốc khi xuất. Bản triển khai gửi từng nhóm lời thoại tới backend để gọi AI; backend không lưu API key hay file phụ đề. Số thứ tự, timestamp và phần metadata luôn được giữ ở trình duyệt.</div></div>
   </main>
   <div class="decor" aria-hidden="true"></div>
 </div>
@@ -321,7 +233,6 @@ textarea.field { resize: vertical; line-height: 1.55; }
 <div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
   <div class="modal"><h3 id="modalTitle">Kết nối dịch vụ</h3><p id="modalText"></p><div class="modal-actions"><button class="btn btn-ghost" id="modalClose">Để sau</button><button class="btn btn-primary" id="modalOk">Đã hiểu</button></div></div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@6.0.1/dist/tesseract.min.js"></script>
 <script>
 (() => {
   const $ = (id) => document.getElementById(id);
@@ -348,35 +259,6 @@ textarea.field { resize: vertical; line-height: 1.55; }
   $('modalOk').addEventListener('click', () => $('modalBackdrop').classList.remove('open'));
   $('modalBackdrop').addEventListener('click', (e) => { if (e.target === $('modalBackdrop')) $('modalBackdrop').classList.remove('open'); });
 
-  function parseTimestampMs(value) {
-    const match = String(value || '').trim().match(/^(\d{2,}):(\d{2}):(\d{2})[,.](\d{3})$/);
-    if (!match) return null;
-    const hours = Number(match[1]), minutes = Number(match[2]), seconds = Number(match[3]), millis = Number(match[4]);
-    if (minutes > 59 || seconds > 59) return null;
-    return (((hours * 60 + minutes) * 60 + seconds) * 1000) + millis;
-  }
-  function formatSrtTimestamp(milliseconds) {
-    const total = Math.max(0, Math.round(milliseconds));
-    const hours = Math.floor(total / 3600000);
-    const minutes = Math.floor((total % 3600000) / 60000);
-    const seconds = Math.floor((total % 60000) / 1000);
-    const millis = total % 1000;
-    return String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0') + ',' + String(millis).padStart(3, '0');
-  }
-  function updateCueTiming(index, startValue, endValue) {
-    const startMs = parseTimestampMs(startValue), endMs = parseTimestampMs(endValue);
-    if (startMs === null || endMs === null || endMs <= startMs) {
-      toast('Thời gian không hợp lệ. Dùng HH:MM:SS,mmm và thời gian kết thúc phải sau thời gian bắt đầu.');
-      renderCues();
-      return;
-    }
-    cues[index].startMs = startMs;
-    cues[index].endMs = endMs;
-    cues[index].time = formatSrtTimestamp(startMs) + ' --> ' + formatSrtTimestamp(endMs);
-    renderCues();
-    toast('Đã cập nhật mốc thời gian đến mili giây.');
-  }
-
   function parseSrt(text) {
     const split = text.split(/(\r?\n[ \t]*\r?\n+)/);
     const parsedChunks = [];
@@ -391,9 +273,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
       const prefixEnd = match.index + match[0].length;
       const prefix = raw.slice(0, prefixEnd);
       const source = raw.slice(prefixEnd);
-      const times = match[1].match(/(\d{2,}:\d{2}:\d{2}[,.]\d{3})\s*-->\s*(\d{2,}:\d{2}:\d{2}[,.]\d{3})/);
-      if (!times) { parsedChunks.push({ raw, separator, cue: null }); continue; }
-      const cue = { id: parsedCues.length, prefix, source, translation: source, time: match[1], startMs: parseTimestampMs(times[1]), endMs: parseTimestampMs(times[2]), separator };
+      const cue = { id: parsedCues.length, prefix, source, translation: source, time: match[1], separator };
       parsedCues.push(cue);
       parsedChunks.push({ raw, separator, cue });
     }
@@ -413,14 +293,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
       const leftTop = document.createElement('div');
       leftTop.className = 'cue-top';
       const leftLabel = document.createElement('span'); leftLabel.className = 'cue-label'; leftLabel.textContent = 'Bản gốc';
-      const time = document.createElement('div'); time.className = 'cue-time-edit';
-      const startWrap = document.createElement('label'); startWrap.textContent = 'Từ';
-      const startInput = document.createElement('input'); startInput.className = 'field cue-time-input'; startInput.type = 'text'; startInput.value = formatSrtTimestamp(cue.startMs); startInput.setAttribute('aria-label', 'Thời gian bắt đầu câu ' + (idx + 1));
-      const endWrap = document.createElement('label'); endWrap.textContent = 'Đến';
-      const endInput = document.createElement('input'); endInput.className = 'field cue-time-input'; endInput.type = 'text'; endInput.value = formatSrtTimestamp(cue.endMs); endInput.setAttribute('aria-label', 'Thời gian kết thúc câu ' + (idx + 1));
-      const applyCueTiming = () => updateCueTiming(idx, startInput.value, endInput.value);
-      startInput.addEventListener('change', applyCueTiming); endInput.addEventListener('change', applyCueTiming);
-      startWrap.append(startInput); endWrap.append(endInput); time.append(startWrap, endWrap);
+      const time = document.createElement('span'); time.className = 'timecode'; time.textContent = cue.time;
       leftTop.append(leftLabel, time);
       const source = document.createElement('textarea');
       source.className = 'field cue-text original'; source.rows = 3; source.readOnly = true; source.value = cue.source;
@@ -460,7 +333,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
       return;
     }
     renderCues();
-    $('preserveNote').textContent = '🔒 Số thứ tự/cấu trúc gốc được giữ nguyên; thời gian có thể chỉnh đến mili giây.';
+    $('preserveNote').textContent = '🔒 Đã khóa số thứ tự, timestamp và cấu trúc gốc.';
     toast(`Đã đọc ${cues.length} cue. Cấu trúc gốc được giữ nguyên.`);
   }
   function handleFile(file) {
@@ -497,8 +370,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
       const cue = chunk.cue;
       const value = formatCueText(cue, cues[cue.id].translation);
       if (value === null) invalidCue = true;
-      const updatedPrefix = cue.prefix.replace(/(\d{2,}:\d{2}:\d{2}[,.]\d{3})\s*-->\s*(\d{2,}:\d{2}:\d{2}[,.]\d{3})/, formatSrtTimestamp(cues[cue.id].startMs) + ' --> ' + formatSrtTimestamp(cues[cue.id].endMs));
-      return updatedPrefix + (value === null ? cues[cue.id].translation : value) + chunk.separator;
+      return cue.prefix + (value === null ? cues[cue.id].translation : value) + chunk.separator;
     }).join('');
     if (invalidCue) {
       toast('Một bản dịch có chứa dòng timestamp. Hãy sửa nội dung đó trước khi xuất để tránh hỏng cấu trúc SRT.');
@@ -521,318 +393,10 @@ textarea.field { resize: vertical; line-height: 1.55; }
     document.querySelectorAll('.provider').forEach((item) => item.classList.toggle('active', item === button));
     $('keyLabel').textContent = provider === 'openai' ? 'OpenAI API key' : 'Google Gemini API key';
     $('apiKey').placeholder = provider === 'openai' ? 'sk-••••••••••••••••' : 'AIza••••••••••••••••';
-    restoreSavedKey();
     $('model').innerHTML = provider === 'openai'
       ? '<option value="gpt-4.1-mini">GPT-4.1 mini</option><option value="gpt-4.1">GPT-4.1</option>'
       : '<option value="gemini-3.8-flash">Gemini 3.8 Flash</option><option value="gemini-3.5-flash-lite">Gemini 3.5 Flash-Lite</option>';
   }));
-  function keyStorageName() { return 'sublingo.apiKey.' + provider; }
-  function restoreSavedKey() {
-    try {
-      $('apiKey').value = sessionStorage.getItem(keyStorageName()) || '';
-      $('keySaveHelp').textContent = $('apiKey').value
-        ? 'Đã khôi phục key đã lưu trong phiên tab này. Đóng tab sẽ xóa key.'
-        : 'Key được lưu trong phiên tab hiện tại để không mất khi tải lại trang. Đóng tab sẽ xóa key đã lưu.';
-    } catch (_) {
-      $('keySaveHelp').textContent = 'Trình duyệt đang chặn lưu trong phiên. Bạn có thể nhập lại key sau khi tải trang.';
-    }
-    $('keyHelpLink').href = provider === 'gemini'
-      ? 'https://aistudio.google.com/app/apikey'
-      : 'https://platform.openai.com/api-keys';
-  }
-  $('saveKeyBtn').addEventListener('click', () => {
-    const value = $('apiKey').value.trim();
-    if (!value) { toast('Hãy nhập API key trước khi lưu.'); $('apiKey').focus(); return; }
-    try {
-      sessionStorage.setItem(keyStorageName(), value);
-      $('keySaveHelp').textContent = 'Đã lưu key cho phiên tab hiện tại. Key không được gửi để lưu trên máy chủ SubLingo.';
-      toast('Đã lưu key trong tab này. Tải lại trang sẽ không mất key.');
-    } catch (_) {
-      toast('Không thể lưu key. Trình duyệt có thể đang chặn bộ nhớ phiên.');
-    }
-  });
-  $('clearKeyBtn').addEventListener('click', () => {
-    try { sessionStorage.removeItem(keyStorageName()); } catch (_) {}
-    $('apiKey').value = '';
-    $('keySaveHelp').textContent = 'Đã xóa key lưu trong phiên tab này.';
-    toast('Đã xóa key đã lưu.');
-  });
-
-  const menuToggle = $('menuToggle');
-  const menuPopover = $('menuPopover');
-  menuToggle.addEventListener('click', () => {
-    const open = menuPopover.classList.toggle('open');
-    menuToggle.setAttribute('aria-expanded', String(open));
-  });
-  menuPopover.querySelectorAll('a[data-menu-action]').forEach((link) => link.addEventListener('click', (event) => {
-    event.preventDefault();
-    const action = link.dataset.menuAction;
-    const targetId = action === 'snapany' ? 'video-download' : 'video-ocr';
-    const target = $(targetId);
-    document.querySelectorAll('.tool-panel').forEach((panel) => panel.classList.remove('feature-open'));
-    target.classList.add('feature-open');
-    menuPopover.classList.remove('open');
-    menuToggle.setAttribute('aria-expanded', 'false');
-    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    if (action === 'region') {
-      if ($('selectVideoRegion').disabled) {
-        $('videoRegionHelp').textContent = 'Hãy chọn video trước. Khi video tải xong, bấm “Chọn vùng quét trên video” để khoanh khu vực phụ đề.';
-        $('videoFileInput').focus({ preventScroll: true });
-      } else {
-        $('selectVideoRegion').click();
-      }
-    } else if (action === 'orientation') {
-      $('videoRegionHelp').textContent = 'Chọn video tại đây. SubLingo sẽ tự nhận diện khung hình ngang hoặc dọc sau khi video được tải.';
-      $('videoFileInput').focus({ preventScroll: true });
-    } else if (action === 'ocr') {
-      $('videoFileInput').focus({ preventScroll: true });
-    } else if (action === 'snapany') {
-      $('snapAnyUrl').focus({ preventScroll: true });
-    }
-  }));
-  document.addEventListener('click', (event) => {
-    if (!menuPopover.contains(event.target) && !menuToggle.contains(event.target)) {
-      menuPopover.classList.remove('open');
-      menuToggle.setAttribute('aria-expanded', 'false');
-    }
-  });
-  $('openSnapAny').addEventListener('click', async () => {
-    const link = $('snapAnyUrl').value.trim();
-    const newTab = window.open('https://snapany.com/fr', '_blank');
-    if (newTab) newTab.opener = null;
-    if (!newTab) toast('Trình duyệt đã chặn tab mới. Hãy cho phép cửa sổ bật lên để mở SnapAny.');
-    else if (link) {
-      try {
-        await navigator.clipboard.writeText(link);
-        toast('Đã sao chép link video. Dán link vào SnapAny để tiếp tục.');
-      } catch (_) {
-        toast('SnapAny đã mở. Hãy sao chép link video và dán vào trang đó.');
-      }
-    } else {
-      toast('Đã mở SnapAny. Dán link video vào trang để tiếp tục.');
-    }
-  });
-
-  // OCR xử lý cục bộ trong trình duyệt; không tải video lên máy chủ.
-  const ocrVideo = $('ocrVideo');
-  const videoInput = $('videoFileInput');
-  const previewWrap = $('videoPreviewWrap');
-  const selectionLayer = $('ocrSelectionLayer');
-  const selectionBox = $('ocrSelectionBox');
-  let videoObjectUrl = '';
-  let videoRegion = { x: 0.05, y: 0.68, w: 0.90, h: 0.25 };
-  let ocrStopRequested = false;
-  let isSelectingRegion = false;
-  let regionStart = null;
-
-  function drawVideoRegion() {
-    selectionBox.style.left = (videoRegion.x * 100) + '%';
-    selectionBox.style.top = (videoRegion.y * 100) + '%';
-    selectionBox.style.width = (videoRegion.w * 100) + '%';
-    selectionBox.style.height = (videoRegion.h * 100) + '%';
-    $('ocrRegionSize').textContent = Math.round(videoRegion.w * 100) + '% ngang · ' + Math.round(videoRegion.h * 100) + '% cao';
-  }
-  videoInput.addEventListener('change', () => {
-    const file = videoInput.files && videoInput.files[0];
-    if (!file) return;
-    if (videoObjectUrl) URL.revokeObjectURL(videoObjectUrl);
-    videoObjectUrl = URL.createObjectURL(file);
-    ocrVideo.src = videoObjectUrl;
-    previewWrap.style.display = 'block';
-    $('videoOrientation').textContent = 'Đang đọc video...';
-    $('startOcrBtn').disabled = true;
-    $('selectVideoRegion').disabled = true;
-    $('ocrStatus').textContent = 'Đang đọc thông tin video...';
-  });
-  ocrVideo.addEventListener('loadedmetadata', () => {
-    if (!ocrVideo.videoWidth || !ocrVideo.videoHeight) {
-      $('videoOrientation').textContent = 'Không đọc được video';
-      $('ocrStatus').textContent = 'Định dạng video không được trình duyệt hỗ trợ.';
-      return;
-    }
-    const isLandscape = ocrVideo.videoWidth >= ocrVideo.videoHeight;
-    $('videoOrientation').textContent = (isLandscape ? 'Video ngang' : 'Video dọc') + ' · ' + ocrVideo.videoWidth + '×' + ocrVideo.videoHeight;
-    $('ocrStatus').textContent = 'Đã nhận diện khung hình ' + (isLandscape ? 'ngang' : 'dọc') + '. Vùng mặc định nằm ở phần dưới video.';
-    $('startOcrBtn').disabled = false;
-    $('selectVideoRegion').disabled = false;
-    videoRegion = { x: 0.05, y: isLandscape ? 0.68 : 0.70, w: 0.90, h: 0.25 };
-    drawVideoRegion();
-  });
-
-  $('selectVideoRegion').addEventListener('click', () => {
-    selectionLayer.classList.add('selecting');
-    $('videoRegionHelp').textContent = 'Đang chọn vùng: kéo chuột trên video để khoanh khu vực chứa phụ đề.';
-    $('videoRegionHelp').textContent = 'Đang chọn vùng: kéo chuột trên video để khoanh khu vực chứa phụ đề.';
-  });
-  selectionLayer.addEventListener('pointerdown', (event) => {
-    const rect = selectionLayer.getBoundingClientRect();
-    regionStart = { x: Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)), y: Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height)) };
-    isSelectingRegion = true;
-    selectionLayer.setPointerCapture(event.pointerId);
-    videoRegion = { x: regionStart.x, y: regionStart.y, w: 0.001, h: 0.001 };
-    drawVideoRegion();
-  });
-  selectionLayer.addEventListener('pointermove', (event) => {
-    if (!isSelectingRegion || !regionStart) return;
-    const rect = selectionLayer.getBoundingClientRect();
-    const x = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
-    const y = Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height));
-    videoRegion = { x: Math.min(x, regionStart.x), y: Math.min(y, regionStart.y), w: Math.max(0.01, Math.abs(x - regionStart.x)), h: Math.max(0.01, Math.abs(y - regionStart.y)) };
-    drawVideoRegion();
-  });
-  function finishRegionSelection() {
-    if (!isSelectingRegion) return;
-    isSelectingRegion = false;
-    selectionLayer.classList.remove('selecting');
-    if (videoRegion.w < 0.02 || videoRegion.h < 0.02) {
-      videoRegion = { x: 0.05, y: 0.70, w: 0.90, h: 0.25 };
-      drawVideoRegion();
-      toast('Vùng quét quá nhỏ. Đã đặt lại vùng phụ đề mặc định.');
-    } else {
-      $('videoRegionHelp').textContent = 'Đã chọn vùng quét ' + Math.round(videoRegion.w * 100) + '% × ' + Math.round(videoRegion.h * 100) + '%.';
-    }
-    regionStart = null;
-  }
-  selectionLayer.addEventListener('pointerup', finishRegionSelection);
-  selectionLayer.addEventListener('pointercancel', finishRegionSelection);
-
-  function seekVideoTo(seconds) {
-    return new Promise((resolve, reject) => {
-      if (Math.abs(ocrVideo.currentTime - seconds) < 0.015) { requestAnimationFrame(resolve); return; }
-      const onSeeked = () => { cleanup(); requestAnimationFrame(resolve); };
-      const onError = () => { cleanup(); reject(new Error('Không đọc được khung hình video.')); };
-      const cleanup = () => { ocrVideo.removeEventListener('seeked', onSeeked); ocrVideo.removeEventListener('error', onError); };
-      ocrVideo.addEventListener('seeked', onSeeked, { once: true });
-      ocrVideo.addEventListener('error', onError, { once: true });
-      ocrVideo.currentTime = seconds;
-    });
-  }
-  function normalizeOcrText(value) {
-    return String(value || '').replace(/\r/g, '').split('\n').map((line) => line.replace(/[ \t]+/g, ' ').trim()).filter(Boolean).join('\n').trim();
-  }
-  function createSrtFromSegments(segments) {
-    return segments.map((segment, index) => {
-      const endMs = Math.max(segment.startMs + 100, segment.endMs);
-      return (index + 1) + '\r\n' + formatSrtTimestamp(segment.startMs) + ' --> ' + formatSrtTimestamp(endMs) + '\r\n' + segment.text + '\r\n';
-    }).join('\r\n');
-  }
-
-  async function scanVideoForSubtitles() {
-    if (!ocrVideo.src || !Number.isFinite(ocrVideo.duration) || ocrVideo.duration <= 0) {
-      toast('Hãy chọn video hợp lệ trước.');
-      return;
-    }
-    if (!window.Tesseract || !window.Tesseract.createWorker) {
-      toast('Chưa tải được bộ OCR. Hãy tải lại trang hoặc kiểm tra kết nối Internet.');
-      return;
-    }
-    ocrStopRequested = false;
-    $('startOcrBtn').disabled = true;
-    $('stopOcrBtn').hidden = false;
-    $('ocrProgress').classList.add('visible');
-    $('ocrProgressPercent').textContent = '0%';
-    $('ocrProgressFill').style.width = '0%';
-    $('ocrProgress').previousElementSibling.classList.add('visible');
-    const intervalMs = Number($('ocrInterval').value) || 250;
-    const stepSeconds = intervalMs / 1000;
-    const totalSteps = Math.ceil(ocrVideo.duration / stepSeconds);
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d', { willReadFrequently: true });
-    const sx = Math.round(videoRegion.x * ocrVideo.videoWidth);
-    const sy = Math.round(videoRegion.y * ocrVideo.videoHeight);
-    const sw = Math.max(1, Math.round(videoRegion.w * ocrVideo.videoWidth));
-    const sh = Math.max(1, Math.round(videoRegion.h * ocrVideo.videoHeight));
-    canvas.width = Math.max(1, sw * 2);
-    canvas.height = Math.max(1, sh * 2);
-    let worker = null;
-    let lastText = '';
-    let activeSegment = null;
-    const segments = [];
-    let blankFrames = 0;
-    try {
-      $('ocrStatus').textContent = 'Đang tải dữ liệu OCR. Lần đầu có thể cần tải bộ ngôn ngữ.';
-      worker = await window.Tesseract.createWorker($('ocrLanguage').value, 1, {
-        workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@6.0.1/dist/worker.min.js',
-        langPath: 'https://tessdata.projectnaptha.com/4.0.0',
-        corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@6.0.0',
-        logger: (message) => {
-          if (message.status === 'recognizing text') $('ocrStatus').textContent = 'Đang nhận diện chữ... ' + Math.round((message.progress || 0) * 100) + '%';
-        }
-      });
-      if (window.Tesseract.PSM) await worker.setParameters({ tessedit_pageseg_mode: window.Tesseract.PSM.SINGLE_BLOCK });
-      ocrVideo.pause();
-      for (let index = 0; index < totalSteps; index += 1) {
-        if (ocrStopRequested) break;
-        const atSeconds = Math.min(index * stepSeconds, Math.max(0, ocrVideo.duration - 0.02));
-        await seekVideoTo(atSeconds);
-        context.filter = 'grayscale(1) contrast(1.25) brightness(1.06)';
-        context.drawImage(ocrVideo, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
-        const result = await worker.recognize(canvas);
-        const confidence = result.data && Number(result.data.confidence || 0);
-        const textValue = confidence >= 25 ? normalizeOcrText(result.data.text) : '';
-        const sampleEndMs = Math.min(Math.round(ocrVideo.duration * 1000), Math.round((atSeconds + stepSeconds) * 1000));
-        if (textValue && textValue === lastText && activeSegment) {
-          activeSegment.endMs = sampleEndMs;
-          blankFrames = 0;
-        } else if (textValue) {
-          if (activeSegment) {
-            activeSegment.endMs = Math.max(activeSegment.startMs + 100, Math.round(atSeconds * 1000));
-            segments.push(activeSegment);
-          }
-          activeSegment = { startMs: Math.round(atSeconds * 1000), endMs: sampleEndMs, text: textValue };
-          lastText = textValue;
-          blankFrames = 0;
-        } else if (activeSegment) {
-          blankFrames += 1;
-          if (blankFrames >= 2) {
-            segments.push(activeSegment);
-            activeSegment = null;
-            lastText = '';
-            blankFrames = 0;
-          }
-        }
-        const progressPercent = Math.min(100, Math.round(((index + 1) / totalSteps) * 100));
-        $('ocrProgressFill').style.width = progressPercent + '%';
-        $('ocrProgressPercent').textContent = progressPercent + '%';
-        if (index % 10 === 0 || index === totalSteps - 1) {
-          $('ocrStatus').textContent = 'Đã quét ' + Math.min(ocrVideo.duration, atSeconds).toFixed(2) + ' / ' + ocrVideo.duration.toFixed(2) + ' giây · tìm thấy ' + (segments.length + (activeSegment ? 1 : 0)) + ' đoạn chữ.';
-        }
-        await new Promise((resolve) => setTimeout(resolve, 0));
-      }
-      if (activeSegment) segments.push(activeSegment);
-      if (ocrStopRequested) {
-        const stoppedAt = $('ocrProgressPercent').textContent;
-        $('ocrStatus').textContent = 'Đã dừng quét ở ' + stoppedAt + '. Đang tạo file từ các đoạn đã nhận diện...';
-      } else {
-        $('ocrProgressFill').style.width = '100%';
-        $('ocrProgressPercent').textContent = '100%';
-      }
-      const validSegments = segments.filter((segment) => segment.endMs - segment.startMs >= 150 && segment.text);
-      if (!validSegments.length) {
-        $('ocrStatus').textContent = 'Chưa nhận diện được phụ đề. Hãy thử khoanh lại vùng chữ hoặc chọn ngôn ngữ OCR phù hợp.';
-        toast('Chưa tìm thấy đoạn phụ đề. Hãy thử chỉnh vùng quét và quét lại.');
-      } else {
-        const srtText = createSrtFromSegments(validSegments);
-        const originalName = (videoInput.files[0] && videoInput.files[0].name || 'video').replace(/\.[^.]+$/, '');
-        loadText(srtText, originalName + '_ocr.srt');
-        $('ocrStatus').textContent = 'Đã tạo ' + validSegments.length + ' đoạn phụ đề. Hãy kiểm tra chữ nhận diện và chỉnh mốc mili giây trước khi tải SRT.';
-        $('translator').scrollIntoView({ behavior: 'smooth', block: 'start' });
-        toast('Đã quét xong video và tạo SRT. Hãy rà soát lại chữ nhận diện.');
-      }
-    } catch (error) {
-      console.error('Video OCR failed:', error);
-      $('ocrStatus').textContent = 'Quét video gặp lỗi ở ' + $('ocrProgressPercent').textContent + ': ' + (error.message || 'Lỗi không xác định');
-      toast('Không thể quét video. Hãy kiểm tra kết nối và thử lại.');
-    } finally {
-      if (worker) await worker.terminate().catch(() => {});
-      $('startOcrBtn').disabled = false;
-      $('stopOcrBtn').hidden = true;
-      ocrVideo.pause();
-    }
-  }
-  $('startOcrBtn').addEventListener('click', scanVideoForSubtitles);
-  $('stopOcrBtn').addEventListener('click', () => { ocrStopRequested = true; $('ocrStatus').textContent = 'Đang dừng sau khung hình hiện tại...'; });
-
   $('toggleKey').addEventListener('click', () => {
     const input = $('apiKey');
     input.type = input.type === 'password' ? 'text' : 'password';
@@ -978,7 +542,6 @@ textarea.field { resize: vertical; line-height: 1.55; }
   }
 
   $('translateBtn').addEventListener('click', translateAll);
-  restoreSavedKey();
   refreshSession();
   initializeGoogleSignIn();
   $('targetLang').addEventListener('change', () => {
