@@ -78,3 +78,20 @@ test('invalid SRT files clear old cue content and disable download', () => {
   assert.match(html, /\$\('cueList'\)\.innerHTML = ''/);
   assert.match(html, /\$\('downloadBtn'\)\.disabled = true/);
 });
+
+
+test('Gemini upstream status is preserved for the browser retry policy', async () => {
+  const { readFile: readSource } = await import('node:fs/promises');
+  const server = await readSource(new URL('../server.js', import.meta.url), 'utf8');
+  assert.match(server, /error\.upstreamStatus = response\.status/);
+  assert.match(server, /Number\.isInteger\(error\?\.upstreamStatus\)/);
+  assert.match(server, /Gemini đang tạm quá tải \(503\)/);
+});
+
+test('translator backs off and retries only transient HTTP or network failures', () => {
+  assert.match(html, /const retryableStatuses = \[408, 429, 500, 502, 503, 504\]/);
+  assert.match(html, /const backoffMs = Math\.min\(8000, 1000 \* \(2 \*\* \(attempt - 1\)\)\)/);
+  assert.match(html, /requestError\.status = response\.status/);
+  assert.match(html, /if \(!canRetry\) throw error/);
+  assert.match(html, /failureMessages\[0\]/);
+});
