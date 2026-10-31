@@ -268,7 +268,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
         </div>
         <div class="cue-list" id="cueList" aria-live="polite"></div>
         <div class="bottom-bar">
-          <div class="bottom-note" id="preserveNote">🔒 Số thứ tự và mốc thời gian được khóa, không cho chỉnh sửa.</div>
+          <div class="bottom-note" id="preserveNote">🔒 Số thứ tự được khóa; mốc thời gian chỉnh được đến mili giây.</div>
           <div class="bottom-actions"><button class="btn btn-ghost" id="loadSample">Dùng file mẫu</button><button class="btn btn-primary" id="downloadBtn" disabled>↓ Tải SRT đã dịch</button></div>
         </div>
       </section>
@@ -297,7 +297,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
     </section>
 
     <section class="panel tool-panel" id="video-download">
-      <div class="panel-head"><div class="panel-title"><span class="step">03</span> Tải video từ nền tảng khác</div><span class="count">Mở SnapAny</span></div>
+      <div class="panel-head"><div class="panel-title"><span class="step">04</span> Tải video từ nền tảng khác</div><span class="count">Mở SnapAny</span></div>
       <div class="panel-body">
         <div>
           <label class="form-label" for="snapAnyUrl">Đường dẫn video (không bắt buộc)</label>
@@ -307,7 +307,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
         <button class="btn btn-primary" id="openSnapAny" type="button">Mở SnapAny ↗</button>
       </div>
     </section>
-    <div class="notice"><span>ⓘ</span><div><b>Cơ chế bảo vệ file:</b> Trình đọc chỉ cho phép chỉnh sửa vùng lời thoại. Số thứ tự, dòng thời gian, phần metadata và dấu phân cách được giữ lại từ file gốc khi xuất. Bản triển khai gửi từng nhóm lời thoại tới backend để gọi AI; backend không lưu API key hay file phụ đề. Số thứ tự, timestamp và phần metadata luôn được giữ ở trình duyệt.</div></div>
+    <div class="notice"><span>ⓘ</span><div><b>Cơ chế bảo vệ file:</b> Số thứ tự, metadata và dấu phân cách được giữ nguyên; lời thoại và mốc thời gian có thể chỉnh. Video được quét OCR ngay trên trình duyệt, không tải video lên máy chủ. Bản triển khai gửi từng nhóm lời thoại tới backend để gọi AI; backend không lưu API key hay file phụ đề. Số thứ tự, timestamp và phần metadata luôn được giữ ở trình duyệt.</div></div>
   </main>
   <div class="decor" aria-hidden="true"></div>
 </div>
@@ -454,7 +454,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
       return;
     }
     renderCues();
-    $('preserveNote').textContent = '🔒 Đã khóa số thứ tự, timestamp và cấu trúc gốc.';
+    $('preserveNote').textContent = '🔒 Số thứ tự/cấu trúc gốc được giữ nguyên; thời gian có thể chỉnh đến mili giây.';
     toast(`Đã đọc ${cues.length} cue. Cấu trúc gốc được giữ nguyên.`);
   }
   function handleFile(file) {
