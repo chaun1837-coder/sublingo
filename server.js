@@ -226,10 +226,18 @@ async function callOpenAI(apiKey, model, prompt) {
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const message = data?.error?.message || '';
-    if (response.status === 401 || response.status === 403) throw new Error('OpenAI từ chối API key. Hãy kiểm tra key và quyền sử dụng API.');
-    if (response.status === 429) throw new Error('OpenAI đang giới hạn tốc độ hoặc đã hết hạn mức.');
-    throw new Error(`OpenAI gặp lỗi (${response.status}). ${message.slice(0, 180)}`);
+    const detail = data?.error?.message || '';
+    let message;
+    if (response.status === 401 || response.status === 403) {
+      message = 'OpenAI từ chối API key hoặc quyền sử dụng API. Hãy kiểm tra key và quyền truy cập.';
+    } else if (response.status === 429) {
+      message = 'OpenAI đang giới hạn tốc độ hoặc đã hết hạn mức. SubLingo sẽ chờ rồi thử lại.';
+    } else {
+      message = `OpenAI gặp lỗi (${response.status}). ${detail.slice(0, 180)}`;
+    }
+    const error = new Error(message);
+    error.upstreamStatus = response.status;
+    throw error;
   }
   const content = (data?.output || [])
     .filter((item) => item.type === 'message')
