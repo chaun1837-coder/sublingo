@@ -56,7 +56,8 @@ button { cursor: pointer; }
 .key-actions .btn { padding: 8px 10px; font-size: 10px; }
 .key-link { color: #2E897D; font-size: 10px; font-weight: 800; text-decoration: none; }
 .key-link:hover { text-decoration: underline; }
-.tool-panel { margin-top: 18px; }
+.tool-panel { margin-top: 18px; display: none; }
+.tool-panel.feature-open { display: block; }
 .tool-panel .panel-body { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 14px; align-items: end; }
 .tool-panel .helper { max-width: 650px; }
 @media (max-width: 600px) { .tool-panel .panel-body { grid-template-columns: 1fr; } .tool-panel .panel-body > .btn { width: 100%; } }
@@ -192,12 +193,12 @@ textarea.field { resize: vertical; line-height: 1.55; }
       <div class="user-state" id="userState"><img class="user-avatar" id="userAvatar" alt=""><span id="userName"></span><button class="btn btn-light" id="logoutBtn" type="button">Đăng xuất</button></div>
     </div>
   </header>
-  <nav class="menu-popover" id="menuPopover" aria-label="Danh mục SubLingo">
-    <div class="menu-caption">Các khu vực</div>
-    <a href="#translator">✦ Dịch phụ đề SRT</a>
-    <a href="#api-settings">⚙ Thiết lập & API key</a>
-    <a href="#video-ocr">▣ Quét phụ đề từ video</a>
-    <a href="#video-download">⇩ Tải video qua SnapAny</a>
+  <nav class="menu-popover" id="menuPopover" aria-label="Bốn tiện ích SubLingo">
+    <div class="menu-caption">Bốn tiện ích</div>
+    <a href="#video-ocr" data-menu-action="ocr">🎞 Quét chữ phụ đề từ video</a>
+    <a href="#video-ocr" data-menu-action="region">▣ Chọn vùng quét OCR</a>
+    <a href="#video-ocr" data-menu-action="orientation">↔ Nhận diện khung hình ngang / dọc</a>
+    <a href="#video-download" data-menu-action="snapany">⇩ Tải video qua SnapAny</a>
   </nav>
 
   <main class="page">
@@ -558,9 +559,30 @@ textarea.field { resize: vertical; line-height: 1.55; }
     const open = menuPopover.classList.toggle('open');
     menuToggle.setAttribute('aria-expanded', String(open));
   });
-  menuPopover.querySelectorAll('a').forEach((link) => link.addEventListener('click', () => {
+  menuPopover.querySelectorAll('a[data-menu-action]').forEach((link) => link.addEventListener('click', (event) => {
+    event.preventDefault();
+    const action = link.dataset.menuAction;
+    const targetId = action === 'snapany' ? 'video-download' : 'video-ocr';
+    const target = $(targetId);
+    target.classList.add('feature-open');
     menuPopover.classList.remove('open');
     menuToggle.setAttribute('aria-expanded', 'false');
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (action === 'region') {
+      if ($('selectVideoRegion').disabled) {
+        $('videoRegionHelp').textContent = 'Hãy chọn video trước. Khi video tải xong, bấm “Chọn vùng quét trên video” để khoanh khu vực phụ đề.';
+        $('videoFileInput').focus({ preventScroll: true });
+      } else {
+        $('selectVideoRegion').click();
+      }
+    } else if (action === 'orientation') {
+      $('videoRegionHelp').textContent = 'Chọn video tại đây. SubLingo sẽ tự nhận diện khung hình ngang hoặc dọc sau khi video được tải.';
+      $('videoFileInput').focus({ preventScroll: true });
+    } else if (action === 'ocr') {
+      $('videoFileInput').focus({ preventScroll: true });
+    } else if (action === 'snapany') {
+      $('snapAnyUrl').focus({ preventScroll: true });
+    }
   }));
   document.addEventListener('click', (event) => {
     if (!menuPopover.contains(event.target) && !menuToggle.contains(event.target)) {
