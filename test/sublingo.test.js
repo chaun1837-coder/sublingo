@@ -95,3 +95,10 @@ test('translator backs off and retries only transient HTTP or network failures',
   assert.match(html, /if \(!canRetry\) throw error/);
   assert.match(html, /failureMessages\[0\]/);
 });
+
+
+test('OpenAI upstream status is preserved so invalid keys are not retried', async () => {
+  const { readFile: readSource } = await import('node:fs/promises');
+  const server = await readSource(new URL('../server.js', import.meta.url), 'utf8');
+  assert.match(server, /async function callOpenAI[\s\S]*?error\.upstreamStatus = response\.status/);
+});
