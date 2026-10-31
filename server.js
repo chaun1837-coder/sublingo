@@ -254,9 +254,21 @@ async function callGemini(apiKey, model, prompt) {
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    if (response.status === 400 || response.status === 403) throw new Error('Google Gemini từ chối API key hoặc model. Hãy kiểm tra key và model.');
-    if (response.status === 429) throw new Error('Gemini đang giới hạn tốc độ hoặc đã hết hạn mức.');
-    throw new Error(`Google Gemini gặp lỗi (${response.status}).`);
+    let message;
+    if (response.status === 400 || response.status === 401 || response.status === 403) {
+      message = 'Google Gemini từ chối API key, quyền truy cập hoặc yêu cầu. Hãy kiểm tra key và model.';
+    } else if (response.status === 404) {
+      message = 'Không tìm thấy mô hình Gemini đã chọn. Hãy tải lại trang và chọn mô hình đang được hỗ trợ.';
+    } else if (response.status === 429) {
+      message = 'Gemini đang giới hạn tốc độ hoặc hết hạn mức. SubLingo sẽ chờ rồi thử lại.';
+    } else if (response.status === 503) {
+      message = 'Gemini đang tạm quá tải (503). SubLingo sẽ tự động thử lại sau khi chờ.';
+    } else {
+      message = `Google Gemini gặp lỗi (${response.status}).`;
+    }
+    const error = new Error(message);
+    error.upstreamStatus = response.status;
+    throw error;
   }
   const content = data?.candidates?.[0]?.content?.parts?.map((part) => part.text || '').join('');
   if (!content) throw new Error('Gemini không trả về nội dung dịch hợp lệ.');
@@ -314,9 +326,15 @@ app.post('/api/translate', requireSameOrigin, optionalAuthenticate, translateLim
     if (seen.size !== expectedIds.size) throw new Error('AI trả về thiếu câu phụ đề. Hãy thử dịch lại nhóm này.');
     return res.json({ translations });
   } catch (error) {
-    console.warn('Translation request failed:', input.provider, error?.message || 'unknown error');
-    const status = error?.name === 'TimeoutError' ? 504 : 502;
-    return res.status(status).json({ error: error?.message || 'Không thể dịch lúc này. Vui lòng thử lại.' });
+    const timedOut = error?.name === 'TimeoutError';
+    const status = timedOut ? 504 : Number.isInteger(error?.upstreamStatus) ? error.upstreamStatus : 502;
+    const message = timedOut
+      ? (input.provider === 'gemini'
+        ? 'Gemini phản hồi quá chậm (hết thời gian chờ). Hãy thử lại; nếu vẫn xảy ra, hãy chia file thành nhóm nhỏ hơn.'
+        : 'OpenAI phản hồi quá chậm. Hãy thử lại sau.')
+      : error?.message || 'Không thể dịch lúc này. Vui lòng thử lại.';
+    console.error('Translation request failed:', input.provider, status, message);
+    return res.status(status).json({ error: message });
   }
 });
 
