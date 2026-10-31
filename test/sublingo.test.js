@@ -57,3 +57,24 @@ test('all static element references exist and inline JavaScript parses', async (
   assert.ok(scripts.length > 0, 'expected an inline application script');
   for (const script of scripts) assert.doesNotThrow(() => new Script(script[1]));
 });
+
+
+test('translation completion uses an explicit status instead of comparing text', () => {
+  assert.match(html, /translated: false/);
+  assert.match(html, /cue\.translated/);
+  assert.match(html, /filter\(\(cue\) => !cue\.translated\)/);
+  assert.match(html, /cues\[cue\.id\]\.translated = true/);
+});
+
+test('manual translation edits are retained and textareas lock during translation', () => {
+  assert.match(html, /cues\[idx\]\.translated = true/);
+  assert.match(html, /translated\.disabled = translating/);
+  assert.match(html, /field\.disabled = true/);
+  assert.match(html, /field\.disabled = false/);
+});
+
+test('invalid SRT files clear old cue content and disable download', () => {
+  assert.match(html, /Chưa có file hợp lệ/);
+  assert.match(html, /\$\('cueList'\)\.innerHTML = ''/);
+  assert.match(html, /\$\('downloadBtn'\)\.disabled = true/);
+});
