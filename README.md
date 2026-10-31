@@ -4,6 +4,7 @@ Bản này chuyển giao diện preview thành ứng dụng Node.js có backend 
 
 - Đăng nhập Google bằng Google Identity Services; backend xác minh ID token với Google và tạo cookie phiên `HttpOnly`.
 - Gửi lời thoại theo từng nhóm tới OpenAI hoặc Google Gemini.
+- Có thể chọn lưu API key trên thiết bị bằng `localStorage` của trình duyệt. Tùy chọn này không mã hóa key; chỉ dùng trên thiết bị cá nhân và xóa key nếu dùng máy tính chung.
 - Nhận JSON có `id` và bản dịch; trình duyệt chỉ thay nội dung lời thoại. Số thứ tự, timestamp, metadata và dấu phân cách vẫn lấy nguyên từ file SRT gốc.
 - Không lưu API key hoặc file phụ đề trên máy chủ. API key do người dùng nhập chỉ được gửi trong request dịch.
 
@@ -35,14 +36,14 @@ curl http://localhost:10000/api/health
 
 ## Cấu hình API key
 
-Người dùng nhập OpenAI API key hoặc Gemini API key ngay trong giao diện. Backend không ghi key vào file, database, session hay log. Chỉ gửi key qua HTTPS trong request dịch và chuyển tiếp tới nhà cung cấp tương ứng. Người dùng chịu phí API của chính tài khoản nhà cung cấp của mình.
+Người dùng nhập OpenAI API key hoặc Gemini API key ngay trong giao diện. Backend không ghi key vào file, database, session hay log; key chỉ được gửi qua HTTPS trong request dịch và chuyển tiếp tới nhà cung cấp tương ứng. Nếu người dùng chủ động bấm “Lưu key trên thiết bị”, trình duyệt lưu key trong `localStorage` để dùng lại sau khi tải trang. `localStorage` không mã hóa key, vì vậy không nên bật tùy chọn này trên máy tính dùng chung. Người dùng có thể xóa key bằng nút “Xóa key đã lưu”. Người dùng chịu phí API của chính tài khoản nhà cung cấp của mình.
 
 ## Lưu ý bảo mật và vận hành
 
 - Bắt buộc dùng HTTPS khi public website. Render cấp HTTPS cho miền `onrender.com`.
 - Không commit `.env`, API key, OAuth client secret hoặc `SESSION_SECRET` vào GitHub.
 - Đổi `SESSION_SECRET` sẽ đăng xuất các phiên hiện tại.
-- Giới hạn hiện tại là 12 cue/request để tăng độ ổn định. Frontend tự chia file dài thành nhiều nhóm và cập nhật tiến độ.
+- Giao diện chia file thành các nhóm 60 cue/lượt khi dịch Gemini và nghỉ 4,5 giây giữa các request Gemini. Backend chấp nhận tối đa 80 cue/request và giới hạn tổng văn bản mỗi request ở 30.000 ký tự. Tiến độ và trạng thái hoàn thành được theo dõi riêng, kể cả khi bản dịch trùng với câu gốc.
 - Giới hạn rate hiện tại là 120 request/15 phút/IP; cần điều chỉnh khi có nhiều người dùng thật.
 - Bản này không có cơ sở dữ liệu người dùng vì đăng nhập chỉ dùng để xác thực phiên. Nếu cần lịch sử dịch, phân quyền, gói trả phí hoặc quản trị, cần bổ sung database.
 - Bản này không tự động publish. Chủ tài khoản phải kết nối repository và cấu hình biến môi trường trên Render.
