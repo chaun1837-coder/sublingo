@@ -235,7 +235,7 @@ async function callGemini(apiKey, model, prompt) {
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
       generationConfig: { responseMimeType: 'application/json', temperature: 0.2, maxOutputTokens: 6000 }
     }),
-    signal: AbortSignal.timeout(90000)
+    signal: AbortSignal.timeout(180000)
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
