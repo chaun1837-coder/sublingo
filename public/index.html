@@ -34,6 +34,7 @@ button { cursor: pointer; }
   color-scheme: light dark;
 }
 .topbar {
+  position: relative;
   min-height: 74px;
   background: var(--site-primary);
   color: var(--site-on-primary);
@@ -44,6 +45,21 @@ button { cursor: pointer; }
   gap: 18px;
 }
 .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.menu-toggle { width: 40px; height: 40px; flex: 0 0 auto; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.22); border-radius: 11px; color: #FFFFFF; background: rgba(255,255,255,.08); }
+.menu-toggle:hover { background: rgba(255,255,255,.16); }
+.menu-popover { display: none; position: absolute; z-index: 40; left: clamp(12px, 3vw, 38px); top: calc(100% - 4px); width: min(300px, calc(100vw - 24px)); padding: 9px; background: light-dark(#FFFFFF, #182335); border: 1px solid light-dark(#DDE5ED, #39485D); border-radius: 14px; box-shadow: 0 18px 44px rgba(9,24,43,.22); }
+.menu-popover.open { display: grid; gap: 4px; }
+.menu-popover a { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 9px; color: light-dark(#31445D, #DFE8F3); font-size: 12px; font-weight: 750; text-decoration: none; }
+.menu-popover a:hover { background: light-dark(#EDF5F7, #243449); }
+.menu-caption { padding: 7px 12px 4px; color: light-dark(#8A97A8, #95A6BA); font-size: 9px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.key-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin-top: 9px; }
+.key-actions .btn { padding: 8px 10px; font-size: 10px; }
+.key-link { color: #2E897D; font-size: 10px; font-weight: 800; text-decoration: none; }
+.key-link:hover { text-decoration: underline; }
+.tool-panel { margin-top: 18px; }
+.tool-panel .panel-body { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 14px; align-items: end; }
+.tool-panel .helper { max-width: 650px; }
+@media (max-width: 600px) { .tool-panel .panel-body { grid-template-columns: 1fr; } .tool-panel .panel-body > .btn { width: 100%; } }
 .logo-mark { width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; background: #DDF2EE; color: #183153; flex: 0 0 auto; }
 .brand-name { font-family: var(--site-font-heading); font-size: calc(1.22rem * var(--site-heading-scale)); font-weight: 800; letter-spacing: -0.04em; }
 .brand-sub { font-size: 11px; opacity: .74; margin-top: 2px; }
@@ -147,8 +163,9 @@ textarea.field { resize: vertical; line-height: 1.55; }
 <body>
 <div id="app">
   <header class="topbar">
+    <button class="menu-toggle" id="menuToggle" type="button" aria-label="Mở danh mục" aria-expanded="false"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
     <div class="brand">
-      <div class="logo-mark" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 5.5C4 4.67 4.67 4 5.5 4h13c.83 0 1.5.67 1.5 1.5v9c0 .83-.67 1.5-1.5 1.5H11l-4.5 4v-4H5.5C4.67 16 4 15.33 4 14.5v-9Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 8.5h8M8 11.5h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
+      <div class="logo-mark" aria-hidden="true"><svg width="25" height="25" viewBox="0 0 24 24" fill="none"><path d="M18.2 6.9C17 5.6 15.3 5 13.3 5H10c-2.1 0-3.8 1.2-3.8 3s1.3 2.8 3.7 3.4l4.2 1c2.3.6 3.7 1.8 3.7 3.7S16 19.5 13.6 19.5h-3.2c-2.1 0-3.8-.8-5-2.2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M5.4 7.1h.1M18.5 16.9h.1" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/></svg></div>
       <div><div class="brand-name">SubLingo</div><div class="brand-sub">SUBTITLE WORKSPACE · SRT TRANSLATOR</div></div>
     </div>
     <div class="top-actions">
@@ -156,6 +173,12 @@ textarea.field { resize: vertical; line-height: 1.55; }
       <div class="user-state" id="userState"><img class="user-avatar" id="userAvatar" alt=""><span id="userName"></span><button class="btn btn-light" id="logoutBtn" type="button">Đăng xuất</button></div>
     </div>
   </header>
+  <nav class="menu-popover" id="menuPopover" aria-label="Danh mục SubLingo">
+    <div class="menu-caption">Các khu vực</div>
+    <a href="#translator">✦ Dịch phụ đề SRT</a>
+    <a href="#api-settings">⚙ Thiết lập & API key</a>
+    <a href="#video-download">⇩ Tải video qua SnapAny</a>
+  </nav>
 
   <main class="page">
     <section class="hero">
@@ -163,8 +186,8 @@ textarea.field { resize: vertical; line-height: 1.55; }
       <div class="status-pill"><span class="status-dot"></span> Bảo toàn cấu trúc SRT</div>
     </section>
 
-    <section class="workspace">
-      <aside class="panel">
+    <section class="workspace" id="translator">
+      <aside class="panel" id="api-settings">
         <div class="panel-head"><div class="panel-title"><span class="step">01</span> Thiết lập bản dịch</div></div>
         <div class="panel-body">
           <div class="form-group">
@@ -174,7 +197,12 @@ textarea.field { resize: vertical; line-height: 1.55; }
           <div class="form-group">
             <label class="form-label" id="keyLabel" for="apiKey">OpenAI API key</label>
             <div class="input-wrap"><input class="field" id="apiKey" type="password" placeholder="Dán API key tại đây" autocomplete="off"><button class="reveal" id="toggleKey" type="button">Hiện</button></div>
-            <div class="helper">Key chỉ được giữ tạm trong phiên xem trước này, không lưu vào trình duyệt.</div>
+            <div class="key-actions">
+              <button class="btn btn-secondary" id="saveKeyBtn" type="button">Lưu key trong tab này</button>
+              <button class="btn btn-ghost" id="clearKeyBtn" type="button">Xóa key đã lưu</button>
+              <a class="key-link" id="keyHelpLink" href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">Lấy API key ↗</a>
+            </div>
+            <div class="helper" id="keySaveHelp">Key được lưu trong phiên tab hiện tại để không mất khi tải lại trang. Đóng tab sẽ xóa key đã lưu.</div>
           </div>
           <div class="divider"></div>
           <div class="form-group">
@@ -224,6 +252,17 @@ textarea.field { resize: vertical; line-height: 1.55; }
           <div class="bottom-actions"><button class="btn btn-ghost" id="loadSample">Dùng file mẫu</button><button class="btn btn-primary" id="downloadBtn" disabled>↓ Tải SRT đã dịch</button></div>
         </div>
       </section>
+    </section>
+    <section class="panel tool-panel" id="video-download">
+      <div class="panel-head"><div class="panel-title"><span class="step">03</span> Tải video từ nền tảng khác</div><span class="count">Mở SnapAny</span></div>
+      <div class="panel-body">
+        <div>
+          <label class="form-label" for="snapAnyUrl">Đường dẫn video (không bắt buộc)</label>
+          <input class="field" id="snapAnyUrl" type="url" placeholder="Dán link video công khai tại đây">
+          <div class="helper">SubLingo sẽ mở SnapAny trong tab mới. Bạn có thể dán link vào SnapAny để tiếp tục tải theo các tùy chọn mà trang đó hỗ trợ.</div>
+        </div>
+        <button class="btn btn-primary" id="openSnapAny" type="button">Mở SnapAny ↗</button>
+      </div>
     </section>
     <div class="notice"><span>ⓘ</span><div><b>Cơ chế bảo vệ file:</b> Trình đọc chỉ cho phép chỉnh sửa vùng lời thoại. Số thứ tự, dòng thời gian, phần metadata và dấu phân cách được giữ lại từ file gốc khi xuất. Bản triển khai gửi từng nhóm lời thoại tới backend để gọi AI; backend không lưu API key hay file phụ đề. Số thứ tự, timestamp và phần metadata luôn được giữ ở trình duyệt.</div></div>
   </main>
@@ -393,10 +432,75 @@ textarea.field { resize: vertical; line-height: 1.55; }
     document.querySelectorAll('.provider').forEach((item) => item.classList.toggle('active', item === button));
     $('keyLabel').textContent = provider === 'openai' ? 'OpenAI API key' : 'Google Gemini API key';
     $('apiKey').placeholder = provider === 'openai' ? 'sk-••••••••••••••••' : 'AIza••••••••••••••••';
+    restoreSavedKey();
     $('model').innerHTML = provider === 'openai'
       ? '<option value="gpt-4.1-mini">GPT-4.1 mini</option><option value="gpt-4.1">GPT-4.1</option>'
       : '<option value="gemini-3.8-flash">Gemini 3.8 Flash</option><option value="gemini-3.5-flash-lite">Gemini 3.5 Flash-Lite</option>';
   }));
+  function keyStorageName() { return 'sublingo.apiKey.' + provider; }
+  function restoreSavedKey() {
+    try {
+      $('apiKey').value = sessionStorage.getItem(keyStorageName()) || '';
+      $('keySaveHelp').textContent = $('apiKey').value
+        ? 'Đã khôi phục key đã lưu trong phiên tab này. Đóng tab sẽ xóa key.'
+        : 'Key được lưu trong phiên tab hiện tại để không mất khi tải lại trang. Đóng tab sẽ xóa key đã lưu.';
+    } catch (_) {
+      $('keySaveHelp').textContent = 'Trình duyệt đang chặn lưu trong phiên. Bạn có thể nhập lại key sau khi tải trang.';
+    }
+    $('keyHelpLink').href = provider === 'gemini'
+      ? 'https://aistudio.google.com/app/apikey'
+      : 'https://platform.openai.com/api-keys';
+  }
+  $('saveKeyBtn').addEventListener('click', () => {
+    const value = $('apiKey').value.trim();
+    if (!value) { toast('Hãy nhập API key trước khi lưu.'); $('apiKey').focus(); return; }
+    try {
+      sessionStorage.setItem(keyStorageName(), value);
+      $('keySaveHelp').textContent = 'Đã lưu key cho phiên tab hiện tại. Key không được gửi để lưu trên máy chủ SubLingo.';
+      toast('Đã lưu key trong tab này. Tải lại trang sẽ không mất key.');
+    } catch (_) {
+      toast('Không thể lưu key. Trình duyệt có thể đang chặn bộ nhớ phiên.');
+    }
+  });
+  $('clearKeyBtn').addEventListener('click', () => {
+    try { sessionStorage.removeItem(keyStorageName()); } catch (_) {}
+    $('apiKey').value = '';
+    $('keySaveHelp').textContent = 'Đã xóa key lưu trong phiên tab này.';
+    toast('Đã xóa key đã lưu.');
+  });
+
+  const menuToggle = $('menuToggle');
+  const menuPopover = $('menuPopover');
+  menuToggle.addEventListener('click', () => {
+    const open = menuPopover.classList.toggle('open');
+    menuToggle.setAttribute('aria-expanded', String(open));
+  });
+  menuPopover.querySelectorAll('a').forEach((link) => link.addEventListener('click', () => {
+    menuPopover.classList.remove('open');
+    menuToggle.setAttribute('aria-expanded', 'false');
+  }));
+  document.addEventListener('click', (event) => {
+    if (!menuPopover.contains(event.target) && !menuToggle.contains(event.target)) {
+      menuPopover.classList.remove('open');
+      menuToggle.setAttribute('aria-expanded', 'false');
+    }
+  });
+  $('openSnapAny').addEventListener('click', async () => {
+    const link = $('snapAnyUrl').value.trim();
+    const newTab = window.open('https://snapany.com/fr', '_blank', 'noopener,noreferrer');
+    if (!newTab) toast('Trình duyệt đã chặn tab mới. Hãy cho phép cửa sổ bật lên để mở SnapAny.');
+    else if (link) {
+      try {
+        await navigator.clipboard.writeText(link);
+        toast('Đã sao chép link video. Dán link vào SnapAny để tiếp tục.');
+      } catch (_) {
+        toast('SnapAny đã mở. Hãy sao chép link video và dán vào trang đó.');
+      }
+    } else {
+      toast('Đã mở SnapAny. Dán link video vào trang để tiếp tục.');
+    }
+  });
+
   $('toggleKey').addEventListener('click', () => {
     const input = $('apiKey');
     input.type = input.type === 'password' ? 'text' : 'password';
@@ -542,6 +646,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
   }
 
   $('translateBtn').addEventListener('click', translateAll);
+  restoreSavedKey();
   refreshSession();
   initializeGoogleSignIn();
   $('targetLang').addEventListener('change', () => {
