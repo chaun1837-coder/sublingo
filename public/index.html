@@ -580,6 +580,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
     const batchSize = 60;
     const total = cues.length;
     const failedRanges = [];
+    const failureMessages = [];
     const updateProgress = () => {
       const done = cues.filter((cue) => cue.translated).length;
       const percent = Math.round((done / total) * 100);
@@ -612,8 +613,12 @@ textarea.field { resize: vertical; line-height: 1.55; }
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ provider, apiKey, model: $('model').value, sourceLang: $('sourceLang').value, targetLang: $('targetLang').value, style: $('style').value, cues: batch })
             });
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.error || 'Lỗi khi dịch phụ đề.');
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+              const requestError = new Error(data.error || 'Lỗi khi dịch phụ đề.');
+              requestError.status = response.status;
+              throw requestError;
+            }
             const byId = new Map((data.translations || []).map((item) => [item.id, item.text]));
             for (const cue of batch) if (!byId.has(cue.id) || typeof byId.get(cue.id) !== 'string') throw new Error('AI trả về thiếu câu phụ đề.');
             for (const cue of batch) {
@@ -623,18 +628,27 @@ textarea.field { resize: vertical; line-height: 1.55; }
             succeeded = true; updateProgress(); break;
           } catch (error) {
             lastError = error;
-            if (attempt < 3) button.textContent = 'Thử lại nhóm ' + (Math.floor(start / batchSize) + 1) + ' (' + attempt + '/2)...';
+            const retryableStatuses = [408, 429, 500, 502, 503, 504];
+            const isNetworkFailure = !Number.isInteger(error.status) && (error.name === 'TypeError' || /timeout|network/i.test(error.message || ''));
+            const canRetry = retryableStatuses.includes(error.status) || isNetworkFailure;
+            if (!canRetry) throw error;
+            if (attempt < 3) {
+              const backoffMs = Math.min(8000, 1000 * (2 ** (attempt - 1))) + Math.floor(Math.random() * 500);
+              button.textContent = 'Gemini tạm bận · chờ ' + Math.ceil(backoffMs / 1000) + ' giây rồi thử lại...';
+              await new Promise((resolve) => setTimeout(resolve, backoffMs));
+            }
           }
         }
         if (!succeeded) {
           failedRanges.push((start + 1) + '-' + Math.min(start + batchSize, cues.length));
+          if (lastError?.message && !failureMessages.includes(lastError.message)) failureMessages.push(lastError.message);
           console.warn('Subtitle batch failed after retries:', failedRanges[failedRanges.length - 1], lastError);
         }
         renderCues(); updateProgress();
         button.textContent = 'Đã xử lý đến ' + Math.min(start + batchSize, cues.length) + '/' + total + '...';
       }
       const remaining = cues.filter((cue) => !cue.translated).length;
-      if (remaining) toast('Đã dịch ' + (total - remaining) + '/' + total + ' câu. Nhóm lỗi: ' + failedRanges.join(', ') + '. Bấm dịch lại để thử các câu còn thiếu.');
+      if (remaining) toast('Đã dịch ' + (total - remaining) + '/' + total + ' câu. Nhóm lỗi: ' + failedRanges.join(', ') + (failureMessages.length ? '. Nguyên nhân: ' + failureMessages[0] : '') + '. Bấm dịch lại để thử các câu còn thiếu.');
       else toast('Đã dịch xong ' + total + ' câu. Hãy rà soát trước khi tải file.');
     } catch (error) {
       renderCues(); toast(error.message || 'Có lỗi khi dịch. Vui lòng thử lại.');
