@@ -52,9 +52,11 @@ button { cursor: pointer; }
 .user-state.visible { display: flex; }
 .user-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; background: #DDF2EE; }
 .google-login-wrap { min-width: 190px; display: flex; justify-content: flex-end; }
-.progress-track { height: 5px; margin-top: 10px; border-radius: 99px; background: light-dark(#E7EDF3, #2D3B50); overflow: hidden; display: none; }
+.progress-track { height: 18px; margin-top: 12px; border: 1px solid light-dark(#C9D8E4, #40536B); border-radius: 99px; background: light-dark(#E7EDF3, #2D3B50); overflow: hidden; display: none; box-shadow: inset 0 1px 2px rgba(20, 40, 60, .10); }
 .progress-track.visible { display: block; }
-.progress-fill { height: 100%; width: 0; background: #43A995; transition: width .2s ease; }
+.progress-fill { height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, #43A995, #75C8B8); transition: width .25s ease; }
+.progress-summary { display: none; justify-content: space-between; gap: 8px; margin-top: 8px; color: light-dark(#486078, #C2D0DF); font-size: 11px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.progress-summary.visible { display: flex; }
 .btn { border: 1px solid transparent; border-radius: calc(11px * var(--site-radius-scale)); padding: 10px 14px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; font-weight: 700; transition: .18s ease; }
 .btn:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid #68B8AD; outline-offset: 2px; }
 .btn-light { background: #FFFFFF; color: #183153; }
@@ -192,7 +194,8 @@ textarea.field { resize: vertical; line-height: 1.55; }
             <select class="field" id="model"><option value="gpt-4.1-mini">GPT-4.1 mini</option><option value="gpt-4.1">GPT-4.1</option></select>
           </div>
           <button class="btn btn-primary" id="translateBtn" style="width:100%">✦ Dịch phụ đề bằng AI</button>
-          <div class="progress-track" id="translateProgress"><div class="progress-fill" id="translateProgressFill"></div></div>
+          <div class="progress-track" id="translateProgress" role="progressbar" aria-label="Tiến độ dịch" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="progress-fill" id="translateProgressFill"></div></div>
+          <div class="progress-summary" id="translateProgressSummary"><span id="translateProgressCount">0/0 câu đã dịch</span><span id="translateProgressPercent">0% · còn 0 câu</span></div>
           <div class="helper" id="translateHelp" style="text-align:center;margin-top:8px">Đăng nhập Google, nhập API key của bạn rồi bắt đầu dịch.</div>
         </div>
       </aside>
@@ -480,52 +483,61 @@ textarea.field { resize: vertical; line-height: 1.55; }
     const button = $('translateBtn');
     const progress = $('translateProgress');
     const fill = $('translateProgressFill');
+    const summary = $('translateProgressSummary');
     const batchSize = 12;
-    const totalBatches = Math.ceil(cues.length / batchSize);
+    const total = cues.length;
+    const failedRanges = [];
+    const updateProgress = () => {
+      const done = cues.filter((cue) => cue.translation !== cue.source).length;
+      const percent = Math.round((done / total) * 100);
+      fill.style.width = percent + '%';
+      progress.setAttribute('aria-valuenow', String(percent));
+      $('translateProgressCount').textContent = done + '/' + total + ' câu đã dịch';
+      $('translateProgressPercent').textContent = percent + '% · còn ' + (total - done) + ' câu';
+    };
     button.disabled = true;
     progress.classList.add('visible');
-    fill.style.width = '0%';
-    let completed = 0;
+    summary.classList.add('visible');
+    updateProgress();
+
     try {
       for (let start = 0; start < cues.length; start += batchSize) {
-        const batch = cues.slice(start, start + batchSize).map((cue) => ({ id: cue.id, text: cue.source }));
-        const response = await fetch('/api/translate', {
-          method: 'POST',
-          credentials: 'same-origin',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            provider,
-            apiKey,
-            model: $('model').value,
-            sourceLang: $('sourceLang').value,
-            targetLang: $('targetLang').value,
-            style: $('style').value,
-            cues: batch
-          })
-        });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || 'Lỗi khi dịch phụ đề.');
-        const byId = new Map((data.translations || []).map((item) => [item.id, item.text]));
-        for (const cue of batch) {
-          if (!byId.has(cue.id) || typeof byId.get(cue.id) !== 'string') {
-            throw new Error('AI trả về thiếu câu phụ đề. Các câu đã dịch trước đó vẫn được giữ lại.');
+        const batch = cues.slice(start, start + batchSize).filter((cue) => cue.translation === cue.source).map((cue) => ({ id: cue.id, text: cue.source }));
+        if (!batch.length) continue;
+        let lastError = null;
+        let succeeded = false;
+        for (let attempt = 1; attempt <= 3; attempt += 1) {
+          try {
+            const response = await fetch('/api/translate', {
+              method: 'POST', credentials: 'same-origin',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ provider, apiKey, model: $('model').value, sourceLang: $('sourceLang').value, targetLang: $('targetLang').value, style: $('style').value, cues: batch })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Lỗi khi dịch phụ đề.');
+            const byId = new Map((data.translations || []).map((item) => [item.id, item.text]));
+            for (const cue of batch) if (!byId.has(cue.id) || typeof byId.get(cue.id) !== 'string') throw new Error('AI trả về thiếu câu phụ đề.');
+            for (const cue of batch) cues[cue.id].translation = byId.get(cue.id);
+            succeeded = true; updateProgress(); break;
+          } catch (error) {
+            lastError = error;
+            if (attempt < 3) button.textContent = 'Thử lại nhóm ' + (Math.floor(start / batchSize) + 1) + ' (' + attempt + '/2)...';
           }
         }
-        for (const cue of batch) cues[cue.id].translation = byId.get(cue.id);
-        completed += 1;
-        fill.style.width = `${Math.round((completed / totalBatches) * 100)}%`;
-        button.textContent = `Đang dịch ${Math.min(start + batchSize, cues.length)}/${cues.length}...`;
+        if (!succeeded) {
+          failedRanges.push((start + 1) + '-' + Math.min(start + batchSize, cues.length));
+          console.warn('Subtitle batch failed after retries:', failedRanges[failedRanges.length - 1], lastError);
+        }
+        renderCues(); updateProgress();
+        button.textContent = 'Đã xử lý đến ' + Math.min(start + batchSize, cues.length) + '/' + total + '...';
       }
-      renderCues();
-      toast(`Đã dịch xong ${cues.length} câu. Hãy rà soát trước khi tải file.`);
+      const remaining = cues.filter((cue) => cue.translation === cue.source).length;
+      if (remaining) toast('Đã dịch ' + (total - remaining) + '/' + total + ' câu. Nhóm lỗi: ' + failedRanges.join(', ') + '. Bấm dịch lại để thử các câu còn thiếu.');
+      else toast('Đã dịch xong ' + total + ' câu. Hãy rà soát trước khi tải file.');
     } catch (error) {
-      renderCues();
-      toast(error.message || 'Có lỗi khi dịch. Vui lòng thử lại.');
+      renderCues(); toast(error.message || 'Có lỗi khi dịch. Vui lòng thử lại.');
     } finally {
-      translating = false;
-      button.disabled = false;
-      button.textContent = '✦ Dịch phụ đề bằng AI';
-      setTimeout(() => progress.classList.remove('visible'), 900);
+      translating = false; button.disabled = false; button.textContent = '✦ Dịch phụ đề bằng AI';
     }
   }
 
