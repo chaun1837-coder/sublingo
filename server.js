@@ -103,6 +103,21 @@ function authenticate(req, res, next) {
   }
 }
 
+function optionalAuthenticate(req, res, next) {
+  const token = getCookie(req, COOKIE_NAME);
+  if (!token) {
+    req.user = null;
+    return next();
+  }
+  try {
+    req.user = jwt.verify(token, SESSION_SECRET, { algorithms: ['HS256'] });
+  } catch {
+    req.user = null;
+    clearSessionCookie(res);
+  }
+  next();
+}
+
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 20, standardHeaders: 'draft-8', legacyHeaders: false });
 const translateLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 120, standardHeaders: 'draft-8', legacyHeaders: false });
 
@@ -167,7 +182,7 @@ const translateSchema = z.object({
   sourceLang: z.string().min(1).max(60),
   targetLang: z.string().min(1).max(60),
   style: z.string().max(3000).default(''),
-  cues: z.array(cueSchema).min(1).max(12)
+  cues: z.array(cueSchema).min(1).max(80)
 }).strict();
 
 function buildPrompt({ sourceLang, targetLang, style, cues }) {
@@ -233,7 +248,7 @@ async function callGemini(apiKey, model, prompt) {
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
     body: JSON.stringify({
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: { responseMimeType: 'application/json', temperature: 0.2, maxOutputTokens: 6000 }
+      generationConfig: { responseMimeType: 'application/json', temperature: 0.2, maxOutputTokens: 12000 }
     }),
     signal: AbortSignal.timeout(180000)
   });
@@ -248,10 +263,27 @@ async function callGemini(apiKey, model, prompt) {
   return parseJsonResponse(content);
 }
 
-app.post('/api/translate', requireSameOrigin, authenticate, translateLimiter, async (req, res) => {
+app.post('/api/translate', requireSameOrigin, optionalAuthenticate, translateLimiter, async (req, res) => {
   const parsed = translateSchema.safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ error: 'Dữ liệu dịch không hợp lệ. Mỗi lượt chỉ gửi tối đa 12 câu.' });
+  if (!parsed.success) return res.status(400).json({ error: 'Dữ liệu dịch không hợp lệ. Mỗi lượt chỉ gửi tối đa 80 câu.' });
   const input = parsed.data;
+  if (input.provider === 'openai') {
+    if (!req.user) return res.status(401).json({ error: 'Vui lòng đăng nhập Google để sử dụng OpenAI.' });
+    if (!['gpt-4.1-mini', 'gpt-4.1'].includes(input.model)) {
+      return res.status(400).json({ error: 'Mô hình OpenAI không được hỗ trợ.' });
+    }
+  } else {
+    const allowedGeminiModels = req.user
+      ? ['gemini-3.8-flash', 'gemini-3.5-flash-lite']
+      : ['gemini-3.5-flash-lite'];
+    if (!allowedGeminiModels.includes(input.model)) {
+      return res.status(req.user ? 400 : 403).json({
+        error: req.user
+          ? 'Tài khoản không được chọn mô hình Gemini này.'
+          : 'Chưa đăng nhập chỉ được sử dụng Gemini 3.5 Flash-Lite. Hãy đăng nhập để mở khóa Gemini 3.8 Flash.'
+      });
+    }
+  }
   if (new Set(input.cues.map((cue) => cue.id)).size !== input.cues.length) {
     return res.status(400).json({ error: 'ID phụ đề bị trùng.' });
   }
