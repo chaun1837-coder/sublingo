@@ -95,6 +95,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
 .provider-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
 .provider { border: 1px solid light-dark(#DDE5ED, #3B4A60); background: light-dark(#FAFBFD, #131F30); color: light-dark(#586A80, #B6C2D1); border-radius: 9px; padding: 10px 8px; font-size: 11px; font-weight: 800; }
 .provider.active { border-color: #65AFA4; background: light-dark(#EAF6F3, #1B3935); color: light-dark(#256B61, #A6DED5); box-shadow: inset 0 0 0 1px #65AFA4; }
+.provider:disabled { opacity: .48; cursor: not-allowed; }
 .upload-zone { border: 1.5px dashed light-dark(#B9C9D8, #53647B); background: light-dark(#F8FBFD, #142133); border-radius: calc(13px * var(--site-radius-scale)); padding: 24px 15px; text-align: center; transition: .18s ease; }
 .upload-zone.drag { border-color: #38A18F; background: light-dark(#ECF8F5, #193631); }
 .upload-icon { width: 42px; height: 42px; display: grid; place-items: center; margin: 0 auto 10px; color: #2E8B7D; background: light-dark(#E4F3F0, #203C39); border-radius: 13px; }
@@ -177,10 +178,10 @@ textarea.field { resize: vertical; line-height: 1.55; }
         <div class="panel-body">
           <div class="form-group">
             <label class="form-label">Chọn công cụ AI</label>
-            <div class="provider-tabs"><button class="provider active" data-provider="openai">✳ ChatGPT</button><button class="provider" data-provider="gemini">✦ Google Gemini</button></div>
+            <div class="provider-tabs"><button class="provider" data-provider="openai" disabled>✳ ChatGPT · cần đăng nhập</button><button class="provider active" data-provider="gemini">✦ Google Gemini</button></div>
           </div>
           <div class="form-group">
-            <label class="form-label" id="keyLabel" for="apiKey">OpenAI API key</label>
+            <label class="form-label" id="keyLabel" for="apiKey">Google Gemini API key</label>
             <div class="input-wrap"><input class="field" id="apiKey" type="password" placeholder="Dán API key tại đây" autocomplete="off"><button class="reveal" id="toggleKey" type="button">Hiện</button></div>
             <div class="field-row" style="margin-top:9px">
               <button class="btn btn-secondary" id="saveKeyBtn" type="button">Lưu key trên thiết bị</button>
@@ -204,12 +205,12 @@ textarea.field { resize: vertical; line-height: 1.55; }
           </div>
           <div class="form-group">
             <label class="form-label" for="model">Mô hình</label>
-            <select class="field" id="model"><option value="gpt-4.1-mini">GPT-4.1 mini</option><option value="gpt-4.1">GPT-4.1</option></select>
+            <select class="field" id="model"><option value="gemini-3.5-flash-lite">Gemini 3.5 Flash-Lite</option></select>
           </div>
           <button class="btn btn-primary" id="translateBtn" style="width:100%">✦ Dịch phụ đề bằng AI</button>
           <div class="progress-track" id="translateProgress" role="progressbar" aria-label="Tiến độ dịch" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="progress-fill" id="translateProgressFill"></div></div>
           <div class="progress-summary" id="translateProgressSummary"><span id="translateProgressCount">0/0 câu đã dịch</span><span id="translateProgressPercent">0% · còn 0 câu</span></div>
-          <div class="helper" id="translateHelp" style="text-align:center;margin-top:8px">Đăng nhập Google, nhập API key của bạn rồi bắt đầu dịch.</div>
+          <div class="helper" id="translateHelp" style="text-align:center;margin-top:8px">Chưa đăng nhập: có thể dùng Gemini 3.5 Flash-Lite. Đăng nhập để mở khóa Gemini 3.8 Flash và OpenAI.</div>
         </div>
       </aside>
 
@@ -249,7 +250,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
 <script>
 (() => {
   const $ = (id) => document.getElementById(id);
-  let provider = 'openai';
+  let provider = 'gemini';
   let fileName = '';
   let originalText = '';
   let chunks = [];
@@ -402,16 +403,19 @@ textarea.field { resize: vertical; line-height: 1.55; }
     loadText(sample, 'demo-subtitles.srt');
   });
   document.querySelectorAll('.provider').forEach((button) => button.addEventListener('click', () => {
-    provider = button.dataset.provider;
+    const requestedProvider = button.dataset.provider;
+    if (requestedProvider === 'openai' && !currentUser) {
+      toast('Vui lòng đăng nhập Google để sử dụng OpenAI.');
+      return;
+    }
+    provider = requestedProvider;
     document.querySelectorAll('.provider').forEach((item) => item.classList.toggle('active', item === button));
     $('keyLabel').textContent = provider === 'openai' ? 'OpenAI API key' : 'Google Gemini API key';
     $('apiKey').placeholder = provider === 'openai' ? 'sk-••••••••••••••••' : 'AIza••••••••••••••••';
     $('keyGuideLink').href = provider === 'openai' ? 'https://platform.openai.com/api-keys' : 'https://aistudio.google.com/app/apikey';
     $('keyGuideLink').textContent = provider === 'openai' ? 'Hướng dẫn lấy OpenAI API key' : 'Hướng dẫn lấy Google Gemini API key';
     $('apiKey').value = loadSavedKey(provider);
-    $('model').innerHTML = provider === 'openai'
-      ? '<option value="gpt-4.1-mini">GPT-4.1 mini</option><option value="gpt-4.1">GPT-4.1</option>'
-      : '<option value="gemini-3.8-flash">Gemini 3.8 Flash</option><option value="gemini-3.5-flash-lite">Gemini 3.5 Flash-Lite</option>';
+    updateModelOptions();
   }));
   function savedKeyStorageName(providerName) { return 'sublingo_saved_api_key_' + providerName; }
   function loadSavedKey(providerName) {
@@ -448,10 +452,39 @@ textarea.field { resize: vertical; line-height: 1.55; }
   let currentUser = null;
   let translating = false;
 
+  function updateModelOptions() {
+    const selected = $('model').value;
+    let options;
+    if (provider === 'openai') {
+      options = [
+        ['gpt-4.1-mini', 'GPT-4.1 mini'],
+        ['gpt-4.1', 'GPT-4.1']
+      ];
+    } else if (currentUser) {
+      options = [
+        ['gemini-3.8-flash', 'Gemini 3.8 Flash'],
+        ['gemini-3.5-flash-lite', 'Gemini 3.5 Flash-Lite']
+      ];
+    } else {
+      options = [['gemini-3.5-flash-lite', 'Gemini 3.5 Flash-Lite']];
+    }
+    $('model').innerHTML = options.map(([value, label]) => '<option value="' + value + '">' + label + '</option>').join('');
+    if (options.some(([value]) => value === selected)) $('model').value = selected;
+  }
+
   function setLoggedIn(user) {
     currentUser = user || null;
     $('googleSignInButton').style.display = currentUser ? 'none' : 'flex';
     $('userState').classList.toggle('visible', !!currentUser);
+    document.querySelector('.provider[data-provider="openai"]').disabled = !currentUser;
+    if (!currentUser && provider === 'openai') {
+      document.querySelector('.provider[data-provider="gemini"]').click();
+    } else {
+      updateModelOptions();
+    }
+    $('translateHelp').textContent = currentUser
+      ? 'Đã đăng nhập: bạn có thể dùng Gemini 3.8 Flash, Gemini 3.5 Flash-Lite và OpenAI.'
+      : 'Chưa đăng nhập: có thể dùng Gemini 3.5 Flash-Lite. Đăng nhập để mở khóa Gemini 3.8 Flash và OpenAI.';
     if (currentUser) {
       $('userName').textContent = currentUser.name || currentUser.email || 'Đã đăng nhập';
       $('userAvatar').src = currentUser.picture || '';
@@ -518,7 +551,11 @@ textarea.field { resize: vertical; line-height: 1.55; }
   async function translateAll() {
     if (translating) return;
     if (!cues.length) { toast('Hãy tải file SRT lên trước khi dịch.'); return; }
-    if (!currentUser) { toast('Vui lòng đăng nhập Google trước khi dịch.'); return; }
+    if (!currentUser && provider === 'openai') { toast('Vui lòng đăng nhập Google để sử dụng OpenAI.'); return; }
+    if (!currentUser && $('model').value !== 'gemini-3.5-flash-lite') {
+      toast('Chưa đăng nhập chỉ được dùng Gemini 3.5 Flash-Lite.');
+      return;
+    }
     const apiKey = $('apiKey').value.trim();
     if (!apiKey) { toast('Bạn cần nhập API key trong phần thiết lập.'); $('apiKey').focus(); return; }
 
@@ -527,7 +564,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
     const progress = $('translateProgress');
     const fill = $('translateProgressFill');
     const summary = $('translateProgressSummary');
-    const batchSize = 12;
+    const batchSize = 60;
     const total = cues.length;
     const failedRanges = [];
     const updateProgress = () => {
@@ -543,6 +580,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
     summary.classList.add('visible');
     updateProgress();
 
+    let geminiRequestsSent = 0;
     try {
       for (let start = 0; start < cues.length; start += batchSize) {
         const batch = cues.slice(start, start + batchSize).filter((cue) => cue.translation === cue.source).map((cue) => ({ id: cue.id, text: cue.source }));
@@ -551,6 +589,11 @@ textarea.field { resize: vertical; line-height: 1.55; }
         let succeeded = false;
         for (let attempt = 1; attempt <= 3; attempt += 1) {
           try {
+            if (provider === 'gemini' && geminiRequestsSent > 0) {
+              button.textContent = 'Đang nghỉ 4,5 giây giữa các lượt gửi...';
+              await new Promise((resolve) => setTimeout(resolve, 4500));
+            }
+            if (provider === 'gemini') geminiRequestsSent += 1;
             const response = await fetch('/api/translate', {
               method: 'POST', credentials: 'same-origin',
               headers: { 'Content-Type': 'application/json' },
