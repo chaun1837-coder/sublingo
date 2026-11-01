@@ -471,6 +471,8 @@ textarea.field { resize: vertical; line-height: 1.55; }
 
   let currentUser = null;
   let translating = false;
+  let activeTranslationController = null;
+  let activeApiKey = '';
 
   function updateModelOptions() {
     const selected = $('model').value;
@@ -569,9 +571,36 @@ textarea.field { resize: vertical; line-height: 1.55; }
     }
   }
 
+  function clearSecretsOnLogout() {
+    // Xóa cả hai nhà cung cấp trước khi setLoggedIn(null) chuyển tab về Gemini.
+    try {
+      localStorage.removeItem('sublingo_saved_api_key_openai');
+      localStorage.removeItem('sublingo_saved_api_key_gemini');
+      for (let i = sessionStorage.length - 1; i >= 0; i -= 1) {
+        const key = sessionStorage.key(i);
+        if (key && key.startsWith('sublingo_')) sessionStorage.removeItem(key);
+      }
+    } catch (_) { /* Storage may be blocked by the browser. */ }
+    $('apiKey').value = '';
+    $('apiKey').type = 'password';
+    $('toggleKey').textContent = 'Hiện';
+    activeApiKey = '';
+    if (activeTranslationController) activeTranslationController.abort();
+    activeTranslationController = null;
+    // Xóa phụ đề đã tải và nội dung tạm trên giao diện.
+    $('removeFile').click();
+  }
+
   $('logoutBtn').addEventListener('click', async () => {
-    try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' }); }
-    finally { setLoggedIn(null); toast('Bạn đã đăng xuất.'); }
+    clearSecretsOnLogout();
+    setLoggedIn(null);
+    try {
+      const response = await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
+      if (!response.ok) throw new Error('Logout request failed');
+      toast('Đã đăng xuất và xóa API key đã lưu trên thiết bị này.');
+    } catch (_) {
+      toast('Đã xóa API key trên thiết bị, nhưng chưa xác nhận được phiên đăng xuất từ máy chủ.');
+    }
   });
 
   async function translateAll() {
