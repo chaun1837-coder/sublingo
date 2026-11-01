@@ -158,6 +158,31 @@ textarea.field { resize: vertical; line-height: 1.55; }
 .page-host { width: calc(100% - var(--sidebar-width)); min-height: calc(100vh - 74px); margin-left: var(--sidebar-width); padding: clamp(25px, 4vw, 54px); transition: width .2s ease, margin-left .2s ease; }
 .page-host h1 { font-size: calc(clamp(1.55rem, 2.8vw, 2.1rem) * var(--site-heading-scale)); }
 .page-host .page-subtitle { margin: 9px 0 0; color: light-dark(#718096, #AAB8C9); font-size: 13px; }
+
+.scan-page-content { width: 100%; max-width: 1120px; margin: 0 auto; }
+.scan-intro { margin-bottom: 24px; }
+.scan-intro .eyebrow { margin-bottom: 9px; }
+.scan-intro p { margin: 10px 0 0; max-width: 680px; color: light-dark(#627188, #A9B7C9); font-size: 13px; line-height: 1.65; }
+.scan-upload-zone { border: 1.5px dashed light-dark(#B9C9D8, #53647B); background: light-dark(#F8FBFD, #142133); border-radius: 14px; padding: 30px 18px; text-align: center; transition: .18s ease; }
+.scan-upload-zone.drag { border-color: #38A18F; background: light-dark(#ECF8F5, #193631); box-shadow: inset 0 0 0 1px #65AFA4; }
+.scan-upload-icon { width: 52px; height: 52px; display: grid; place-items: center; margin: 0 auto 13px; color: #2E8B7D; background: light-dark(#E4F3F0, #203C39); border-radius: 15px; }
+.scan-upload-zone strong { display: block; color: light-dark(#30445D, #D7E2EF); font-size: 14px; margin-bottom: 7px; }
+.scan-upload-zone p { margin: 0; color: light-dark(#8997A8, #91A0B4); font-size: 11px; line-height: 1.6; }
+.scan-upload-zone .btn { margin-top: 16px; }
+.scan-file-meta { display: none; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; padding: 11px 13px; background: light-dark(#EFF7F5, #1A332F); border: 1px solid light-dark(#D1E8E2, #31584F); border-radius: 10px; }
+.scan-file-meta.visible { display: flex; }
+.scan-file-meta strong { display: block; color: light-dark(#2D5D55, #BCE4DB); font-size: 12px; max-width: min(560px, 65vw); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.scan-file-meta small { display: block; color: light-dark(#77928C, #8EB7AE); margin-top: 4px; font-size: 10px; }
+.scan-preview-panel { margin-top: 20px; }
+.scan-preview-panel[hidden] { display: none !important; }
+.scan-video-stage { background: #091321; padding: 12px; }
+.scan-video-stage video { display: block; width: 100%; max-height: min(64vh, 620px); aspect-ratio: 16 / 9; object-fit: contain; margin: 0 auto; border-radius: 9px; background: #050A12; }
+.scan-actions { display: flex; flex-direction: column; align-items: center; gap: 9px; padding: 20px 18px 22px; border-top: 1px solid light-dark(#E7ECF2, #2A384B); }
+.scan-start-button { width: min(100%, 430px); min-height: 54px; border: 0; border-radius: 13px; color: #FFFFFF; background: linear-gradient(135deg, #1C786E, #245F80); box-shadow: 0 9px 22px rgba(27, 104, 111, .2); font-size: 15px; font-weight: 800; letter-spacing: -.01em; transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease; }
+.scan-start-button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 12px 26px rgba(27, 104, 111, .27); }
+.scan-start-button:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
+.scan-action-note { margin: 0; color: light-dark(#8997A8, #91A0B4); font-size: 10px; text-align: center; line-height: 1.55; }
+
 .spa-page[hidden] { display: none !important; }
 #pageHost[hidden], .spa-page[hidden] { display: none !important; }
 .page-host.is-translate { min-height: 0; padding: 0; }
@@ -207,7 +232,48 @@ textarea.field { resize: vertical; line-height: 1.55; }
 
   <main class="page-host" id="pageHost">
     <section class="spa-page" id="scanPage" aria-labelledby="scanPageTitle">
-      <h1 id="scanPageTitle">Quét Video Hardsub</h1>
+      <div class="scan-page-content">
+        <section class="scan-intro">
+          <div class="eyebrow">Nhận diện phụ đề trong video</div>
+          <h1 id="scanPageTitle">Quét Video Hardsub</h1>
+          <p>Tải video lên để xem trước. Sau đó bạn có thể bắt đầu quy trình nhận diện phụ đề được hiển thị trực tiếp trong hình ảnh video.</p>
+        </section>
+        <section class="panel">
+          <div class="panel-head">
+            <div class="panel-title"><span class="step">01</span> Chọn video cần quét</div>
+            <span class="count">Tệp video từ thiết bị</span>
+          </div>
+          <div class="panel-body">
+            <div class="scan-upload-zone" id="videoDropZone" role="button" tabindex="0" aria-label="Kéo thả hoặc chọn video">
+              <div class="scan-upload-icon" aria-hidden="true">
+                <svg width="27" height="27" viewBox="0 0 24 24" fill="none"><path d="M12 15V3m0 0L7.5 7.5M12 3l4.5 4.5M4 15.5v3A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5v-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+              <strong>Kéo và thả video vào đây</strong>
+              <p>Hoặc chọn video từ máy tính của bạn</p>
+              <p>Hỗ trợ các định dạng video phổ biến như MP4, WebM và MOV</p>
+              <button class="btn btn-secondary" id="chooseVideo" type="button">Chọn video</button>
+              <input type="file" id="videoInput" accept="video/*" hidden>
+            </div>
+            <div class="scan-file-meta" id="videoFileMeta">
+              <div><strong id="videoFileName"></strong><small id="videoFileDetails"></small></div>
+              <button class="file-clear" id="removeVideo" type="button">Gỡ video</button>
+            </div>
+          </div>
+        </section>
+        <section class="panel scan-preview-panel" id="videoPreviewPanel" hidden>
+          <div class="panel-head">
+            <div class="panel-title"><span class="step">02</span> Xem trước video</div>
+            <span class="count">Trình phát video</span>
+          </div>
+          <div class="scan-video-stage">
+            <video id="videoPlayer" controls playsinline preload="metadata">Trình duyệt của bạn không hỗ trợ phát video HTML5.</video>
+          </div>
+          <div class="scan-actions">
+            <button class="scan-start-button" id="startScanBtn" type="button" disabled>⌕&nbsp; Bắt đầu quét phụ đề</button>
+            <p class="scan-action-note">Video được xem trước trực tiếp trên trình duyệt. Bộ máy nhận diện phụ đề sẽ được kết nối ở bước phát triển tiếp theo.</p>
+          </div>
+        </section>
+      </div>
     </section>
 
     <section class="page spa-page" id="translatePage" aria-labelledby="translatePageTitle" hidden>
@@ -306,6 +372,8 @@ textarea.field { resize: vertical; line-height: 1.55; }
   const app = $('app');
   const pageViews = { scan: $('scanPage'), translate: $('translatePage') };
   const pageButtons = document.querySelectorAll('.sidebar-nav-button[data-page]');
+  let selectedVideoUrl = '';
+  let selectedVideoFile = null;
 
   function showPage(pageName) {
     if (!pageViews[pageName]) return;
@@ -321,6 +389,71 @@ textarea.field { resize: vertical; line-height: 1.55; }
     });
   }
   pageButtons.forEach((button) => button.addEventListener('click', () => showPage(button.dataset.page)));
+  function loadVideoFile(file) {
+    if (!file) return;
+    const allowedVideo = file.type.startsWith('video/') || /\.(mp4|m4v|mov|webm|ogv|ogg|avi|mkv)$/i.test(file.name);
+    if (!allowedVideo) {
+      toast('Vui lòng chọn một tệp video hợp lệ.');
+      return;
+    }
+    if (selectedVideoUrl) URL.revokeObjectURL(selectedVideoUrl);
+    selectedVideoFile = file;
+    selectedVideoUrl = URL.createObjectURL(file);
+    $('videoPlayer').src = selectedVideoUrl;
+    $('videoPlayer').load();
+    $('videoFileName').textContent = file.name;
+    $('videoFileDetails').textContent = (file.size / (1024 * 1024)).toFixed(1) + ' MB';
+    $('videoFileMeta').classList.add('visible');
+    $('videoPreviewPanel').hidden = false;
+    $('startScanBtn').disabled = false;
+    toast('Đã tải video. Bạn có thể xem trước bên dưới.');
+  }
+  $('chooseVideo').addEventListener('click', (event) => {
+    event.stopPropagation();
+    $('videoInput').click();
+  });
+  $('videoDropZone').addEventListener('click', (event) => {
+    if (!event.target.closest('button')) $('videoInput').click();
+  });
+  $('videoDropZone').addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      $('videoInput').click();
+    }
+  });
+  $('videoInput').addEventListener('change', (event) => {
+    loadVideoFile(event.target.files[0]);
+    event.target.value = '';
+  });
+  $('videoDropZone').addEventListener('dragover', (event) => {
+    event.preventDefault();
+    $('videoDropZone').classList.add('drag');
+  });
+  $('videoDropZone').addEventListener('dragleave', () => $('videoDropZone').classList.remove('drag'));
+  $('videoDropZone').addEventListener('drop', (event) => {
+    event.preventDefault();
+    $('videoDropZone').classList.remove('drag');
+    loadVideoFile(event.dataTransfer.files[0]);
+  });
+  $('removeVideo').addEventListener('click', () => {
+    $('videoPlayer').pause();
+    $('videoPlayer').removeAttribute('src');
+    $('videoPlayer').load();
+    if (selectedVideoUrl) URL.revokeObjectURL(selectedVideoUrl);
+    selectedVideoUrl = '';
+    selectedVideoFile = null;
+    $('videoPreviewPanel').hidden = true;
+    $('videoFileMeta').classList.remove('visible');
+    $('startScanBtn').disabled = true;
+    $('videoInput').value = '';
+  });
+  $('startScanBtn').addEventListener('click', () => {
+    if (!selectedVideoFile) return;
+    toast('Đã sẵn sàng video. Bộ máy quét phụ đề chưa được kết nối ở phiên bản này.');
+  });
+  window.addEventListener('beforeunload', () => {
+    if (selectedVideoUrl) URL.revokeObjectURL(selectedVideoUrl);
+  });
   $('sidebarToggle').addEventListener('click', () => {
     const collapsed = app.classList.toggle('sidebar-collapsed');
     $('sidebarToggle').setAttribute('aria-expanded', String(!collapsed));
