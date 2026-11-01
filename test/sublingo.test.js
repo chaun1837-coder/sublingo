@@ -64,8 +64,9 @@ test('SRT export reconstructs cue from original prefix and exact separator', () 
 });
 
 test('timestamp-like content in translated dialogue is blocked before download', () => {
-  assert.match(html, /Một bản dịch có chứa dòng timestamp/);
-  assert.ok(html.includes("if (/^\\s*\\d{2}:\\d{2}:\\d{2}[,.]\\d{3}\\s*-->/.test(normalized)) return null;"));
+  const formatCueText = getFormatter();
+  const cue = { prefix: '1\n00:00:01,000 --> 00:00:02,000\n', separator: '\n\n' };
+  assert.equal(formatCueText(cue, '00:00:03,000 --> 00:00:04,000\nInjected timestamp'), null);
 });
 
 test('AI responses update only translation text by cue ID', () => {
