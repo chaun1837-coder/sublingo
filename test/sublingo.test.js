@@ -115,7 +115,7 @@ test('translation settings are snapshotted so changing tabs cannot mutate an act
 });
 
 test('Google sign-in refreshes one-time nonce after a failed attempt', () => {
-  assert.match(html, /fetch\('\\/api\\/auth\\/google'/);
+  assert.ok(html.includes("fetch('/api/auth/google'"));
   assert.match(html, /window\.google\.accounts\.id\.initialize/);
   assert.match(html, /A failed attempt may already have consumed the one-time nonce/);
   assert.match(html, /await initializeGoogleSignIn\(\)/);
