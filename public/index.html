@@ -605,26 +605,68 @@ textarea.field { resize: vertical; line-height: 1.55; }
   }
 
   function captureGrayscaleOcrRegion(video, canvas, context) {
+    // Map the red ROI to intrinsic video pixels, excluding letterbox bars.
     const crop = getOcrCrop(video);
-    canvas.width = crop.width;
-    canvas.height = crop.height;
+    const scale = crop.width < 1100 ? 2 : 1;
+    canvas.width = Math.max(1, Math.round(crop.width * scale));
+    canvas.height = Math.max(1, Math.round(crop.height * scale));
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = 'high';
     context.filter = 'none';
-    context.drawImage(video, crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height);
+    context.drawImage(video, crop.x, crop.y, crop.width, crop.height, 0, 0, canvas.width, canvas.height);
+
     const image = context.getImageData(0, 0, canvas.width, canvas.height);
     const pixels = image.data;
-    for (let index = 0; index < pixels.length; index += 4) {
-      const luminance = 0.299 * pixels[index] + 0.587 * pixels[index + 1] + 0.114 * pixels[index + 2];
-      const gray = Math.max(0, Math.min(255, Math.round((luminance - 128) * 1.12 + 128)));
-      pixels[index] = gray;
-      pixels[index + 1] = gray;
-      pixels[index + 2] = gray;
+    const histogram = new Uint32Array(256);
+    const luminanceValues = new Uint8Array(pixels.length / 4);
+    for (let p = 0, i = 0; i < pixels.length; i += 4, p++) {
+      const gray = Math.max(0, Math.min(255, Math.round(
+        0.299 * pixels[i] + 0.587 * pixels[i + 1] + 0.114 * pixels[i + 2]
+      )));
+      luminanceValues[p] = gray;
+      histogram[gray]++;
+    }
+    // Otsu threshold emphasizes bright subtitle strokes and suppresses background detail.
+    const total = luminanceValues.length;
+    let sum = 0;
+    for (let value = 0; value < 256; value++) sum += value * histogram[value];
+    let sumBackground = 0, weightBackground = 0, bestVariance = -1, threshold = 150;
+    for (let value = 0; value < 256; value++) {
+      weightBackground += histogram[value];
+      if (!weightBackground) continue;
+      const weightForeground = total - weightBackground;
+      if (!weightForeground) break;
+      sumBackground += value * histogram[value];
+      const meanBackground = sumBackground / weightBackground;
+      const meanForeground = (sum - sumBackground) / weightForeground;
+      const variance = weightBackground * weightForeground * (meanBackground - meanForeground) ** 2;
+      if (variance > bestVariance) { bestVariance = variance; threshold = value; }
+    }
+    const cutoff = Math.max(105, Math.min(220, threshold));
+    for (let p = 0, i = 0; i < luminanceValues.length; i++, p += 4) {
+      const value = luminanceValues[i] >= cutoff ? 255 : 0;
+      pixels[p] = value;
+      pixels[p + 1] = value;
+      pixels[p + 2] = value;
+      pixels[p + 3] = 255;
     }
     context.putImageData(image, 0, 0);
     return canvas;
   }
 
   function normalizeScanText(value) {
-    return String(value || '').normalize('NFKC').toLocaleLowerCase().replace(/[\s\p{P}\p{S}]/gu, '');
+    return String(value || '').normalize('NFKC').toLocaleLowerCase()
+      .replace(/[^\p{Script=Han}\p{L}\p{N}]/gu, '');
+  }
+
+  function cleanRecognizedScanText(value) {
+    return String(value || '').normalize('NFKC')
+      .split(/\r?\n/)
+      .map(line => line.replace(/[|=~_]{1,}/g, ' ').replace(/\s+/g, ' ').trim())
+      .filter(line => /[\p{Script=Han}\p{L}\p{N}]/u.test(line))
+      .join(' ')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   function scanTextSimilarity(first, second) {
@@ -766,6 +808,10 @@ textarea.field { resize: vertical; line-height: 1.55; }
     let completed = 0;
     try {
       worker = await window.Tesseract.createWorker(languageCode, 1);
+      await worker.setParameters({
+        tessedit_pageseg_mode: '6',
+        preserve_interword_spaces: '1'
+      });
       scanWorker = worker;
       for (let sampleTime = 0; sampleTime < duration; sampleTime += SCAN_STEP_SECONDS) {
         if (scanId !== activeScanId) break;
@@ -775,25 +821,23 @@ textarea.field { resize: vertical; line-height: 1.55; }
         const result = await worker.recognize(canvas);
         if (scanId !== activeScanId) break;
 
-        const recognizedText = String(result?.data?.text || '')
-          .split(/\r?\n/)
-          .map(line => line.trim())
-          .filter(Boolean)
-          .join(' ')
-          .replace(/\s+/g, ' ')
-          .trim();
+        const recognizedText = cleanRecognizedScanText(result?.data?.text || '');
         const cleanText = normalizeScanText(recognizedText);
         const confidence = Number(result?.data?.confidence || 0);
+        // Reject symbol-only fragments but preserve legitimate short Chinese lines.
+        const hasReadableText = /[\p{Script=Han}\p{L}\p{N}]/u.test(recognizedText);
+        const acceptedText = hasReadableText && (confidence >= 25 || cleanText.length >= 4);
 
-        if (!cleanText) {
+        if (!acceptedText) {
           if (currentCue) {
             currentCue.end = Math.max(currentCue.start, sampleTime);
             currentCue = null;
             renderScanResults();
           }
-        } else if (currentCue && scanTextSimilarity(currentCue.text, recognizedText) >= 0.80) {
+        } else if (currentCue && scanTextSimilarity(currentCue.text, recognizedText) >= 0.70) {
+          // Same subtitle: extend the end time, never create a duplicate cue.
           currentCue.end = Math.min(duration, sampleTime + SCAN_STEP_SECONDS);
-          if (recognizedText.length > currentCue.text.length || confidence > currentCue.confidence + 8) {
+          if (confidence > currentCue.confidence + 5 || recognizedText.length > currentCue.text.length * 1.25) {
             currentCue.text = recognizedText;
             currentCue.confidence = confidence;
           }
