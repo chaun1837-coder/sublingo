@@ -458,7 +458,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
   }
 
   function normalizeScanText(value) {
-    return String(value || '').normalize('NFKC').toLocaleLowerCase().replace(/[\\s\\p{P}\\p{S}]/gu, '');
+    return String(value || '').normalize('NFKC').toLocaleLowerCase().replace(/[\s\p{P}\p{S}]/gu, '');
   }
 
   function scanTextSimilarity(first, second) {
@@ -491,7 +491,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
       number.textContent = String(index + 1);
       const time = document.createElement('td');
       time.className = 'scan-result-time';
-      time.textContent = formatScanTime(cue.start) + '\\n' + formatScanTime(cue.end);
+      time.textContent = formatScanTime(cue.start) + '\n' + formatScanTime(cue.end);
       const text = document.createElement('td');
       text.textContent = cue.text;
       row.append(number, time, text);
@@ -605,11 +605,11 @@ textarea.field { resize: vertical; line-height: 1.55; }
         if (scanId !== activeScanId) break;
 
         const recognizedText = String(result?.data?.text || '')
-          .split(/\\r?\\n/)
+          .split(/\r?\n/)
           .map(line => line.trim())
           .filter(Boolean)
           .join(' ')
-          .replace(/\\s+/g, ' ')
+          .replace(/\s+/g, ' ')
           .trim();
         const cleanText = normalizeScanText(recognizedText);
         const confidence = Number(result?.data?.confidence || 0);
