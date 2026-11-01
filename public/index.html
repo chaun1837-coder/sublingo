@@ -178,6 +178,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
 .scan-video-stage { background: #091321; padding: 12px; }
 .scan-video-stage video { display: block; width: 100%; max-height: min(64vh, 620px); aspect-ratio: 16 / 9; object-fit: contain; margin: 0 auto; border-radius: 9px; background: #050A12; }
 .scan-actions { display: flex; flex-direction: column; align-items: center; gap: 9px; padding: 20px 18px 22px; border-top: 1px solid light-dark(#E7ECF2, #2A384B); }
+.scan-language-control { width: min(100%, 430px); text-align: left; }
 .scan-start-button { width: min(100%, 430px); min-height: 54px; border: 0; border-radius: 13px; color: #FFFFFF; background: linear-gradient(135deg, #1C786E, #245F80); box-shadow: 0 9px 22px rgba(27, 104, 111, .2); font-size: 15px; font-weight: 800; letter-spacing: -.01em; transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease; }
 .scan-start-button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 12px 26px rgba(27, 104, 111, .27); }
 .scan-start-button:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
@@ -269,8 +270,23 @@ textarea.field { resize: vertical; line-height: 1.55; }
             <video id="videoPlayer" controls playsinline preload="metadata">Trình duyệt của bạn không hỗ trợ phát video HTML5.</video>
           </div>
           <div class="scan-actions">
+            <div class="scan-language-control">
+              <label class="form-label" for="scanLanguage">Ngôn ngữ phụ đề trong video</label>
+              <select class="field" id="scanLanguage">
+                <option value="vie" selected>Tiếng Việt</option>
+                <option value="eng">Tiếng Anh</option>
+                <option value="chi_sim">Tiếng Trung (Giản thể)</option>
+                <option value="chi_tra">Tiếng Trung (Phồn thể)</option>
+                <option value="kor">Tiếng Hàn</option>
+                <option value="jpn">Tiếng Nhật</option>
+                <option value="fra">Tiếng Pháp</option>
+                <option value="spa">Tiếng Tây Ban Nha</option>
+                <option value="deu">Tiếng Đức</option>
+                <option value="tha">Tiếng Thái</option>
+              </select>
+            </div>
             <button class="scan-start-button" id="startScanBtn" type="button" disabled>⌕&nbsp; Bắt đầu quét phụ đề</button>
-            <p class="scan-action-note">Video được xem trước trực tiếp trên trình duyệt. Bộ máy nhận diện phụ đề sẽ được kết nối ở bước phát triển tiếp theo.</p>
+            <p class="scan-action-note">Chọn ngôn ngữ, tua đến khung hình cần kiểm tra rồi bấm quét. Văn bản nhận diện sẽ được ghi trong Console (F12).</p>
           </div>
         </section>
       </div>
@@ -366,6 +382,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
 <div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
   <div class="modal"><h3 id="modalTitle">Kết nối dịch vụ</h3><p id="modalText"></p><div class="modal-actions"><button class="btn btn-ghost" id="modalClose">Để sau</button><button class="btn btn-primary" id="modalOk">Đã hiểu</button></div></div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script>
 (() => {
   const $ = (id) => document.getElementById(id);
@@ -447,9 +464,82 @@ textarea.field { resize: vertical; line-height: 1.55; }
     $('startScanBtn').disabled = true;
     $('videoInput').value = '';
   });
-  $('startScanBtn').addEventListener('click', () => {
-    if (!selectedVideoFile) return;
-    toast('Đã sẵn sàng video. Bộ máy quét phụ đề chưa được kết nối ở phiên bản này.');
+  $('startScanBtn').addEventListener('click', async () => {
+    if (!selectedVideoFile) {
+      toast('Vui lòng chọn video trước khi quét.');
+      return;
+    }
+
+    const video = $('videoPlayer');
+    if (video.readyState < 2 || !video.videoWidth || !video.videoHeight) {
+      toast('Video chưa sẵn sàng. Hãy đợi video tải khung hình rồi thử lại.');
+      return;
+    }
+
+    const languageSelect = $('scanLanguage');
+    const languageCode = languageSelect.value;
+    const languageName = languageSelect.selectedOptions[0]?.textContent.trim() || languageCode;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const context = canvas.getContext('2d');
+    if (!context) {
+      toast('Không thể tạo canvas để chụp khung hình video.');
+      return;
+    }
+
+    // Chụp ngay khung hình đang hiển thị; OCR chạy sau đó trên canvas này.
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const capturedAt = video.currentTime;
+    const button = $('startScanBtn');
+    const originalButtonHtml = button.innerHTML;
+    let worker;
+
+    button.disabled = true;
+    button.textContent = 'Đang khởi tạo OCR...';
+    toast('Đang tải bộ nhận diện và dữ liệu ngôn ngữ. Lần đầu có thể mất thêm thời gian.');
+
+    try {
+      if (!window.Tesseract || typeof window.Tesseract.createWorker !== 'function') {
+        throw new Error('Không tải được Tesseract.js từ CDN. Hãy kiểm tra kết nối mạng rồi tải lại trang.');
+      }
+
+      worker = await window.Tesseract.createWorker(languageCode, 1);
+      button.textContent = 'Đang nhận diện khung hình...';
+
+      const result = await worker.recognize(canvas);
+      const recognizedText = String(result?.data?.text || '').trim();
+      const confidence = result?.data?.confidence ?? null;
+
+      console.log('[SubLingo] Kết quả OCR:', {
+        language: languageName,
+        languageCode,
+        videoTimeSeconds: capturedAt,
+        confidence,
+        text: recognizedText,
+        data: result.data
+      });
+
+      if (recognizedText) {
+        toast('Đã nhận diện xong. Mở Console (F12) để xem nội dung.');
+      } else {
+        toast('Chưa nhận diện được chữ ở khung hình này. Hãy thử thời điểm khác hoặc ngôn ngữ khác.');
+      }
+    } catch (error) {
+      console.error('[SubLingo] Lỗi OCR:', error);
+      toast('Quét phụ đề thất bại: ' + (error.message || 'Lỗi không xác định.'));
+    } finally {
+      if (worker) {
+        try {
+          await worker.terminate();
+        } catch (terminationError) {
+          console.warn('[SubLingo] Không thể đóng OCR worker:', terminationError);
+        }
+      }
+      button.disabled = !selectedVideoFile;
+      button.innerHTML = originalButtonHtml;
+    }
   });
   window.addEventListener('beforeunload', () => {
     if (selectedVideoUrl) URL.revokeObjectURL(selectedVideoUrl);
