@@ -308,6 +308,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
 
   function showPage(pageName) {
     if (!pageViews[pageName]) return;
+    $('pageHost').hidden = pageName !== 'scan';
     Object.entries(pageViews).forEach(([name, page]) => { page.hidden = name !== pageName; });
     pageButtons.forEach((button) => {
       const isActive = button.dataset.page === pageName;
