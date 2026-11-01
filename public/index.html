@@ -682,6 +682,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
         renderCues(); updateProgress();
         button.textContent = 'Đã xử lý đến ' + batchEnd + '/' + total + '...';
       }
+      if (requestSignal.aborted) throw new DOMException('Translation cancelled', 'AbortError');
       const remaining = cues.filter((cue) => !cue.translated).length;
       if (remaining) toast('Đã dịch ' + (total - remaining) + '/' + total + ' câu. Nhóm lỗi: ' + failedRanges.join(', ') + (failureMessages.length ? '. Nguyên nhân: ' + failureMessages[0] : '') + '. Bấm dịch lại để thử các câu còn thiếu.');
       else toast('Đã dịch xong ' + total + ' câu. Hãy rà soát trước khi tải file.');
