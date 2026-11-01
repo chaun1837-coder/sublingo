@@ -391,7 +391,9 @@ textarea.field { resize: vertical; line-height: 1.55; }
   function formatCueText(cue, value) {
     const normalized = String(value ?? '').replace(/\r\n?/g, '\n').replace(/\n[ \t]*\n+/g, '\n');
     if (/^\s*\d{2}:\d{2}:\d{2}[,.]\d{3}\s*-->/m.test(normalized)) return null;
-    const lineEnding = cue.prefix.includes('\r\n') || cue.separator.includes('\r\n') ? '\r\n' : '\n';
+    const hasCrLf = cue.prefix.includes('\r\n') || cue.separator.includes('\r\n');
+    const hasCrOnly = !hasCrLf && (cue.prefix.includes('\r') || cue.separator.includes('\r'));
+    const lineEnding = hasCrLf ? '\r\n' : hasCrOnly ? '\r' : '\n';
     return normalized.replace(/\n/g, lineEnding);
   }
   $('downloadBtn').addEventListener('click', () => {

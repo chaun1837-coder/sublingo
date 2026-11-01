@@ -114,6 +114,17 @@ test('SRT parsing supports CRLF, LF, and legacy CR-only line endings', () => {
   assert.ok(html.includes(String.raw`(?<!\r)\n|\r(?!\n)`));
 });
 
+test('SRT export preserves CRLF, LF, and CR-only line endings', () => {
+  const formatStart = html.indexOf('function formatCueText(');
+  const formatEnd = html.indexOf("$('downloadBtn').addEventListener('click'", formatStart);
+  assert.ok(formatStart >= 0 && formatEnd > formatStart);
+  const formatter = new Function(html.slice(formatStart, formatEnd) + '; return formatCueText;')();
+  const body = 'line one\nline two';
+  assert.equal(formatter({ prefix: '1\r\n00:00:01,000 --> 00:00:02,000\r\n', separator: '\r\n\r\n' }, body), 'line one\r\nline two');
+  assert.equal(formatter({ prefix: '1\n00:00:01,000 --> 00:00:02,000\n', separator: '\n\n' }, body), 'line one\nline two');
+  assert.equal(formatter({ prefix: '1\r00:00:01,000 --> 00:00:02,000\r', separator: '\r\r' }, body), 'line one\rline two');
+});
+
 test('Google sign-in polling is bounded when the GIS script does not load', () => {
   assert.match(html, /retryCount < 20/);
   assert.match(html, /initializeGoogleSignIn\(retryCount \+ 1\)/);
