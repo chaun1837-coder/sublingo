@@ -158,7 +158,8 @@ textarea.field { resize: vertical; line-height: 1.55; }
 .page-host { width: calc(100% - var(--sidebar-width)); min-height: calc(100vh - 74px); margin-left: var(--sidebar-width); padding: clamp(25px, 4vw, 54px); transition: width .2s ease, margin-left .2s ease; }
 .page-host h1 { font-size: calc(clamp(1.55rem, 2.8vw, 2.1rem) * var(--site-heading-scale)); }
 .page-host .page-subtitle { margin: 9px 0 0; color: light-dark(#718096, #AAB8C9); font-size: 13px; }
-.spa-page[hidden], .legacy-page { display: none !important; }
+.spa-page[hidden] { display: none !important; }
+#translatePage.page { max-width: none; width: calc(100% - var(--sidebar-width)); margin-left: var(--sidebar-width); }
 #app.sidebar-collapsed { --sidebar-width: 76px; }
 #app.sidebar-collapsed .app-sidebar { padding-inline: 10px; }
 #app.sidebar-collapsed .sidebar-header { justify-content: center; }
@@ -206,14 +207,12 @@ textarea.field { resize: vertical; line-height: 1.55; }
     <section class="spa-page" id="scanPage" aria-labelledby="scanPageTitle">
       <h1 id="scanPageTitle">Quét Video Hardsub</h1>
     </section>
-    <section class="spa-page" id="translatePage" aria-labelledby="translatePageTitle" hidden>
-      <h1 id="translatePageTitle">Dịch phụ đề AI</h1>
-    </section>
+
   </main>
 
-  <main class="page legacy-page">
+  <main class="page spa-page" id="translatePage" aria-labelledby="translatePageTitle" hidden>
     <section class="hero">
-      <div><div class="eyebrow">Không mất cấu trúc · Không lệch thời gian</div><h1>Dịch phụ đề, giữ nguyên<br>từng khung hình.</h1><p>Tải file SRT lên, chọn AI và phong cách dịch. SubLingo tách riêng phần lời thoại để số thứ tự, timestamp và cấu trúc gốc luôn được giữ nguyên khi xuất file.</p></div>
+      <div><div class="eyebrow">Không mất cấu trúc · Không lệch thời gian</div><h1 id="translatePageTitle">Dịch phụ đề, giữ nguyên<br>từng khung hình.</h1><p>Tải file SRT lên, chọn AI và phong cách dịch. SubLingo tách riêng phần lời thoại để số thứ tự, timestamp và cấu trúc gốc luôn được giữ nguyên khi xuất file.</p></div>
       <div class="status-pill"><span class="status-dot"></span> Bảo toàn cấu trúc SRT</div>
     </section>
 
