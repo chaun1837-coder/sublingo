@@ -281,7 +281,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
   }
 
   function parseSrt(text) {
-    const split = text.split(/(\r\n|\n|\r)[ \t]*(?:(?:\r\n|\n|\r)[ \t]*)+/);
+    const split = text.split(/((?:\r\n|(?<!\r)\n|\r(?!\n))[ \t]*(?:(?:\r\n|(?<!\r)\n|\r(?!\n))[ \t]*)+)/);
     const parsedChunks = [];
     const parsedCues = [];
     const timePattern = /(?:^|\r\n|\n|\r)(\d{2}:\d{2}:\d{2}[,.]\d{3}\s*-->\s*\d{2}:\d{2}:\d{2}[,.]\d{3}[^\r\n]*)(\r\n|\n|\r)/;

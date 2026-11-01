@@ -111,7 +111,7 @@ test('translation batches respect per-cue and per-request text limits', () => {
 });
 
 test('SRT parsing supports CRLF, LF, and legacy CR-only line endings', () => {
-  assert.match(html, /text\.split\(\/(\\r\\n\|\\n\|\\r)\[ \\t\]\*/);
+  assert.ok(html.includes(String.raw`(?<!\r)\n|\r(?!\n)`));
 });
 
 test('Google sign-in polling is bounded when the GIS script does not load', () => {
