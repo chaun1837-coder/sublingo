@@ -179,11 +179,21 @@ textarea.field { resize: vertical; line-height: 1.55; }
 .video-frame-wrap { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 9px; background: #050A12; }
 .video-frame-wrap video { display: block; width: 100%; height: 100%; object-fit: contain; background: #050A12; }
 .ocr-overlay { position: absolute; inset: 0; pointer-events: none; }
-.ocr-region { position: absolute; left: 8%; top: 76%; width: 84%; height: 18%; min-height: 4%; border: 2px solid #FF3838; background: rgba(255, 56, 56, .10); box-shadow: 0 0 0 9999px rgba(2, 8, 18, .10); pointer-events: auto; cursor: move; touch-action: none; user-select: none; }
+.ocr-region { position: absolute; left: 8%; top: 76%; width: 84%; height: 18%; min-width: 8%; min-height: 4%; border: 2px solid #FF3838; background: rgba(255, 56, 56, .10); box-shadow: 0 0 0 9999px rgba(2, 8, 18, .10); pointer-events: auto; cursor: move; touch-action: none; user-select: none; }
 .ocr-region::before { content: 'VÙNG QUÉT OCR'; position: absolute; left: 0; top: -23px; padding: 3px 7px; border-radius: 5px 5px 0 0; color: #FFFFFF; background: #D92929; font-size: 9px; font-weight: 800; letter-spacing: .05em; white-space: nowrap; }
 .ocr-region:focus-visible { outline: 2px solid #FFFFFF; outline-offset: 3px; }
-.ocr-resize-handle { position: absolute; left: 50%; bottom: -7px; width: 64px; height: 13px; transform: translateX(-50%); border: 1px solid #FFFFFF; border-radius: 99px; background: #D92929; cursor: ns-resize; touch-action: none; }
-.ocr-resize-handle::after { content: ''; position: absolute; left: 50%; top: 3px; width: 22px; height: 5px; transform: translateX(-50%); border-top: 1px solid #FFFFFF; border-bottom: 1px solid #FFFFFF; }
+.ocr-resize-handle { position: absolute; display: block; padding: 0; border: 1px solid #FFFFFF; border-radius: 5px; background: #D92929; touch-action: none; }
+.ocr-resize-handle.n, .ocr-resize-handle.s { left: 50%; width: 34px; height: 9px; transform: translateX(-50%); cursor: ns-resize; }
+.ocr-resize-handle.n { top: -5px; }
+.ocr-resize-handle.s { bottom: -5px; }
+.ocr-resize-handle.e, .ocr-resize-handle.w { top: 50%; width: 9px; height: 34px; transform: translateY(-50%); cursor: ew-resize; }
+.ocr-resize-handle.e { right: -5px; }
+.ocr-resize-handle.w { left: -5px; }
+.ocr-resize-handle.nw, .ocr-resize-handle.ne, .ocr-resize-handle.sw, .ocr-resize-handle.se { width: 13px; height: 13px; }
+.ocr-resize-handle.nw { left: -6px; top: -6px; cursor: nwse-resize; }
+.ocr-resize-handle.ne { right: -6px; top: -6px; cursor: nesw-resize; }
+.ocr-resize-handle.sw { left: -6px; bottom: -6px; cursor: nesw-resize; }
+.ocr-resize-handle.se { right: -6px; bottom: -6px; cursor: nwse-resize; }
 .scan-running .ocr-region { pointer-events: none; opacity: .75; }
 .scan-region-help { margin: 0; padding: 9px 12px; color: #AAB8C9; background: #101C2C; font-size: 10px; line-height: 1.55; }
 .scan-monitor-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(290px, .85fr); gap: 14px; align-items: start; padding: 14px; }
@@ -308,12 +318,19 @@ textarea.field { resize: vertical; line-height: 1.55; }
                 <div class="video-frame-wrap" id="videoFrameWrap">
                   <video id="videoPlayer" controls playsinline preload="metadata">Trình duyệt của bạn không hỗ trợ phát video HTML5.</video>
                   <div class="ocr-overlay" aria-label="Lớp điều chỉnh vùng quét">
-                    <div class="ocr-region" id="ocrRegion" role="group" tabindex="0" aria-label="Vùng quét OCR. Kéo để di chuyển, dùng tay nắm đỏ phía dưới để chỉnh chiều cao. Dùng phím mũi tên để điều chỉnh.">
-                      <button class="ocr-resize-handle" id="ocrResizeHandle" type="button" aria-label="Kéo để thay đổi chiều cao vùng quét"></button>
+                    <div class="ocr-region" id="ocrRegion" role="group" tabindex="0" aria-label="Vùng quét OCR. Kéo phần bên trong để di chuyển; kéo cạnh hoặc góc để thay đổi tự do chiều rộng và chiều cao.">
+                      <button class="ocr-resize-handle n" type="button" data-resize="n" aria-label="Đổi cạnh trên"></button>
+                      <button class="ocr-resize-handle s" type="button" data-resize="s" aria-label="Đổi cạnh dưới"></button>
+                      <button class="ocr-resize-handle e" type="button" data-resize="e" aria-label="Đổi cạnh phải"></button>
+                      <button class="ocr-resize-handle w" type="button" data-resize="w" aria-label="Đổi cạnh trái"></button>
+                      <button class="ocr-resize-handle nw" type="button" data-resize="nw" aria-label="Đổi góc trên trái"></button>
+                      <button class="ocr-resize-handle ne" type="button" data-resize="ne" aria-label="Đổi góc trên phải"></button>
+                      <button class="ocr-resize-handle sw" type="button" data-resize="sw" aria-label="Đổi góc dưới trái"></button>
+                      <button class="ocr-resize-handle se" type="button" data-resize="se" aria-label="Đổi góc dưới phải"></button>
                     </div>
                   </div>
                 </div>
-                <p class="scan-region-help">Kéo khung đỏ để di chuyển vùng phụ đề. Kéo tay nắm đỏ phía dưới để tăng hoặc giảm chiều cao. OCR chỉ đọc phần nằm bên trong khung.</p>
+                <p class="scan-region-help">Kéo bên trong khung đỏ để di chuyển. Kéo một cạnh để chỉnh chiều rộng hoặc chiều cao; kéo các góc để thay đổi cả hai tự do. OCR chỉ đọc phần nằm bên trong khung.</p>
               </div>
               <div class="scan-actions">
                 <div class="scan-language-control">
@@ -478,51 +495,84 @@ textarea.field { resize: vertical; line-height: 1.55; }
   function initOcrRegionControls() {
     const region = $('ocrRegion');
     const frame = $('videoFrameWrap');
-    const handle = $('ocrResizeHandle');
     let interaction = null;
     const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
-    const geometry = () => ({ top: parseFloat(region.style.top || '76%'), height: parseFloat(region.style.height || '18%') });
-    const apply = (top, height) => {
-      const safeHeight = clamp(height, 4, 96);
+    const geometry = () => ({
+      left: parseFloat(region.style.left || '8%'),
+      top: parseFloat(region.style.top || '76%'),
+      width: parseFloat(region.style.width || '84%'),
+      height: parseFloat(region.style.height || '18%')
+    });
+    const apply = (left, top, width, height) => {
+      const safeLeft = clamp(left, 0, 92);
+      const safeTop = clamp(top, 0, 96);
+      const safeWidth = clamp(width, 8, 100 - safeLeft);
+      const safeHeight = clamp(height, 4, 100 - safeTop);
+      region.style.left = safeLeft + '%';
+      region.style.top = safeTop + '%';
+      region.style.width = safeWidth + '%';
       region.style.height = safeHeight + '%';
-      region.style.top = clamp(top, 0, 100 - safeHeight) + '%';
     };
-    const start = (event, mode) => {
+    const start = (event, mode, direction = '') => {
       if (scanRunning || !selectedVideoFile) return;
       event.preventDefault();
       event.stopPropagation();
       const current = geometry();
-      interaction = { mode, pointerId: event.pointerId, startY: event.clientY, top: current.top, height: current.height, frameHeight: frame.getBoundingClientRect().height };
-      (mode === 'resize' ? handle : region).setPointerCapture(event.pointerId);
+      interaction = {
+        mode, direction, pointerId: event.pointerId,
+        startX: event.clientX, startY: event.clientY,
+        ...current,
+        frameWidth: frame.getBoundingClientRect().width,
+        frameHeight: frame.getBoundingClientRect().height
+      };
+      event.currentTarget.setPointerCapture(event.pointerId);
     };
     region.addEventListener('pointerdown', (event) => {
-      if (event.target === handle) return;
-      start(event, 'move');
+      const resizeHandle = event.target.closest('[data-resize]');
+      start(event, resizeHandle ? 'resize' : 'move', resizeHandle?.dataset.resize || '');
     });
-    handle.addEventListener('pointerdown', (event) => start(event, 'resize'));
     const move = (event) => {
       if (!interaction || event.pointerId !== interaction.pointerId) return;
-      const delta = (event.clientY - interaction.startY) / Math.max(1, interaction.frameHeight) * 100;
-      if (interaction.mode === 'move') apply(interaction.top + delta, interaction.height);
-      else apply(interaction.top, interaction.height + delta);
+      const deltaX = (event.clientX - interaction.startX) / Math.max(1, interaction.frameWidth) * 100;
+      const deltaY = (event.clientY - interaction.startY) / Math.max(1, interaction.frameHeight) * 100;
+      let { left, top, width, height } = interaction;
+      if (interaction.mode === 'move') {
+        left += deltaX;
+        top += deltaY;
+      } else {
+        const direction = interaction.direction;
+        if (direction.includes('e')) width += deltaX;
+        if (direction.includes('s')) height += deltaY;
+        if (direction.includes('w')) { left += deltaX; width -= deltaX; }
+        if (direction.includes('n')) { top += deltaY; height -= deltaY; }
+      }
+      apply(left, top, width, height);
     };
     const end = (event) => {
       if (!interaction || event.pointerId !== interaction.pointerId) return;
       interaction = null;
     };
     region.addEventListener('pointermove', move);
-    handle.addEventListener('pointermove', move);
     region.addEventListener('pointerup', end);
     region.addEventListener('pointercancel', end);
-    handle.addEventListener('pointerup', end);
-    handle.addEventListener('pointercancel', end);
     region.addEventListener('keydown', (event) => {
-      if (!['ArrowUp', 'ArrowDown'].includes(event.key)) return;
+      if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) return;
       event.preventDefault();
       const current = geometry();
       const step = event.shiftKey ? 2 : 1;
-      if (event.shiftKey) apply(current.top, current.height + (event.key === 'ArrowDown' ? step : -step));
-      else apply(current.top + (event.key === 'ArrowDown' ? step : -step), current.height);
+      if (event.shiftKey) {
+        apply(
+          current.left, current.top,
+          current.width + (event.key === 'ArrowRight' ? step : event.key === 'ArrowLeft' ? -step : 0),
+          current.height + (event.key === 'ArrowDown' ? step : event.key === 'ArrowUp' ? -step : 0)
+        );
+      } else {
+        apply(
+          current.left + (event.key === 'ArrowRight' ? step : event.key === 'ArrowLeft' ? -step : 0),
+          current.top + (event.key === 'ArrowDown' ? step : event.key === 'ArrowUp' ? -step : 0),
+          current.width, current.height
+        );
+      }
     });
   }
 
