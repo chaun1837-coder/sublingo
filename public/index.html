@@ -140,6 +140,40 @@ textarea.field { resize: vertical; line-height: 1.55; }
 .modal p { color: light-dark(#718096, #AAB8C9); font-size: 12px; line-height: 1.65; margin: 0 0 17px; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
 .decor { position: fixed; pointer-events: none; opacity: var(--site-decoration-opacity); inset: auto 0 0 auto; width: 240px; height: 240px; background: radial-gradient(circle, rgba(92, 176, 160, .11), transparent 68%); z-index: 0; }
+/* Single-page workspace navigation */
+#app { --sidebar-width: 264px; }
+.app-sidebar { position: fixed; inset: 0 auto 0 0; z-index: 25; width: var(--sidebar-width); padding: 18px 13px; display: flex; flex-direction: column; gap: 22px; background: light-dark(#FFFFFF, #151F30); border-right: 1px solid light-dark(#E0E7EF, #2B394D); transition: width .2s ease; overflow: hidden; }
+.sidebar-header { min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 3px; }
+.sidebar-brand { min-width: 0; display: flex; align-items: center; gap: 10px; color: light-dark(#183153, #EDF3FA); font-size: 16px; font-weight: 800; letter-spacing: -.04em; white-space: nowrap; }
+.sidebar-mark { width: 36px; height: 36px; flex: 0 0 36px; display: grid; place-items: center; border-radius: 11px; background: #DDF2EE; color: #183153; font-size: 12px; font-weight: 900; letter-spacing: -.04em; }
+.sidebar-toggle { width: 36px; height: 36px; flex: 0 0 36px; border: 1px solid light-dark(#E0E7EF, #35445A); border-radius: 10px; background: transparent; color: light-dark(#53657B, #C0CCDA); font-size: 18px; }
+.sidebar-toggle:hover { background: light-dark(#EEF3F8, #202D40); }
+.sidebar-nav { display: grid; gap: 7px; }
+.sidebar-nav-button { width: 100%; min-height: 46px; display: flex; align-items: center; gap: 12px; padding: 9px 11px; border: 1px solid transparent; border-radius: 11px; background: transparent; color: light-dark(#52647A, #B9C6D5); text-align: left; font-size: 12px; font-weight: 700; white-space: nowrap; transition: .18s ease; }
+.sidebar-nav-button:hover { background: light-dark(#F0F4F8, #202D40); }
+.sidebar-nav-button.active { color: light-dark(#205F57, #B6E4DB); background: light-dark(#EAF6F3, #1B3935); border-color: light-dark(#CDE7E1, #31584F); }
+.sidebar-icon { width: 23px; flex: 0 0 23px; display: inline-grid; place-items: center; font-size: 17px; }
+.topbar { width: calc(100% - var(--sidebar-width)); margin-left: var(--sidebar-width); justify-content: flex-end; transition: width .2s ease, margin-left .2s ease; }
+.topbar .brand { display: none; }
+.page-host { width: calc(100% - var(--sidebar-width)); min-height: calc(100vh - 74px); margin-left: var(--sidebar-width); padding: clamp(25px, 4vw, 54px); transition: width .2s ease, margin-left .2s ease; }
+.page-host h1 { font-size: calc(clamp(1.55rem, 2.8vw, 2.1rem) * var(--site-heading-scale)); }
+.page-host .page-subtitle { margin: 9px 0 0; color: light-dark(#718096, #AAB8C9); font-size: 13px; }
+.spa-page[hidden], .legacy-page { display: none !important; }
+#app.sidebar-collapsed { --sidebar-width: 76px; }
+#app.sidebar-collapsed .app-sidebar { padding-inline: 10px; }
+#app.sidebar-collapsed .sidebar-header { justify-content: center; }
+#app.sidebar-collapsed .sidebar-brand > span, #app.sidebar-collapsed .sidebar-label { display: none; }
+#app.sidebar-collapsed .sidebar-nav-button { justify-content: center; padding-inline: 5px; }
+#app.sidebar-collapsed .sidebar-icon { width: 100%; flex-basis: auto; }
+@media (max-width: 760px) {
+  #app:not(.sidebar-collapsed) { --sidebar-width: 220px; }
+  #app.sidebar-collapsed { --sidebar-width: 68px; }
+  .app-sidebar { padding: 15px 10px; }
+  .topbar { min-height: 66px; padding-inline: 12px; }
+  .top-actions .btn { padding: 9px 10px; font-size: 11px; }
+  .page-host { min-height: calc(100vh - 66px); padding: 25px 18px; }
+}
+
 @media (max-width: 980px) { .workspace { grid-template-columns: 300px minmax(0, 1fr); } .cue-card { grid-template-columns: 35px minmax(0, 1fr); } .cue-content.translation-col { grid-column: 2; } }
 @media (max-width: 760px) { .workspace { grid-template-columns: 1fr; } .hero { align-items: flex-start; flex-direction: column; } .topbar { padding-inline: 16px; } .brand-sub { display: none; } .top-actions .btn { padding: 9px 10px; font-size: 11px; } .page { padding-top: 24px; } }
 @media (max-width: 480px) { .cue-card { grid-template-columns: 30px minmax(0, 1fr); gap: 7px; } .cue-content.translation-col { grid-column: 2; } .field-row { grid-template-columns: 1fr; } .bottom-actions { width: 100%; } .bottom-actions .btn { flex: 1; } }
@@ -147,6 +181,16 @@ textarea.field { resize: vertical; line-height: 1.55; }
 </head>
 <body>
 <div id="app">
+  <aside class="app-sidebar" aria-label="Thanh điều hướng chính">
+    <div class="sidebar-header">
+      <div class="sidebar-brand"><div class="sidebar-mark" aria-hidden="true">SL</div><span>SubLingo</span></div>
+      <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-label="Thu gọn thanh bên" aria-expanded="true" title="Thu gọn thanh bên">☰</button>
+    </div>
+    <nav class="sidebar-nav" aria-label="Các tính năng">
+      <button class="sidebar-nav-button active" type="button" data-page="scan" aria-current="page"><span class="sidebar-icon" aria-hidden="true">◉</span><span class="sidebar-label">1. Quét Video Hardsub</span></button>
+      <button class="sidebar-nav-button" type="button" data-page="translate"><span class="sidebar-icon" aria-hidden="true">文</span><span class="sidebar-label">2. Dịch phụ đề AI</span></button>
+    </nav>
+  </aside>
   <header class="topbar">
     <div class="brand">
       <div class="logo-mark" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 5.5C4 4.67 4.67 4 5.5 4h13c.83 0 1.5.67 1.5 1.5v9c0 .83-.67 1.5-1.5 1.5H11l-4.5 4v-4H5.5C4.67 16 4 15.33 4 14.5v-9Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 8.5h8M8 11.5h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
@@ -158,7 +202,16 @@ textarea.field { resize: vertical; line-height: 1.55; }
     </div>
   </header>
 
-  <main class="page">
+  <main class="page-host" id="pageHost">
+    <section class="spa-page" id="scanPage" aria-labelledby="scanPageTitle">
+      <h1 id="scanPageTitle">Quét Video Hardsub</h1>
+    </section>
+    <section class="spa-page" id="translatePage" aria-labelledby="translatePageTitle" hidden>
+      <h1 id="translatePageTitle">Dịch phụ đề AI</h1>
+    </section>
+  </main>
+
+  <main class="page legacy-page">
     <section class="hero">
       <div><div class="eyebrow">Không mất cấu trúc · Không lệch thời gian</div><h1>Dịch phụ đề, giữ nguyên<br>từng khung hình.</h1><p>Tải file SRT lên, chọn AI và phong cách dịch. SubLingo tách riêng phần lời thoại để số thứ tự, timestamp và cấu trúc gốc luôn được giữ nguyên khi xuất file.</p></div>
       <div class="status-pill"><span class="status-dot"></span> Bảo toàn cấu trúc SRT</div>
@@ -250,6 +303,29 @@ textarea.field { resize: vertical; line-height: 1.55; }
 <script>
 (() => {
   const $ = (id) => document.getElementById(id);
+  const app = $('app');
+  const pageViews = { scan: $('scanPage'), translate: $('translatePage') };
+  const pageButtons = document.querySelectorAll('.sidebar-nav-button[data-page]');
+
+  function showPage(pageName) {
+    if (!pageViews[pageName]) return;
+    Object.entries(pageViews).forEach(([name, page]) => { page.hidden = name !== pageName; });
+    pageButtons.forEach((button) => {
+      const isActive = button.dataset.page === pageName;
+      button.classList.toggle('active', isActive);
+      if (isActive) button.setAttribute('aria-current', 'page');
+      else button.removeAttribute('aria-current');
+    });
+  }
+  pageButtons.forEach((button) => button.addEventListener('click', () => showPage(button.dataset.page)));
+  $('sidebarToggle').addEventListener('click', () => {
+    const collapsed = app.classList.toggle('sidebar-collapsed');
+    $('sidebarToggle').setAttribute('aria-expanded', String(!collapsed));
+    $('sidebarToggle').setAttribute('aria-label', collapsed ? 'Mở rộng thanh bên' : 'Thu gọn thanh bên');
+    $('sidebarToggle').title = collapsed ? 'Mở rộng thanh bên' : 'Thu gọn thanh bên';
+  });
+  showPage('scan');
+
   let provider = 'gemini';
   let fileName = '';
   let originalText = '';
