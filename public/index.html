@@ -150,7 +150,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
   <header class="topbar">
     <div class="brand">
       <div class="logo-mark" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 5.5C4 4.67 4.67 4 5.5 4h13c.83 0 1.5.67 1.5 1.5v9c0 .83-.67 1.5-1.5 1.5H11l-4.5 4v-4H5.5C4.67 16 4 15.33 4 14.5v-9Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 8.5h8M8 11.5h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
-      <div><div class="brand-name">SubLingo</div><div class="brand-sub">SUBTITLE WORKSPACE · SRT TRANSLATOR</div></div>
+      <div><div class="brand-name">SubLingo</div><div class="brand-sub">SUBTITLE WORKSPACE · SRT TRANSLATOR · v1.1.0</div></div>
     </div>
     <div class="top-actions">
       <div class="google-login-wrap" id="googleSignInButton"></div>
@@ -256,6 +256,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
   let chunks = [];
   let cues = [];
   let toastTimer;
+  let fileReadToken = 0;
 
   function toast(message) {
     const el = $('toast');
@@ -275,7 +276,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
 
   function normalizeSrtTimestamp(value) {
     const singleLine = String(value ?? '').replace(/[\r\n]+/g, ' ').trim();
-    const match = singleLine.match(/^(\d{2}:\d{2}:\d{2})[,.](\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2})[,.](\d{3})(.*)$/);
+    const match = singleLine.match(/^(\d{2,}:\d{2}:\d{2})[,.](\d{3})\s*-->\s*(\d{2,}:\d{2}:\d{2})[,.](\d{3})(.*)$/);
     if (!match) return singleLine;
     return match[1] + ',' + match[2] + ' --> ' + match[3] + ',' + match[4] + match[5];
   }
@@ -284,7 +285,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
     const split = text.split(/((?:\r\n|(?<!\r)\n|\r(?!\n))[ \t]*(?:(?:\r\n|(?<!\r)\n|\r(?!\n))[ \t]*)+)/);
     const parsedChunks = [];
     const parsedCues = [];
-    const timePattern = /(?:^|\r\n|\n|\r)(\d{2}:\d{2}:\d{2}[,.]\d{3}\s*-->\s*\d{2}:\d{2}:\d{2}[,.]\d{3}[^\r\n]*)(\r\n|\n|\r)/;
+    const timePattern = /(?:^|\r\n|\n|\r)(\d{2,}:\d{2}:\d{2}[,.]\d{3}\s*-->\s*\d{2,}:\d{2}:\d{2}[,.]\d{3}[^\r\n]*)(\r\n|\n|\r)/;
     for (let i = 0; i < split.length; i += 2) {
       const raw = split[i];
       const separator = split[i + 1] || '';
@@ -293,7 +294,8 @@ textarea.field { resize: vertical; line-height: 1.55; }
       if (!match) { parsedChunks.push({ raw, separator, cue: null }); continue; }
       const normalizedTime = normalizeSrtTimestamp(match[1]);
       const prefixEnd = match.index + match[0].length;
-      const prefix = raw.slice(0, match.index) + match[0].replace(match[1], normalizedTime);
+      // Keep the original timestamp line byte-for-byte; normalize only the preview label.
+      const prefix = raw.slice(0, prefixEnd);
       const source = raw.slice(prefixEnd);
       const cue = { id: parsedCues.length, prefix, source, translation: source, translated: false, time: normalizedTime, separator };
       parsedCues.push(cue);
@@ -341,9 +343,18 @@ textarea.field { resize: vertical; line-height: 1.55; }
     $('downloadBtn').disabled = cues.length === 0;
   }
   function loadText(text, name) {
+    fileReadToken += 1;
+    if (activeTranslationController) activeTranslationController.abort();
     originalText = text;
     fileName = name;
     const result = parseSrt(text);
+    if (result.parsedCues.length > 5000) {
+      fileName = ''; originalText = ''; chunks = []; cues = [];
+      $('fileMeta').classList.remove('visible'); $('cueList').innerHTML = ''; $('cueList').style.display = 'none';
+      $('emptyState').style.display = 'block'; $('cueCount').textContent = 'File quá lớn'; $('downloadBtn').disabled = true;
+      toast('File có hơn 5.000 câu phụ đề. Hãy chia nhỏ file để xử lý ổn định hơn.');
+      return;
+    }
     chunks = result.parsedChunks;
     cues = result.parsedCues;
     $('fileName').textContent = name;
@@ -371,9 +382,12 @@ textarea.field { resize: vertical; line-height: 1.55; }
   function handleFile(file) {
     if (!file) return;
     if (!/\.srt$/i.test(file.name)) { toast('Vui lòng chọn file có đuôi .srt.'); return; }
+    if (file.size > 10 * 1024 * 1024) { toast('File vượt quá 10 MB. Hãy chia nhỏ file SRT rồi thử lại.'); return; }
+    if (activeTranslationController) activeTranslationController.abort();
+    const readToken = ++fileReadToken;
     const reader = new FileReader();
-    reader.onload = () => loadText(String(reader.result || ''), file.name);
-    reader.onerror = () => toast('Không thể đọc file. Vui lòng thử lại.');
+    reader.onload = () => { if (readToken === fileReadToken) loadText(String(reader.result || ''), file.name); };
+    reader.onerror = () => { if (readToken === fileReadToken) toast('Không thể đọc file. Vui lòng thử lại.'); };
     reader.readAsText(file, 'UTF-8');
   }
   $('chooseFile').addEventListener('click', () => $('fileInput').click());
@@ -382,11 +396,15 @@ textarea.field { resize: vertical; line-height: 1.55; }
   $('dropZone').addEventListener('dragleave', () => $('dropZone').classList.remove('drag'));
   $('dropZone').addEventListener('drop', (e) => { e.preventDefault(); $('dropZone').classList.remove('drag'); handleFile(e.dataTransfer.files[0]); });
   $('removeFile').addEventListener('click', () => {
+    fileReadToken += 1;
+    if (activeTranslationController) activeTranslationController.abort();
     fileName = ''; originalText = ''; chunks = []; cues = [];
     $('fileMeta').classList.remove('visible'); $('fileInput').value = '';
     $('cueList').innerHTML = ''; $('cueList').style.display = 'none'; $('emptyState').style.display = 'block';
     $('cueCount').textContent = 'Chưa có file'; $('downloadBtn').disabled = true;
     $('preserveNote').textContent = '🔒 Số thứ tự và mốc thời gian được khóa, không cho chỉnh sửa.';
+    $('translateProgress').classList.remove('visible'); $('translateProgressSummary').classList.remove('visible');
+    $('translateProgressFill').style.width = '0%'; $('translateProgressCount').textContent = '0/0 câu đã dịch'; $('translateProgressPercent').textContent = '0%';
   });
   function formatCueText(cue, value) {
     const normalized = String(value ?? '').replace(/\r\n?/g, '\n').replace(/\n[ \t]*\n+/g, '\n');
@@ -540,6 +558,8 @@ textarea.field { resize: vertical; line-height: 1.55; }
       toast('Đăng nhập Google thành công.');
     } catch (error) {
       toast(error.message || 'Đăng nhập Google thất bại.');
+      // A failed attempt may already have consumed the one-time nonce.
+      await initializeGoogleSignIn();
     }
   }
 
@@ -572,7 +592,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
     }
   }
 
-  function clearSecretsOnLogout() {
+  function clearAppSecretsAndWorkspace() {
     // Xóa cả hai nhà cung cấp trước khi setLoggedIn(null) chuyển tab về Gemini.
     try {
       localStorage.removeItem('sublingo_saved_api_key_openai');
@@ -593,7 +613,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
   }
 
   $('logoutBtn').addEventListener('click', async () => {
-    clearSecretsOnLogout();
+    clearAppSecretsAndWorkspace();
     setLoggedIn(null);
     try {
       const response = await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
@@ -608,6 +628,22 @@ textarea.field { resize: vertical; line-height: 1.55; }
     }
   });
 
+  function waitFor(ms, signal) {
+    return new Promise((resolve, reject) => {
+      if (signal.aborted) return reject(new DOMException('Translation cancelled', 'AbortError'));
+      const onAbort = () => {
+        clearTimeout(timer);
+        signal.removeEventListener('abort', onAbort);
+        reject(new DOMException('Translation cancelled', 'AbortError'));
+      };
+      const timer = setTimeout(() => {
+        signal.removeEventListener('abort', onAbort);
+        resolve();
+      }, ms);
+      signal.addEventListener('abort', onAbort, { once: true });
+    });
+  }
+
   async function translateAll() {
     if (translating) return;
     if (!cues.length) { toast('Hãy tải file SRT lên trước khi dịch.'); return; }
@@ -616,9 +652,23 @@ textarea.field { resize: vertical; line-height: 1.55; }
       toast('Chưa đăng nhập chỉ được dùng Gemini 3.5 Flash-Lite.');
       return;
     }
+    const oversizedCue = cues.find((cue) => !cue.translated && cue.source.length > 5000);
+    if (oversizedCue) {
+      toast('Câu phụ đề ' + (oversizedCue.id + 1) + ' dài hơn giới hạn 5.000 ký tự. Hãy rút ngắn câu đó rồi dịch lại.');
+      return;
+    }
     const apiKey = $('apiKey').value.trim();
     if (!apiKey) { toast('Bạn cần nhập API key trong phần thiết lập.'); $('apiKey').focus(); return; }
 
+    const requestProvider = provider;
+    const requestModel = $('model').value;
+    const requestSourceLang = $('sourceLang').value;
+    const requestTargetLang = $('targetLang').value;
+    const requestStyle = $('style').value;
+    const requestController = new AbortController();
+    activeTranslationController = requestController;
+    const requestSignal = requestController.signal;
+    activeApiKey = apiKey;
     translating = true;
     document.querySelectorAll('.cue-text.translation').forEach((field) => { field.disabled = true; });
     const button = $('translateBtn');
@@ -627,11 +677,6 @@ textarea.field { resize: vertical; line-height: 1.55; }
     const summary = $('translateProgressSummary');
     const batchSize = 60;
     const maxBatchChars = 24000;
-    const oversizedCue = cues.find((cue) => !cue.translated && cue.source.length > 5000);
-    if (oversizedCue) {
-      toast('Câu phụ đề ' + (oversizedCue.id + 1) + ' dài hơn giới hạn 5.000 ký tự. Hãy rút ngắn câu đó rồi dịch lại.');
-      return;
-    }
     const total = cues.length;
     const failedRanges = [];
     const failureMessages = [];
@@ -672,15 +717,16 @@ textarea.field { resize: vertical; line-height: 1.55; }
         let succeeded = false;
         for (let attempt = 1; attempt <= 3; attempt += 1) {
           try {
-            if (provider === 'gemini' && geminiRequestsSent > 0) {
+            if (requestProvider === 'gemini' && geminiRequestsSent > 0) {
               button.textContent = 'Đang nghỉ 4,5 giây giữa các lượt gửi...';
-              await new Promise((resolve) => setTimeout(resolve, 4500));
+              await waitFor(4500, requestSignal);
             }
             if (provider === 'gemini') geminiRequestsSent += 1;
+            if (requestSignal.aborted) throw new DOMException('Translation cancelled', 'AbortError');
             const response = await fetch('/api/translate', {
-              method: 'POST', credentials: 'same-origin',
+              method: 'POST', credentials: 'same-origin', signal: requestSignal,
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ provider, apiKey, model: $('model').value, sourceLang: $('sourceLang').value, targetLang: $('targetLang').value, style: $('style').value, cues: batch })
+              body: JSON.stringify({ provider: requestProvider, apiKey: activeApiKey, model: requestModel, sourceLang: requestSourceLang, targetLang: requestTargetLang, style: requestStyle, cues: batch })
             });
             const data = await response.json().catch(() => ({}));
             if (!response.ok) {
@@ -696,6 +742,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
             }
             succeeded = true; updateProgress(); break;
           } catch (error) {
+            if (requestSignal.aborted || error.name === 'AbortError') throw new DOMException('Translation cancelled', 'AbortError');
             lastError = error;
             const retryableStatuses = [408, 429, 500, 502, 503, 504];
             const isNetworkFailure = !Number.isInteger(error.status) && (error.name === 'TypeError' || /timeout|network/i.test(error.message || ''));
@@ -703,8 +750,8 @@ textarea.field { resize: vertical; line-height: 1.55; }
             if (!canRetry) throw error;
             if (attempt < 3) {
               const backoffMs = Math.min(8000, 1000 * (2 ** (attempt - 1))) + Math.floor(Math.random() * 500);
-              button.textContent = 'Gemini tạm bận · chờ ' + Math.ceil(backoffMs / 1000) + ' giây rồi thử lại...';
-              await new Promise((resolve) => setTimeout(resolve, backoffMs));
+              button.textContent = (requestProvider === 'gemini' ? 'Gemini' : 'OpenAI') + ' tạm bận · chờ ' + Math.ceil(backoffMs / 1000) + ' giây rồi thử lại...';
+              await waitFor(backoffMs, requestSignal);
             }
           }
         }
@@ -721,9 +768,12 @@ textarea.field { resize: vertical; line-height: 1.55; }
       if (remaining) toast('Đã dịch ' + (total - remaining) + '/' + total + ' câu. Nhóm lỗi: ' + failedRanges.join(', ') + (failureMessages.length ? '. Nguyên nhân: ' + failureMessages[0] : '') + '. Bấm dịch lại để thử các câu còn thiếu.');
       else toast('Đã dịch xong ' + total + ' câu. Hãy rà soát trước khi tải file.');
     } catch (error) {
-      renderCues(); toast(error.message || 'Có lỗi khi dịch. Vui lòng thử lại.');
+      renderCues();
+      if (error.name !== 'AbortError') toast(error.message || 'Có lỗi khi dịch. Vui lòng thử lại.');
     } finally {
       translating = false;
+      activeApiKey = '';
+      if (activeTranslationController === requestController) activeTranslationController = null;
       document.querySelectorAll('.cue-text.translation').forEach((field) => { field.disabled = false; });
       button.disabled = false;
       button.textContent = '✦ Dịch phụ đề bằng AI';
