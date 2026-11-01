@@ -217,8 +217,8 @@ textarea.field { resize: vertical; line-height: 1.55; }
 .scan-results-table th { position: sticky; top: 0; z-index: 1; color: light-dark(#758397, #A2B0C2); background: light-dark(#F8FAFC, #1D2A3D); font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; }
 .scan-results-table td { color: light-dark(#30445D, #D7E2EF); font-size: 11px; line-height: 1.5; overflow-wrap: anywhere; }
 .scan-results-table th:first-child, .scan-results-table td:first-child { width: 34px; text-align: center; }
-.scan-results-table th:nth-child(2), .scan-results-table td:nth-child(2) { width: 116px; }
-.scan-result-time { color: light-dark(#537365, #A8D8C7) !important; font-size: 9px !important; font-variant-numeric: tabular-nums; white-space: pre-line; }
+.scan-results-table th:nth-child(2), .scan-results-table td:nth-child(2) { width: 205px; }
+.scan-result-time { color: light-dark(#537365, #A8D8C7) !important; font-size: 9px !important; font-variant-numeric: tabular-nums; white-space: nowrap; overflow-wrap: normal; }
 .scan-result-row { cursor: pointer; }
 .scan-result-row:hover { background: light-dark(#F2F8F6, #1D332F); }
 .scan-action-note { max-width: 470px; }
@@ -699,7 +699,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
       number.textContent = String(index + 1);
       const time = document.createElement('td');
       time.className = 'scan-result-time';
-      time.textContent = formatScanTime(cue.start) + '\n' + formatScanTime(cue.end);
+      time.textContent = formatScanTime(cue.start) + ' --> ' + formatScanTime(cue.end);
       const text = document.createElement('td');
       text.textContent = cue.text;
       row.append(number, time, text);
@@ -1100,6 +1100,13 @@ textarea.field { resize: vertical; line-height: 1.55; }
   $('modalOk').addEventListener('click', () => $('modalBackdrop').classList.remove('open'));
   $('modalBackdrop').addEventListener('click', (e) => { if (e.target === $('modalBackdrop')) $('modalBackdrop').classList.remove('open'); });
 
+  function normalizeSrtTimestamp(value) {
+    const singleLine = String(value ?? '').replace(/[\r\n]+/g, ' ').trim();
+    const match = singleLine.match(/^(\d{2}:\d{2}:\d{2})[,.](\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2})[,.](\d{3})(.*)$/);
+    if (!match) return singleLine;
+    return match[1] + ',' + match[2] + ' --> ' + match[3] + ',' + match[4] + match[5];
+  }
+
   function parseSrt(text) {
     const split = text.split(/(\r?\n[ \t]*\r?\n+)/);
     const parsedChunks = [];
@@ -1111,10 +1118,11 @@ textarea.field { resize: vertical; line-height: 1.55; }
       if (raw === '') { parsedChunks.push({ raw, separator, cue: null }); continue; }
       const match = timePattern.exec(raw);
       if (!match) { parsedChunks.push({ raw, separator, cue: null }); continue; }
+      const normalizedTime = normalizeSrtTimestamp(match[1]);
       const prefixEnd = match.index + match[0].length;
-      const prefix = raw.slice(0, prefixEnd);
+      const prefix = raw.slice(0, match.index) + match[0].replace(match[1], normalizedTime);
       const source = raw.slice(prefixEnd);
-      const cue = { id: parsedCues.length, prefix, source, translation: source, translated: false, time: match[1], separator };
+      const cue = { id: parsedCues.length, prefix, source, translation: source, translated: false, time: normalizedTime, separator };
       parsedCues.push(cue);
       parsedChunks.push({ raw, separator, cue });
     }
