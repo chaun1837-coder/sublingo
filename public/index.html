@@ -558,7 +558,8 @@ textarea.field { resize: vertical; line-height: 1.55; }
       return;
     }
     try {
-      const nonceResponse = await fetch('/api/auth/nonce', { credentials: 'same-origin' });
+      $('googleSignInButton').innerHTML = '';
+      const nonceResponse = await fetch('/api/auth/nonce', { credentials: 'same-origin', cache: 'no-store' });
       const nonceData = await nonceResponse.json();
       if (!nonceResponse.ok || !nonceData.nonce) throw new Error('Không khởi tạo được phiên Google.');
       window.google.accounts.id.initialize({ client_id: clientId, nonce: nonceData.nonce, callback: googleCredentialCallback, auto_select: false });
@@ -600,6 +601,10 @@ textarea.field { resize: vertical; line-height: 1.55; }
       toast('Đã đăng xuất và xóa API key đã lưu trên thiết bị này.');
     } catch (_) {
       toast('Đã xóa API key trên thiết bị, nhưng chưa xác nhận được phiên đăng xuất từ máy chủ.');
+    } finally {
+      // Google nonce is one-time and was consumed during the previous sign-in.
+      // Fetch a fresh nonce so the next sign-in after logout can be verified.
+      initializeGoogleSignIn();
     }
   });
 
