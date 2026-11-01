@@ -73,13 +73,16 @@ function getCookie(req, name) {
   for (const part of raw.split(';')) {
     const index = part.indexOf('=');
     if (index < 0) continue;
-    if (part.slice(0, index).trim() === name) return decodeURIComponent(part.slice(index + 1).trim());
+    if (part.slice(0, index).trim() === name) {
+      try { return decodeURIComponent(part.slice(index + 1).trim()); }
+      catch { return ''; }
+    }
   }
   return '';
 }
 function setSessionCookie(res, token) {
   const secure = isProduction ? '; Secure' : '';
-  res.setHeader('Set-Cookie', `${COOKIE_NAME}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${Math.floor(SESSION_MAX_AGE / 1000)}${secure}`);
+  res.append('Set-Cookie', `${COOKIE_NAME}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${Math.floor(SESSION_MAX_AGE / 1000)}${secure}`);
 }
 function clearSessionCookie(res) {
   const secure = isProduction ? '; Secure' : '';

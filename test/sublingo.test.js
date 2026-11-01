@@ -12,7 +12,7 @@ test('SRT export reconstructs cue from untouched prefix and exact separator', ()
 
 test('AI updates only translation text by cue id', () => {
   assert.match(html, /cues\[cue\.id\]\.translation = byId\.get\(cue\.id\);/);
-  assert.match(html, /map\(\(cue\) => \(\{ id: cue\.id, text: cue\.source \}\)\)/);
+  assert.match(html, /batch\.push\(\{ id: cue\.id, text: cue\.source \}\);/);
 });
 
 test('Google sign-in sends credential to backend endpoint', () => {
@@ -36,7 +36,7 @@ test('translation completion is tracked independently from text equality', () =>
 });
 
 test('manual edits count as completed and translation fields lock while translating', () => {
-  assert.match(html, /cues\[idx\]\.translated = true/);
+  assert.match(html, /cues\[idx\]\.translated = translated\.value\.trim\(\)\.length > 0/);
   assert.match(html, /translated\.disabled = translating/);
   assert.match(html, /field\.disabled = true/);
   assert.match(html, /field\.disabled = false/);
@@ -67,7 +67,7 @@ test('translation completion uses an explicit status instead of comparing text',
 });
 
 test('manual translation edits are retained and textareas lock during translation', () => {
-  assert.match(html, /cues\[idx\]\.translated = true/);
+  assert.match(html, /cues\[idx\]\.translated = translated\.value\.trim\(\)\.length > 0/);
   assert.match(html, /translated\.disabled = translating/);
   assert.match(html, /field\.disabled = true/);
   assert.match(html, /field\.disabled = false/);
@@ -101,4 +101,36 @@ test('OpenAI upstream status is preserved so invalid keys are not retried', asyn
   const { readFile: readSource } = await import('node:fs/promises');
   const server = await readSource(new URL('../server.js', import.meta.url), 'utf8');
   assert.match(server, /async function callOpenAI[\s\S]*?error\.upstreamStatus = response\.status/);
+});
+
+test('translation batches respect per-cue and per-request text limits', () => {
+  assert.match(html, /const batchSize = 60/);
+  assert.match(html, /const maxBatchChars = 24000/);
+  assert.match(html, /cue\.source\.length > 5000/);
+  assert.match(html, /batchCharacters \+ cue\.source\.length > maxBatchChars/);
+});
+
+test('SRT parsing supports CRLF, LF, and legacy CR-only line endings', () => {
+  assert.match(html, /text\.split\(\/(\\r\\n\|\\n\|\\r)\[ \\t\]\*/);
+});
+
+test('Google sign-in polling is bounded when the GIS script does not load', () => {
+  assert.match(html, /retryCount < 20/);
+  assert.match(html, /initializeGoogleSignIn\(retryCount \+ 1\)/);
+});
+
+test('session cookie appends without overwriting the nonce-clearing cookie', async () => {
+  const { readFile: readSource } = await import('node:fs/promises');
+  const server = await readSource(new URL('../server.js', import.meta.url), 'utf8');
+  assert.match(server, /function setSessionCookie[\s\S]*?res\.append\('Set-Cookie'/);
+});
+
+test('malformed cookie percent-encoding does not throw from cookie parsing', async () => {
+  const { readFile: readSource } = await import('node:fs/promises');
+  const server = await readSource(new URL('../server.js', import.meta.url), 'utf8');
+  assert.match(server, /try \{ return decodeURIComponent\(part\.slice\(index \+ 1\)\.trim\(\)\); \}\s*catch \{ return ''; \}/);
+});
+
+test('download object URL is revoked after the browser starts the download', () => {
+  assert.match(html, /setTimeout\(\(\) => URL\.revokeObjectURL\(url\), 1000\)/);
 });

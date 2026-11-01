@@ -281,7 +281,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
   }
 
   function parseSrt(text) {
-    const split = text.split(/(\r?\n[ \t]*\r?\n+)/);
+    const split = text.split(/(\r\n|\n|\r)[ \t]*(?:(?:\r\n|\n|\r)[ \t]*)+/);
     const parsedChunks = [];
     const parsedCues = [];
     const timePattern = /(?:^|\r\n|\n|\r)(\d{2}:\d{2}:\d{2}[,.]\d{3}\s*-->\s*\d{2}:\d{2}:\d{2}[,.]\d{3}[^\r\n]*)(\r\n|\n|\r)/;
@@ -329,7 +329,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
       const translated = document.createElement('textarea');
       translated.className = 'field cue-text translation'; translated.rows = 3; translated.placeholder = 'Nhập hoặc dán nội dung đã dịch...'; translated.value = cue.translation;
       translated.setAttribute('aria-label', `Bản dịch câu ${idx + 1}`);
-      translated.addEventListener('input', () => { cues[idx].translation = translated.value; cues[idx].translated = true; });
+      translated.addEventListener('input', () => { cues[idx].translation = translated.value; cues[idx].translated = translated.value.trim().length > 0; });
       translated.disabled = translating;
       right.append(rightTop, translated);
       card.append(index, left, right);
@@ -413,7 +413,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
     const a = document.createElement('a');
     const base = (fileName || 'subtitle.srt').replace(/\.srt$/i, '');
     a.href = url; a.download = `${base}_${$('targetLang').value.toLowerCase().replace(/\s+/g, '_')}.srt`;
-    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
     toast('Đã xuất file SRT. Số thứ tự và timestamp được giữ nguyên.');
   });
   $('loadSample').addEventListener('click', () => {
@@ -539,14 +539,18 @@ textarea.field { resize: vertical; line-height: 1.55; }
     }
   }
 
-  async function initializeGoogleSignIn() {
+  async function initializeGoogleSignIn(retryCount = 0) {
     const clientId = window.SUBLINGO_CONFIG && window.SUBLINGO_CONFIG.googleClientId;
     if (!clientId) {
       $('googleSignInButton').innerHTML = '<span style="color:#FFE5B4;font-size:11px">Chưa cấu hình Google Client ID</span>';
       return;
     }
     if (!window.google || !window.google.accounts || !window.google.accounts.id) {
-      setTimeout(initializeGoogleSignIn, 400);
+      if (retryCount < 20) {
+        setTimeout(() => initializeGoogleSignIn(retryCount + 1), 400);
+      } else {
+        $('googleSignInButton').innerHTML = '<span style="color:#FFE5B4;font-size:11px">Không tải được đăng nhập Google</span>';
+      }
       return;
     }
     try {
@@ -586,6 +590,12 @@ textarea.field { resize: vertical; line-height: 1.55; }
     const fill = $('translateProgressFill');
     const summary = $('translateProgressSummary');
     const batchSize = 60;
+    const maxBatchChars = 24000;
+    const oversizedCue = cues.find((cue) => !cue.translated && cue.source.length > 5000);
+    if (oversizedCue) {
+      toast('Câu phụ đề ' + (oversizedCue.id + 1) + ' dài hơn giới hạn 5.000 ký tự. Hãy rút ngắn câu đó rồi dịch lại.');
+      return;
+    }
     const total = cues.length;
     const failedRanges = [];
     const failureMessages = [];
@@ -604,9 +614,24 @@ textarea.field { resize: vertical; line-height: 1.55; }
 
     let geminiRequestsSent = 0;
     try {
-      for (let start = 0; start < cues.length; start += batchSize) {
-        const batch = cues.slice(start, start + batchSize).filter((cue) => !cue.translated).map((cue) => ({ id: cue.id, text: cue.source }));
+      let cursor = 0;
+      while (cursor < cues.length) {
+        const batch = [];
+        let batchCharacters = 0;
+        while (cursor < cues.length && batch.length < batchSize) {
+          const cue = cues[cursor];
+          if (cue.translated) {
+            cursor += 1;
+            continue;
+          }
+          if (batch.length && batchCharacters + cue.source.length > maxBatchChars) break;
+          batch.push({ id: cue.id, text: cue.source });
+          batchCharacters += cue.source.length;
+          cursor += 1;
+        }
         if (!batch.length) continue;
+        const batchStart = batch[0].id + 1;
+        const batchEnd = batch[batch.length - 1].id + 1;
         let lastError = null;
         let succeeded = false;
         for (let attempt = 1; attempt <= 3; attempt += 1) {
@@ -648,12 +673,12 @@ textarea.field { resize: vertical; line-height: 1.55; }
           }
         }
         if (!succeeded) {
-          failedRanges.push((start + 1) + '-' + Math.min(start + batchSize, cues.length));
+          failedRanges.push(batchStart + '-' + batchEnd);
           if (lastError?.message && !failureMessages.includes(lastError.message)) failureMessages.push(lastError.message);
           console.warn('Subtitle batch failed after retries:', failedRanges[failedRanges.length - 1], lastError);
         }
         renderCues(); updateProgress();
-        button.textContent = 'Đã xử lý đến ' + Math.min(start + batchSize, cues.length) + '/' + total + '...';
+        button.textContent = 'Đã xử lý đến ' + batchEnd + '/' + total + '...';
       }
       const remaining = cues.filter((cue) => !cue.translated).length;
       if (remaining) toast('Đã dịch ' + (total - remaining) + '/' + total + ' câu. Nhóm lỗi: ' + failedRanges.join(', ') + (failureMessages.length ? '. Nguyên nhân: ' + failureMessages[0] : '') + '. Bấm dịch lại để thử các câu còn thiếu.');
