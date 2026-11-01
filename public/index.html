@@ -159,6 +159,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
 .page-host h1 { font-size: calc(clamp(1.55rem, 2.8vw, 2.1rem) * var(--site-heading-scale)); }
 .page-host .page-subtitle { margin: 9px 0 0; color: light-dark(#718096, #AAB8C9); font-size: 13px; }
 .spa-page[hidden] { display: none !important; }
+#pageHost[hidden], .spa-page[hidden] { display: none !important; }
 #translatePage.page { max-width: none; width: calc(100% - var(--sidebar-width)); margin-left: var(--sidebar-width); }
 #app.sidebar-collapsed { --sidebar-width: 76px; }
 #app.sidebar-collapsed .app-sidebar { padding-inline: 10px; }
@@ -310,6 +311,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
     if (!pageViews[pageName]) return;
     $('pageHost').hidden = pageName !== 'scan';
     Object.entries(pageViews).forEach(([name, page]) => { page.hidden = name !== pageName; });
+    window.scrollTo(0, 0);
     pageButtons.forEach((button) => {
       const isActive = button.dataset.page === pageName;
       button.classList.toggle('active', isActive);
