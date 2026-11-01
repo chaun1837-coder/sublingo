@@ -605,7 +605,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
   }
 
   function captureGrayscaleOcrRegion(video, canvas, context) {
-    // Map the red ROI to intrinsic video pixels, excluding letterbox bars.
+    // Crop strictly inside the movable ROI, mapped to intrinsic video pixels.
     const crop = getOcrCrop(video);
     const scale = crop.width < 1100 ? 2 : 1;
     canvas.width = Math.max(1, Math.round(crop.width * scale));
@@ -615,40 +615,117 @@ textarea.field { resize: vertical; line-height: 1.55; }
     context.filter = 'none';
     context.drawImage(video, crop.x, crop.y, crop.width, crop.height, 0, 0, canvas.width, canvas.height);
 
+    // 1) Convert the cropped frame to grayscale.
     const image = context.getImageData(0, 0, canvas.width, canvas.height);
     const pixels = image.data;
-    const histogram = new Uint32Array(256);
-    const luminanceValues = new Uint8Array(pixels.length / 4);
-    for (let p = 0, i = 0; i < pixels.length; i += 4, p++) {
-      const gray = Math.max(0, Math.min(255, Math.round(
+    const width = canvas.width;
+    const height = canvas.height;
+    const total = width * height;
+    const grayValues = new Uint8Array(total);
+    for (let p = 0, i = 0; p < total; p++, i += 4) {
+      grayValues[p] = Math.max(0, Math.min(255, Math.round(
         0.299 * pixels[i] + 0.587 * pixels[i + 1] + 0.114 * pixels[i + 2]
       )));
-      luminanceValues[p] = gray;
-      histogram[gray]++;
     }
-    // Otsu threshold emphasizes bright subtitle strokes and suppresses background detail.
-    const total = luminanceValues.length;
-    let sum = 0;
-    for (let value = 0; value < 256; value++) sum += value * histogram[value];
-    let sumBackground = 0, weightBackground = 0, bestVariance = -1, threshold = 150;
-    for (let value = 0; value < 256; value++) {
-      weightBackground += histogram[value];
-      if (!weightBackground) continue;
-      const weightForeground = total - weightBackground;
-      if (!weightForeground) break;
-      sumBackground += value * histogram[value];
-      const meanBackground = sumBackground / weightBackground;
-      const meanForeground = (sum - sumBackground) / weightForeground;
-      const variance = weightBackground * weightForeground * (meanBackground - meanForeground) ** 2;
-      if (variance > bestVariance) { bestVariance = variance; threshold = value; }
+
+    // 2) Sauvola-style adaptive thresholding using integral images.
+    // A local window adapts to gradients, shadows, and changing video backgrounds.
+    const stride = width + 1;
+    const integral = new Uint32Array((width + 1) * (height + 1));
+    const integralSquared = new Float64Array((width + 1) * (height + 1));
+    for (let y = 1; y <= height; y++) {
+      let rowSum = 0;
+      let rowSquared = 0;
+      const sourceRow = (y - 1) * width;
+      const targetRow = y * stride;
+      const previousRow = (y - 1) * stride;
+      for (let x = 1; x <= width; x++) {
+        const gray = grayValues[sourceRow + x - 1];
+        rowSum += gray;
+        rowSquared += gray * gray;
+        const index = targetRow + x;
+        integral[index] = integral[previousRow + x] + rowSum;
+        integralSquared[index] = integralSquared[previousRow + x] + rowSquared;
+      }
     }
-    const cutoff = Math.max(105, Math.min(220, threshold));
-    for (let p = 0, i = 0; i < luminanceValues.length; i++, p += 4) {
-      const value = luminanceValues[i] >= cutoff ? 255 : 0;
-      pixels[p] = value;
-      pixels[p + 1] = value;
-      pixels[p + 2] = value;
-      pixels[p + 3] = 255;
+
+    const radius = Math.max(8, Math.min(25, Math.round(Math.min(width, height) * 0.045)));
+    const darkThresholds = new Uint8Array(total);
+    const brightThresholds = new Uint8Array(total);
+    let darkForegroundCount = 0;
+    let brightForegroundCount = 0;
+    const sauvolaK = 0.22;
+    const dynamicRange = 128;
+
+    for (let y = 0; y < height; y++) {
+      const y1 = Math.max(0, y - radius);
+      const y2 = Math.min(height, y + radius + 1);
+      for (let x = 0; x < width; x++) {
+        const x1 = Math.max(0, x - radius);
+        const x2 = Math.min(width, x + radius + 1);
+        const a = y1 * stride + x1;
+        const b = y1 * stride + x2;
+        const c = y2 * stride + x1;
+        const d = y2 * stride + x2;
+        const area = (x2 - x1) * (y2 - y1);
+        const localSum = integral[d] - integral[b] - integral[c] + integral[a];
+        const localSquared = integralSquared[d] - integralSquared[b] - integralSquared[c] + integralSquared[a];
+        const mean = localSum / area;
+        const variance = Math.max(0, localSquared / area - mean * mean);
+        const deviation = Math.sqrt(variance);
+        const factor = 1 + sauvolaK * (deviation / dynamicRange - 1);
+
+        // Compute thresholds for both polarities, then select the less common
+        // foreground polarity (subtitle strokes are usually sparse).
+        const darkThreshold = Math.max(0, Math.min(255, Math.round(mean * factor)));
+        const invertedMean = 255 - mean;
+        const brightThreshold = Math.max(0, Math.min(255, Math.round(255 - invertedMean * factor)));
+        const index = y * width + x;
+        darkThresholds[index] = darkThreshold;
+        brightThresholds[index] = brightThreshold;
+        const gray = grayValues[index];
+        if (gray < darkThreshold) darkForegroundCount++;
+        if (gray > brightThreshold) brightForegroundCount++;
+      }
+    }
+
+    const darkRatio = darkForegroundCount / total;
+    const brightRatio = brightForegroundCount / total;
+    const useDarkForeground = darkRatio < brightRatio;
+    const binary = new Uint8Array(total);
+    for (let i = 0; i < total; i++) {
+      const isForeground = useDarkForeground
+        ? grayValues[i] < darkThresholds[i]
+        : grayValues[i] > brightThresholds[i];
+      binary[i] = isForeground ? 1 : 0;
+    }
+
+    // 3) Remove isolated speckles and fill tiny pinholes without eroding strokes.
+    // This conservative 3x3 cleanup preserves thin Chinese/Japanese character strokes.
+    const denoised = binary.slice();
+    for (let y = 1; y < height - 1; y++) {
+      for (let x = 1; x < width - 1; x++) {
+        const index = y * width + x;
+        let neighbors = 0;
+        for (let dy = -1; dy <= 1; dy++) {
+          const row = (y + dy) * width;
+          for (let dx = -1; dx <= 1; dx++) {
+            if (dx === 0 && dy === 0) continue;
+            neighbors += binary[row + x + dx];
+          }
+        }
+        if (binary[index] && neighbors <= 1) denoised[index] = 0;
+        else if (!binary[index] && neighbors >= 7) denoised[index] = 1;
+      }
+    }
+
+    // 4) Write clean high-contrast white text on a black background for Tesseract.
+    for (let p = 0, i = 0; p < total; p++, i += 4) {
+      const value = denoised[p] ? 255 : 0;
+      pixels[i] = value;
+      pixels[i + 1] = value;
+      pixels[i + 2] = value;
+      pixels[i + 3] = 255;
     }
     context.putImageData(image, 0, 0);
     return canvas;
