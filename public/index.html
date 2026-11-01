@@ -176,7 +176,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
 .scan-preview-panel { margin-top: 20px; }
 .scan-preview-panel[hidden] { display: none !important; }
 .scan-video-stage { background: #091321; padding: 12px; }
-.scan-video-stage video { display: block; width: 100%; max-height: min(64vh, 620px); aspect-ratio: 16 / 9; object-fit: contain; margin: 0 auto; border-radius: 9px; background: #050A12; }
+.scan-video-stage video { display: block; width: 100%; height: min(56vw, 620px); min-height: 220px; max-height: min(64vh, 620px); aspect-ratio: 16 / 9; object-fit: contain; margin: 0 auto; border-radius: 9px; background: #050A12; }
 .scan-monitor-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(290px, .85fr); gap: 14px; align-items: start; padding: 14px; }
 .scan-video-column { min-width: 0; overflow: hidden; border: 1px solid light-dark(#E0E7EF, #2B394D); border-radius: 13px; background: light-dark(#FFFFFF, #182335); }
 .scan-monitor-grid .scan-video-stage { padding: 10px; }
@@ -442,6 +442,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
   const pageButtons = document.querySelectorAll('.sidebar-nav-button[data-page]');
   let selectedVideoUrl = '';
   let selectedVideoFile = null;
+  let videoIsReady = false;
   let scanCues = [];
   let scanWorker = null;
   let scanRunning = false;
@@ -549,8 +550,19 @@ textarea.field { resize: vertical; line-height: 1.55; }
       return;
     }
     const video = $('videoPlayer');
-    if (video.readyState < 2 || !video.videoWidth || !video.videoHeight || !Number.isFinite(video.duration)) {
-      toast('Video chưa sẵn sàng hoặc không xác định được thời lượng.');
+    if (!videoIsReady || !isVideoFrameReady(video)) {
+      $('startScanBtn').disabled = true;
+      $('scanStatus').textContent = 'Đang chờ video nạp xong khung hình và thời lượng...';
+      try {
+        await waitForVideoReady(video);
+      } catch (error) {
+        $('scanStatus').textContent = error.message || 'Video chưa sẵn sàng.';
+        toast(error.message || 'Video chưa sẵn sàng.');
+        return;
+      }
+    }
+    if (!isVideoFrameReady(video)) {
+      toast('Video chưa có khung hình hoặc thời lượng hợp lệ. Hãy thử file MP4 H.264.');
       return;
     }
     if (!window.Tesseract || typeof window.Tesseract.createWorker !== 'function') {
@@ -680,6 +692,86 @@ textarea.field { resize: vertical; line-height: 1.55; }
     toast('Đang dừng quét. Vui lòng đợi khung hình hiện tại xử lý xong.');
   });
 
+  function getVideoErrorMessage(video) {
+    const code = video.error?.code;
+    if (code === 1) return 'Quá trình tải video đã bị hủy.';
+    if (code === 2) return 'Có lỗi khi đọc dữ liệu video từ thiết bị.';
+    if (code === 3) return 'Trình duyệt không giải mã được video này.';
+    if (code === 4) return 'Định dạng hoặc codec video không được trình duyệt hỗ trợ. Hãy thử MP4 dùng codec H.264.';
+    return 'Không thể tải hoặc giải mã video. Hãy thử một file MP4 khác.';
+  }
+
+  function isVideoFrameReady(video) {
+    return video.readyState >= 2
+      && video.videoWidth > 0
+      && video.videoHeight > 0
+      && Number.isFinite(video.duration)
+      && video.duration > 0;
+  }
+
+  function updateVideoReadyState() {
+    const video = $('videoPlayer');
+    if (!selectedVideoFile) return;
+    if (isVideoFrameReady(video)) {
+      videoIsReady = true;
+      $('startScanBtn').disabled = false;
+      $('scanStatus').textContent = 'Video đã sẵn sàng · ' + video.videoWidth + ' × ' + video.videoHeight
+        + ' · ' + formatScanTime(video.duration) + '. Bạn có thể bắt đầu quét.';
+      return;
+    }
+    if (video.readyState >= 1 && video.videoWidth > 0 && video.videoHeight > 0) {
+      $('scanStatus').textContent = 'Đã đọc thông tin video, đang nạp khung hình đầu tiên...';
+    }
+  }
+
+  function waitForVideoReady(video, timeoutMs = 20000) {
+    return new Promise((resolve, reject) => {
+      let settled = false;
+      const cleanup = () => {
+        ['loadedmetadata', 'loadeddata', 'canplay', 'durationchange', 'error'].forEach((name) => {
+          video.removeEventListener(name, check);
+        });
+        clearTimeout(timeout);
+      };
+      const finish = (error) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        if (error) reject(error);
+        else resolve();
+      };
+      const check = () => {
+        if (video.error) {
+          finish(new Error(getVideoErrorMessage(video)));
+        } else if (isVideoFrameReady(video)) {
+          videoIsReady = true;
+          finish();
+        }
+      };
+      ['loadedmetadata', 'loadeddata', 'canplay', 'durationchange', 'error'].forEach((name) => {
+        video.addEventListener(name, check);
+      });
+      const timeout = setTimeout(() => {
+        finish(new Error('Video mất quá nhiều thời gian để tải metadata hoặc khung hình. Hãy thử MP4 H.264.'));
+      }, timeoutMs);
+      check();
+    });
+  }
+
+  const videoPlayer = $('videoPlayer');
+  ['loadedmetadata', 'loadeddata', 'canplay', 'durationchange'].forEach((eventName) => {
+    videoPlayer.addEventListener(eventName, updateVideoReadyState);
+  });
+  videoPlayer.addEventListener('error', () => {
+    videoIsReady = false;
+    $('startScanBtn').disabled = true;
+    if (selectedVideoFile) {
+      const message = getVideoErrorMessage(videoPlayer);
+      $('scanStatus').textContent = message;
+      toast(message);
+    }
+  });
+
   function showPage(pageName) {
     if (!pageViews[pageName]) return;
     $('pageHost').hidden = false;
@@ -703,15 +795,19 @@ textarea.field { resize: vertical; line-height: 1.55; }
     }
     if (selectedVideoUrl) URL.revokeObjectURL(selectedVideoUrl);
     selectedVideoFile = file;
-    selectedVideoUrl = URL.createObjectURL(file);
-    $('videoPlayer').src = selectedVideoUrl;
-    $('videoPlayer').load();
+    videoIsReady = false;
+    $('startScanBtn').disabled = true;
+    $('scanStatus').textContent = 'Đang nạp video và đọc thông tin thời lượng...';
+    const video = $('videoPlayer');
+    video.pause();
+    video.preload = 'auto';
+    video.src = selectedVideoUrl = URL.createObjectURL(file);
     $('videoFileName').textContent = file.name;
     $('videoFileDetails').textContent = (file.size / (1024 * 1024)).toFixed(1) + ' MB';
     $('videoFileMeta').classList.add('visible');
     $('videoPreviewPanel').hidden = false;
-    $('startScanBtn').disabled = false;
-    toast('Đã tải video. Bạn có thể xem trước bên dưới.');
+    video.load();
+    toast('Đã chọn video. Đang tải khung hình để hiển thị...');
   }
   $('chooseVideo').addEventListener('click', (event) => {
     event.stopPropagation();
@@ -747,6 +843,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
       $('scanStatus').textContent = 'Đã dừng quét do video được gỡ.';
     }
     $('videoPlayer').pause();
+    videoIsReady = false;
     $('videoPlayer').removeAttribute('src');
     $('videoPlayer').load();
     if (selectedVideoUrl) URL.revokeObjectURL(selectedVideoUrl);
