@@ -15,7 +15,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = Number(process.env.PORT || 10000);
-const APP_VERSION = process.env.npm_package_version || '1.1.0';
+const APP_VERSION = process.env.npm_package_version || '1.1.1';
 const isProduction = process.env.NODE_ENV === 'production';
 const SESSION_SECRET = process.env.SESSION_SECRET || (isProduction ? '' : crypto.randomBytes(48).toString('hex'));
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
@@ -257,6 +257,29 @@ async function callOpenAI(apiKey, model, prompt, clientSignal) {
   return parseJsonResponse(content);
 }
 
+function parseRetryAfterMs(response, data) {
+  const header = response.headers.get('retry-after');
+  if (header) {
+    const seconds = Number(header);
+    if (Number.isFinite(seconds)) return Math.min(120000, Math.max(1000, seconds * 1000));
+    const dateMs = Date.parse(header);
+    if (Number.isFinite(dateMs)) return Math.min(120000, Math.max(1000, dateMs - Date.now()));
+  }
+  const retryInfo = (data?.error?.details || []).find((detail) =>
+    String(detail?.['@type'] || '').endsWith('google.rpc.RetryInfo')
+  );
+  const match = String(retryInfo?.retryDelay || '').match(/^(\d+(?:\.\d+)?)(ms|s)?$/i);
+  if (!match) return null;
+  const delayMs = Number(match[1]) * (match[2]?.toLowerCase() === 'ms' ? 1 : 1000);
+  return Math.min(120000, Math.max(1000, delayMs));
+}
+
+function isDailyQuotaExceeded(data) {
+  const details = JSON.stringify(data?.error?.details || []);
+  const message = [data?.error?.message, data?.error?.status, details].filter(Boolean).join(' ');
+  return /quota[_\s-]*exceeded|daily quota|requests?[_\s-]*per[_\s-]*day|GenerateRequestsPerDay|perday/i.test(message);
+}
+
 async function callGemini(apiKey, model, prompt, clientSignal) {
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
   const response = await fetch(endpoint, {
@@ -264,7 +287,11 @@ async function callGemini(apiKey, model, prompt, clientSignal) {
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
     body: JSON.stringify({
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: { responseMimeType: 'application/json', temperature: 0.2, maxOutputTokens: 12000 }
+      generationConfig: {
+        responseMimeType: 'application/json',
+        thinkingConfig: { thinkingLevel: model === 'gemini-3.8-flash' ? 'LOW' : 'MINIMAL' },
+        maxOutputTokens: 12000
+      }
     }),
     signal: AbortSignal.any([clientSignal, AbortSignal.timeout(180000)])
   });
@@ -275,8 +302,10 @@ async function callGemini(apiKey, model, prompt, clientSignal) {
       message = 'Google Gemini từ chối API key, quyền truy cập hoặc yêu cầu. Hãy kiểm tra key và model.';
     } else if (response.status === 404) {
       message = 'Không tìm thấy mô hình Gemini đã chọn. Hãy tải lại trang và chọn mô hình đang được hỗ trợ.';
+    } else if (response.status === 429 && isDailyQuotaExceeded(data)) {
+      message = 'Gemini đã chạm hạn mức theo ngày của mô hình này. Hãy đợi hạn mức được đặt lại hoặc kiểm tra quota trong Google AI Studio.';
     } else if (response.status === 429) {
-      message = 'Gemini đang giới hạn tốc độ hoặc hết hạn mức. SubLingo sẽ chờ rồi thử lại.';
+      message = 'Gemini đang giới hạn tốc độ. SubLingo sẽ chờ theo thời gian Google yêu cầu rồi thử lại.';
     } else if (response.status === 503) {
       message = 'Gemini đang tạm quá tải (503). SubLingo sẽ tự động thử lại sau khi chờ.';
     } else {
@@ -284,6 +313,10 @@ async function callGemini(apiKey, model, prompt, clientSignal) {
     }
     const error = new Error(message);
     error.upstreamStatus = response.status;
+    error.retryAfterMs = response.status === 429 || response.status === 503
+      ? parseRetryAfterMs(response, data)
+      : null;
+    error.quotaType = response.status === 429 && isDailyQuotaExceeded(data) ? 'daily' : 'rate';
     throw error;
   }
   const content = data?.candidates?.[0]?.content?.parts?.map((part) => part.text || '').join('');
@@ -354,7 +387,11 @@ app.post('/api/translate', requireSameOrigin, optionalAuthenticate, translateLim
         : 'OpenAI phản hồi quá chậm. Hãy thử lại sau.')
       : error?.message || 'Không thể dịch lúc này. Vui lòng thử lại.';
     console.error('Translation request failed:', input.provider, status, message);
-    return res.status(status).json({ error: message });
+    return res.status(status).json({
+      error: message,
+      ...(Number.isFinite(error?.retryAfterMs) ? { retryAfterMs: error.retryAfterMs } : {}),
+      ...(error?.quotaType ? { quotaType: error.quotaType } : {})
+    });
   }
 });
 

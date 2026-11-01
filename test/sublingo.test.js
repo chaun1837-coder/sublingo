@@ -161,11 +161,28 @@ test('backend preserves upstream status codes for retry decisions', () => {
   assert.match(server, /Gemini đang tạm quá tải \(503\)/);
 });
 
-test('temporary upstream failures are retried with capped exponential backoff', () => {
+test('Gemini 3.8 Flash uses low thinking and Flash-Lite retains minimal thinking', () => {
+  assert.match(server, /thinkingConfig: \{ thinkingLevel: model === 'gemini-3\.8-flash' \? 'LOW' : 'MINIMAL' \}/);
+  assert.doesNotMatch(server.slice(server.indexOf('async function callGemini'), server.indexOf("app.post('/api/translate'")), /temperature:/);
+});
+
+test('temporary upstream failures honor Retry-After and use capped exponential backoff', () => {
   assert.match(html, /const retryableStatuses = \[408, 429, 500, 502, 503, 504\]/);
-  assert.match(html, /const backoffMs = Math\.min\(8000, 1000 \* \(2 \*\* \(attempt - 1\)\)\)/);
-  assert.match(html, /if \(!canRetry\) throw error/);
+  assert.match(html, /const fallbackBackoffMs = Math\.min\(60000, 1000 \* \(2 \*\* \(attempt - 1\)\)\)/);
+  assert.match(html, /requestError\.retryAfterMs = Number\(data\.retryAfterMs\) \|\| 0/);
+  assert.match(html, /if \(error\.quotaType === 'daily'\) throw error/);
+  assert.match(server, /function parseRetryAfterMs\(response, data\)/);
+  assert.match(server, /google\.rpc\.RetryInfo/);
+  assert.match(server, /function isDailyQuotaExceeded\(data\)/);
+  assert.match(server, /retryAfterMs: error\.retryAfterMs/);
+  assert.match(html, /if \(lastError\?\.status === 429\) break/);
   assert.match(html, /failureMessages\[0\]/);
+});
+
+test('Gemini pacing uses request start times and does not add idle delay after slow responses', () => {
+  assert.match(html, /const geminiMinIntervalMs = requestModel === 'gemini-3\.8-flash' \? 6000 : 4500/);
+  assert.match(html, /const elapsed = Date\.now\(\) - lastGeminiRequestAt/);
+  assert.match(html, /waitMs = Math\.max\(waitMs, geminiMinIntervalMs - elapsed\)/);
 });
 
 test('backend only accepts current OpenAI and supported Gemini model IDs', () => {
@@ -218,8 +235,8 @@ test('index HTML is not cached so fixes appear without stale frontend code', () 
 });
 
 test('package and visible UI expose the same semantic version', () => {
-  assert.equal(pkg.version, '1.1.0');
-  assert.match(html, /SRT TRANSLATOR · v1\.1\.0/);
+  assert.equal(pkg.version, '1.1.1');
+  assert.match(html, /SRT TRANSLATOR · v1\.1\.1/);
   assert.match(server, /APP_VERSION/);
 });
 

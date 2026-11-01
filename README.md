@@ -1,6 +1,6 @@
-# SubLingo 1.1.0 — Dịch phụ đề SRT
+# SubLingo 1.1.1 — Dịch phụ đề SRT
 
-**Phiên bản hiện tại:** 1.1.0 — *Stable Logout, Google Session & SRT Reliability*.
+**Phiên bản hiện tại:** 1.1.1 — *Gemini Flash Latency & Quota Retry Improvements*.
 
 SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT bằng Google Gemini hoặc OpenAI.
 
@@ -60,8 +60,8 @@ Người dùng nhập OpenAI API key hoặc Gemini API key trong giao diện. Ke
 - Website public phải dùng HTTPS.
 - Không commit .env, API key, OAuth client secret hoặc SESSION_SECRET vào GitHub.
 - Đổi SESSION_SECRET sẽ làm hết hiệu lực các phiên đăng nhập hiện tại.
-- Giao diện chia file thành các nhóm tối đa 60 cue và 24.000 ký tự mỗi request; mỗi cue tối đa 5.000 ký tự. Gemini nghỉ 4,5 giây giữa các request.
-- Khi gặp lỗi tạm thời như 408, 429, 5xx hoặc lỗi mạng, ứng dụng thử lại tối đa 3 lần với thời gian chờ tăng dần; lỗi key/model không hợp lệ sẽ dừng sớm.
+- Giao diện chia file thành các nhóm tối đa 60 cue và 24.000 ký tự mỗi request; mỗi cue tối đa 5.000 ký tự. Gemini 3.8 Flash dùng thinking LOW và giới hạn khoảng cách tối thiểu 6 giây giữa thời điểm bắt đầu hai request; Gemini 3.5 Flash-Lite giữ mức thinking MINIMAL và khoảng cách 4,5 giây. Khoảng chờ chỉ được áp dụng khi cần, không cộng thêm sau một phản hồi vốn đã chậm.
+- Khi gặp lỗi tạm thời như 408, 429, 5xx hoặc lỗi mạng, ứng dụng thử lại với exponential backoff và jitter; với Gemini, thời gian Retry-After/RetryInfo từ Google được ưu tiên. Hạn mức theo ngày không bị thử lại liên tục; sau nhiều lần 429, ứng dụng dừng gửi thêm nhóm để tránh làm nặng thêm giới hạn.
 - Hủy lượt dịch ở trình duyệt sẽ đóng request và báo backend hủy tiếp công việc gọi AI nếu kết nối đã bị ngắt.
 - Backend giới hạn 80 cue/request, 30.000 ký tự/request và 120 request/15 phút/IP.
 - Ứng dụng không có database người dùng hoặc lịch sử dịch. Nếu cần lịch sử, phân quyền, gói trả phí hoặc quản trị, cần bổ sung database.
@@ -75,6 +75,12 @@ npm test
 GitHub Actions tự chạy bộ test khi có push hoặc pull request vào nhánh main.
 
 ## Nhật ký phiên bản
+
+### 1.1.1
+- Gemini 3.8 Flash dùng thinking LOW; Gemini 3.5 Flash-Lite giữ thinking MINIMAL.
+- Bỏ sampling temperature khỏi yêu cầu Gemini 3.x.
+- Điều chỉnh nhịp gửi theo thời điểm bắt đầu request để không cộng thêm 4,5–6 giây sau phản hồi chậm.
+- Đọc Retry-After/Google RetryInfo, phân biệt hạn mức theo ngày và dừng sớm khi tiếp tục bị 429.
 
 ### 1.1.0
 - Sửa luồng nonce Google sau khi đăng nhập lỗi hoặc đăng xuất.

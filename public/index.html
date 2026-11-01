@@ -150,7 +150,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
   <header class="topbar">
     <div class="brand">
       <div class="logo-mark" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 5.5C4 4.67 4.67 4 5.5 4h13c.83 0 1.5.67 1.5 1.5v9c0 .83-.67 1.5-1.5 1.5H11l-4.5 4v-4H5.5C4.67 16 4 15.33 4 14.5v-9Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 8.5h8M8 11.5h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
-      <div><div class="brand-name">SubLingo</div><div class="brand-sub">SUBTITLE WORKSPACE · SRT TRANSLATOR · v1.1.0</div></div>
+      <div><div class="brand-name">SubLingo</div><div class="brand-sub">SUBTITLE WORKSPACE · SRT TRANSLATOR · v1.1.1</div></div>
     </div>
     <div class="top-actions">
       <div class="google-login-wrap" id="googleSignInButton"></div>
@@ -693,7 +693,10 @@ textarea.field { resize: vertical; line-height: 1.55; }
     summary.classList.add('visible');
     updateProgress();
 
-    let geminiRequestsSent = 0;
+    const maxAttempts = requestProvider === 'gemini' ? 4 : 3;
+    const geminiMinIntervalMs = requestModel === 'gemini-3.8-flash' ? 6000 : 4500;
+    let lastGeminiRequestAt = 0;
+    let pendingRetryDelayMs = 0;
     try {
       let cursor = 0;
       while (cursor < cues.length) {
@@ -715,14 +718,20 @@ textarea.field { resize: vertical; line-height: 1.55; }
         const batchEnd = batch[batch.length - 1].id + 1;
         let lastError = null;
         let succeeded = false;
-        for (let attempt = 1; attempt <= 3; attempt += 1) {
+        for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
           try {
-            if (requestProvider === 'gemini' && geminiRequestsSent > 0) {
-              button.textContent = 'Đang nghỉ 4,5 giây giữa các lượt gửi...';
-              await waitFor(4500, requestSignal);
+            let waitMs = pendingRetryDelayMs;
+            pendingRetryDelayMs = 0;
+            if (requestProvider === 'gemini' && lastGeminiRequestAt > 0) {
+              const elapsed = Date.now() - lastGeminiRequestAt;
+              waitMs = Math.max(waitMs, geminiMinIntervalMs - elapsed);
             }
-            if (provider === 'gemini') geminiRequestsSent += 1;
+            if (waitMs > 0) {
+              button.textContent = 'Đang chờ giới hạn gửi yêu cầu của Gemini...';
+              await waitFor(waitMs, requestSignal);
+            }
             if (requestSignal.aborted) throw new DOMException('Translation cancelled', 'AbortError');
+            if (requestProvider === 'gemini') lastGeminiRequestAt = Date.now();
             const response = await fetch('/api/translate', {
               method: 'POST', credentials: 'same-origin', signal: requestSignal,
               headers: { 'Content-Type': 'application/json' },
@@ -732,6 +741,8 @@ textarea.field { resize: vertical; line-height: 1.55; }
             if (!response.ok) {
               const requestError = new Error(data.error || 'Lỗi khi dịch phụ đề.');
               requestError.status = response.status;
+              requestError.retryAfterMs = Number(data.retryAfterMs) || 0;
+              requestError.quotaType = data.quotaType || '';
               throw requestError;
             }
             const byId = new Map((data.translations || []).map((item) => [item.id, item.text]));
@@ -747,11 +758,14 @@ textarea.field { resize: vertical; line-height: 1.55; }
             const retryableStatuses = [408, 429, 500, 502, 503, 504];
             const isNetworkFailure = !Number.isInteger(error.status) && (error.name === 'TypeError' || /timeout|network/i.test(error.message || ''));
             const canRetry = retryableStatuses.includes(error.status) || isNetworkFailure;
+            if (error.quotaType === 'daily') throw error;
             if (!canRetry) throw error;
-            if (attempt < 3) {
-              const backoffMs = Math.min(8000, 1000 * (2 ** (attempt - 1))) + Math.floor(Math.random() * 500);
-              button.textContent = (requestProvider === 'gemini' ? 'Gemini' : 'OpenAI') + ' tạm bận · chờ ' + Math.ceil(backoffMs / 1000) + ' giây rồi thử lại...';
-              await waitFor(backoffMs, requestSignal);
+            if (attempt < maxAttempts) {
+              const fallbackBackoffMs = Math.min(60000, 1000 * (2 ** (attempt - 1))) + Math.floor(Math.random() * 500);
+              pendingRetryDelayMs = Number.isFinite(error.retryAfterMs) && error.retryAfterMs > 0
+                ? Math.min(120000, error.retryAfterMs)
+                : fallbackBackoffMs;
+              button.textContent = (requestProvider === 'gemini' ? 'Gemini' : 'OpenAI') + ' tạm bận · chờ tối đa ' + Math.ceil(pendingRetryDelayMs / 1000) + ' giây rồi thử lại...';
             }
           }
         }
@@ -761,6 +775,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
           console.warn('Subtitle batch failed after retries:', failedRanges[failedRanges.length - 1], lastError);
         }
         renderCues(); updateProgress();
+        if (lastError?.status === 429) break;
         button.textContent = 'Đã xử lý đến ' + batchEnd + '/' + total + '...';
       }
       if (requestSignal.aborted) throw new DOMException('Translation cancelled', 'AbortError');
