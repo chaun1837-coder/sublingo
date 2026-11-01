@@ -1,15 +1,1 @@
-services:
-  - type: web
-    name: sublingo-srt-translator
-    runtime: node
-    plan: free
-    buildCommand: npm install
-    startCommand: npm start
-    healthCheckPath: /api/health
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: SESSION_SECRET
-        generateValue: true
-      - key: GOOGLE_CLIENT_ID
-        sync: false
+services: []
