@@ -65,7 +65,7 @@ test('SRT export reconstructs cue from original prefix and exact separator', () 
 
 test('timestamp-like content in translated dialogue is blocked before download', () => {
   assert.match(html, /Một bản dịch có chứa dòng timestamp/);
-  assert.match(html, /if \(\/\^\\s\*\\\\d\{2\}:\\\\d\{2\}:\\\\d\{2\}\[,\.\]\\\\d\{3\}\\\\s\*--\>\/m\.test\(normalized\)\) return null/);
+  assert.ok(html.includes("if (/^\\s*\\d{2}:\\d{2}:\\d{2}[,.]\\d{3}\\s*-->/.test(normalized)) return null;"));
 });
 
 test('AI responses update only translation text by cue ID', () => {
