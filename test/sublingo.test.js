@@ -15,6 +15,21 @@ test('AI updates only translation text by cue id', () => {
   assert.match(html, /batch\.push\(\{ id: cue\.id, text: cue\.source \}\);/);
 });
 
+test('logout clears both saved provider keys, temporary subtitle data, and aborts translation', () => {
+  assert.match(html, /function clearAppSecretsAndWorkspace\(\)/);
+  assert.match(html, /localStorage\.removeItem\('sublingo_saved_api_key_openai'\)/);
+  assert.match(html, /localStorage\.removeItem\('sublingo_saved_api_key_gemini'\)/);
+  assert.match(html, /activeTranslationController\.abort\(\)/);
+  assert.match(html, /\$\('removeFile'\)\.click\(\)/);
+  assert.match(html, /signal: requestSignal/);
+});
+
+test('oversized subtitle validation happens before translation state is activated', () => {
+  const validation = html.indexOf('const oversizedCue = cues.find');
+  const activating = html.indexOf('translating = true;', validation);
+  assert.ok(validation >= 0 && activating > validation);
+});
+
 test('Google sign-in sends credential to backend endpoint', () => {
   assert.match(html, /fetch\('\/api\/auth\/google'/);
   assert.match(html, /window\.google\.accounts\.id\.initialize/);
