@@ -1,55 +1,86 @@
-# SubLingo — bản triển khai có backend
+# SubLingo 1.1.0 — Dịch phụ đề SRT
 
-Bản này chuyển giao diện preview thành ứng dụng Node.js có backend thật để:
+**Phiên bản hiện tại:** 1.1.0 — *Stable Logout, Google Session & SRT Reliability*.
 
-- Đăng nhập Google bằng Google Identity Services; backend xác minh ID token với Google và tạo cookie phiên `HttpOnly`.
-- Gửi lời thoại theo từng nhóm tới OpenAI hoặc Google Gemini.
-- Có thể chọn lưu API key trên thiết bị bằng `localStorage` của trình duyệt. Tùy chọn này không mã hóa key; chỉ dùng trên thiết bị cá nhân và xóa key nếu dùng máy tính chung.
-- Nhận JSON có `id` và bản dịch; trình duyệt chỉ thay nội dung lời thoại. Số thứ tự, timestamp, metadata và dấu phân cách vẫn lấy nguyên từ file SRT gốc.
-- Không lưu API key hoặc file phụ đề trên máy chủ. API key do người dùng nhập chỉ được gửi trong request dịch.
+SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT bằng Google Gemini hoặc OpenAI.
+
+## Tính năng
+
+- Đăng nhập Google bằng Google Identity Services; backend xác minh ID token, nonce dùng một lần và tạo cookie phiên HttpOnly.
+- Đăng xuất xóa hai API key đã lưu trong trình duyệt, dữ liệu phụ đề tạm và hủy lượt dịch đang chạy.
+- Gửi lời thoại theo từng nhóm tới Google Gemini hoặc OpenAI.
+- Giữ nguyên số thứ tự, timestamp, metadata, dấu phân cách và kiểu xuống dòng từ file SRT gốc.
+- Có thể chọn lưu API key trên thiết bị bằng localStorage. Tùy chọn này **không mã hóa key**; chỉ nên dùng trên thiết bị cá nhân.
+- Giới hạn file ở 10 MB và 5.000 cue để tránh treo trình duyệt; mỗi cue tối đa 5.000 ký tự.
+- Không lưu API key hoặc file phụ đề trong database trên máy chủ. OpenAI Responses được gọi với store: false.
+
+## Model hiện hỗ trợ
+
+| Nhà cung cấp | Model ID |
+|---|---|
+| OpenAI | gpt-6-luna, gpt-6.1-terra |
+| Gemini (đã đăng nhập) | gemini-3.8-flash, gemini-3.5-flash-lite |
+| Gemini (chưa đăng nhập) | gemini-3.5-flash-lite |
+
+Model khả dụng còn phụ thuộc quyền truy cập và hạn mức của API key do người dùng cung cấp.
 
 ## Chạy thử trên máy tính
 
 Yêu cầu Node.js 20 trở lên.
 
-```bash
+~~~bash
 cp .env.example .env
 npm install
 npm start
-```
+~~~
 
-Mở `http://localhost:10000`. Để đăng nhập Google trên localhost, hãy tạo OAuth Client ID loại Web và thêm `http://localhost:10000` vào **Authorized JavaScript origins**, sau đó đặt `GOOGLE_CLIENT_ID` trong `.env`. `SESSION_SECRET` phải là chuỗi ngẫu nhiên dài.
+Mở http://localhost:10000. Để đăng nhập Google trên localhost, tạo OAuth Client ID loại Web và thêm http://localhost:10000 vào **Authorized JavaScript origins**, sau đó đặt GOOGLE_CLIENT_ID trong .env. SESSION_SECRET phải là chuỗi ngẫu nhiên dài.
 
 Kiểm tra backend:
 
-```bash
+~~~bash
 curl http://localhost:10000/api/health
-```
+~~~
+
+Endpoint trả về trạng thái cùng phiên bản hiện tại, ví dụ {"ok":true,"service":"sublingo-api","version":"1.1.0"}.
 
 ## Đưa lên Render
 
-1. Tạo repository GitHub mới và tải toàn bộ nội dung thư mục này lên repository (không tải `.env`).
-2. Trong Render, chọn **New → Blueprint**, kết nối repository chứa `render.yaml`, rồi chọn **Deploy Blueprint**. Render sẽ dựng web service theo cấu hình trong file này. Nếu không dùng Blueprint, tạo Web Service với Build Command `npm install` và Start Command `npm start`.
-3. Trong phần Environment của Render, đặt `GOOGLE_CLIENT_ID` bằng OAuth Client ID loại Web. `SESSION_SECRET` được `render.yaml` tạo tự động.
-4. Trong Google Cloud Console, ở OAuth Client ID loại Web, thêm URL website Render, ví dụ `https://ten-app.onrender.com`, vào **Authorized JavaScript origins**. Không cần redirect URI vì ứng dụng dùng Google Identity Services popup.
-5. Lưu cấu hình và deploy lại. Mở `https://ten-app.onrender.com/api/health`; kết quả mong đợi là `{"ok":true,"service":"sublingo-api"}`.
+1. Kết nối repository GitHub với Render và tạo Web Service (Build Command npm install, Start Command npm start) hoặc dùng Blueprint có sẵn.
+2. Trong Environment của Render, đặt GOOGLE_CLIENT_ID là OAuth Client ID loại Web. SESSION_SECRET cần là chuỗi ngẫu nhiên dài; Blueprint tạo giá trị tự động.
+3. Trong Google Cloud Console, thêm URL website Render vào **Authorized JavaScript origins** của OAuth Client ID. Ứng dụng dùng Google Identity Services popup nên không cần redirect URI.
+4. Sau khi deploy, kiểm tra /api/health và xác nhận trường version là 1.1.0.
 
 ## Cấu hình API key
 
-Người dùng nhập OpenAI API key hoặc Gemini API key ngay trong giao diện. Backend không ghi key vào file, database, session hay log; key chỉ được gửi qua HTTPS trong request dịch và chuyển tiếp tới nhà cung cấp tương ứng. Nếu người dùng chủ động bấm “Lưu key trên thiết bị”, trình duyệt lưu key trong `localStorage` để dùng lại sau khi tải trang. `localStorage` không mã hóa key, vì vậy không nên bật tùy chọn này trên máy tính dùng chung. Người dùng có thể xóa key bằng nút “Xóa key đã lưu”. Người dùng chịu phí API của chính tài khoản nhà cung cấp của mình.
+Người dùng nhập OpenAI API key hoặc Gemini API key trong giao diện. Key chỉ được gửi qua HTTPS trong request dịch và chuyển tiếp tới nhà cung cấp tương ứng; không ghi key vào file, database, session hay log của ứng dụng. Nếu người dùng bấm “Lưu key trên thiết bị”, trình duyệt lưu key trong localStorage để dùng sau khi tải trang. localStorage không mã hóa key nên không bật tùy chọn này trên máy tính dùng chung. Người dùng chịu phí API của tài khoản nhà cung cấp của mình.
 
-## Lưu ý bảo mật và vận hành
+## Bảo mật và vận hành
 
-- Bắt buộc dùng HTTPS khi public website. Render cấp HTTPS cho miền `onrender.com`.
-- Không commit `.env`, API key, OAuth client secret hoặc `SESSION_SECRET` vào GitHub.
-- Đổi `SESSION_SECRET` sẽ đăng xuất các phiên hiện tại.
-- Giao diện chia file thành các nhóm tối đa 60 cue và 24.000 ký tự mỗi request; mỗi cue tối đa 5.000 ký tự để nằm trong giới hạn backend. Riêng Gemini nghỉ 4,5 giây giữa các request. Khi gặp lỗi tạm thời như 408, 429, 5xx hoặc lỗi mạng, ứng dụng thử lại tối đa 3 lần với thời gian chờ tăng dần; lỗi key/model không hợp lệ sẽ dừng sớm để người dùng sửa. Backend chấp nhận tối đa 80 cue/request và giới hạn tổng văn bản mỗi request ở 30.000 ký tự. Tiến độ và trạng thái hoàn thành được theo dõi riêng, kể cả khi bản dịch trùng với câu gốc.
-- Giới hạn rate hiện tại là 120 request/15 phút/IP; cần điều chỉnh khi có nhiều người dùng thật.
-- Bản này không có cơ sở dữ liệu người dùng vì đăng nhập chỉ dùng để xác thực phiên. Nếu cần lịch sử dịch, phân quyền, gói trả phí hoặc quản trị, cần bổ sung database.
-- Bản này không tự động publish. Chủ tài khoản phải kết nối repository và cấu hình biến môi trường trên Render.
+- Website public phải dùng HTTPS.
+- Không commit .env, API key, OAuth client secret hoặc SESSION_SECRET vào GitHub.
+- Đổi SESSION_SECRET sẽ làm hết hiệu lực các phiên đăng nhập hiện tại.
+- Giao diện chia file thành các nhóm tối đa 60 cue và 24.000 ký tự mỗi request; mỗi cue tối đa 5.000 ký tự. Gemini nghỉ 4,5 giây giữa các request.
+- Khi gặp lỗi tạm thời như 408, 429, 5xx hoặc lỗi mạng, ứng dụng thử lại tối đa 3 lần với thời gian chờ tăng dần; lỗi key/model không hợp lệ sẽ dừng sớm.
+- Hủy lượt dịch ở trình duyệt sẽ đóng request và báo backend hủy tiếp công việc gọi AI nếu kết nối đã bị ngắt.
+- Backend giới hạn 80 cue/request, 30.000 ký tự/request và 120 request/15 phút/IP.
+- Ứng dụng không có database người dùng hoặc lịch sử dịch. Nếu cần lịch sử, phân quyền, gói trả phí hoặc quản trị, cần bổ sung database.
 
 ## Kiểm tra
 
-```bash
+~~~bash
 npm test
-```
+~~~
+
+GitHub Actions tự chạy bộ test khi có push hoặc pull request vào nhánh main.
+
+## Nhật ký phiên bản
+
+### 1.1.0
+- Sửa luồng nonce Google sau khi đăng nhập lỗi hoặc đăng xuất.
+- Xóa API key và dữ liệu phụ đề tạm khi đăng xuất; hỗ trợ hủy request dịch.
+- Sửa trạng thái bị kẹt nếu gặp cue vượt giới hạn.
+- Giữ nguyên timestamp gốc khi đọc/xuất SRT, hỗ trợ định dạng xuống dòng CRLF/LF/CR.
+- Giới hạn dung lượng file, số cue và ngăn lỗi đọc file theo thứ tự sai.
+- Cập nhật model OpenAI; tắt lưu Responses phía OpenAI; tránh cache HTML cũ.
+- Bổ sung test và CI.
