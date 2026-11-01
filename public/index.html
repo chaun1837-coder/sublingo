@@ -176,7 +176,16 @@ textarea.field { resize: vertical; line-height: 1.55; }
 .scan-preview-panel { margin-top: 20px; }
 .scan-preview-panel[hidden] { display: none !important; }
 .scan-video-stage { background: #091321; padding: 12px; }
-.scan-video-stage video { display: block; width: 100%; height: auto; min-height: 0; max-height: none; aspect-ratio: 16 / 9; object-fit: contain; margin: 0 auto; border-radius: 9px; background: #050A12; }
+.video-frame-wrap { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 9px; background: #050A12; }
+.video-frame-wrap video { display: block; width: 100%; height: 100%; object-fit: contain; background: #050A12; }
+.ocr-overlay { position: absolute; inset: 0; pointer-events: none; }
+.ocr-region { position: absolute; left: 8%; top: 76%; width: 84%; height: 18%; min-height: 4%; border: 2px solid #FF3838; background: rgba(255, 56, 56, .10); box-shadow: 0 0 0 9999px rgba(2, 8, 18, .10); pointer-events: auto; cursor: move; touch-action: none; user-select: none; }
+.ocr-region::before { content: 'VÙNG QUÉT OCR'; position: absolute; left: 0; top: -23px; padding: 3px 7px; border-radius: 5px 5px 0 0; color: #FFFFFF; background: #D92929; font-size: 9px; font-weight: 800; letter-spacing: .05em; white-space: nowrap; }
+.ocr-region:focus-visible { outline: 2px solid #FFFFFF; outline-offset: 3px; }
+.ocr-resize-handle { position: absolute; left: 50%; bottom: -7px; width: 64px; height: 13px; transform: translateX(-50%); border: 1px solid #FFFFFF; border-radius: 99px; background: #D92929; cursor: ns-resize; touch-action: none; }
+.ocr-resize-handle::after { content: ''; position: absolute; left: 50%; top: 3px; width: 22px; height: 5px; transform: translateX(-50%); border-top: 1px solid #FFFFFF; border-bottom: 1px solid #FFFFFF; }
+.scan-running .ocr-region { pointer-events: none; opacity: .75; }
+.scan-region-help { margin: 0; padding: 9px 12px; color: #AAB8C9; background: #101C2C; font-size: 10px; line-height: 1.55; }
 .scan-monitor-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(290px, .85fr); gap: 14px; align-items: start; padding: 14px; }
 .scan-video-column { min-width: 0; overflow: hidden; border: 1px solid light-dark(#E0E7EF, #2B394D); border-radius: 13px; background: light-dark(#FFFFFF, #182335); }
 .scan-monitor-grid .scan-video-stage { padding: 10px; }
@@ -296,7 +305,15 @@ textarea.field { resize: vertical; line-height: 1.55; }
           <div class="scan-monitor-grid">
             <div class="scan-video-column">
               <div class="scan-video-stage">
-                <video id="videoPlayer" controls playsinline preload="metadata">Trình duyệt của bạn không hỗ trợ phát video HTML5.</video>
+                <div class="video-frame-wrap" id="videoFrameWrap">
+                  <video id="videoPlayer" controls playsinline preload="metadata">Trình duyệt của bạn không hỗ trợ phát video HTML5.</video>
+                  <div class="ocr-overlay" aria-label="Lớp điều chỉnh vùng quét">
+                    <div class="ocr-region" id="ocrRegion" role="group" tabindex="0" aria-label="Vùng quét OCR. Kéo để di chuyển, dùng tay nắm đỏ phía dưới để chỉnh chiều cao. Dùng phím mũi tên để điều chỉnh.">
+                      <button class="ocr-resize-handle" id="ocrResizeHandle" type="button" aria-label="Kéo để thay đổi chiều cao vùng quét"></button>
+                    </div>
+                  </div>
+                </div>
+                <p class="scan-region-help">Kéo khung đỏ để di chuyển vùng phụ đề. Kéo tay nắm đỏ phía dưới để tăng hoặc giảm chiều cao. OCR chỉ đọc phần nằm bên trong khung.</p>
               </div>
               <div class="scan-actions">
                 <div class="scan-language-control">
@@ -322,7 +339,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
                   <div class="scan-progress-meta"><span id="scanProgressText">Đang chuẩn bị...</span><strong id="scanProgressPercent">0%</strong></div>
                   <div class="scan-progress-bar"><span id="scanProgressFill"></span></div>
                 </div>
-                <p class="scan-action-note" id="scanStatus">Quét tuần tự từng khung hình cách nhau 0,5 giây. OCR chỉ xử lý vùng 40% phía dưới video.</p>
+                <p class="scan-action-note" id="scanStatus">Chọn video, đặt khung đỏ vừa khít vùng phụ đề rồi bấm bắt đầu quét. Ảnh vùng quét sẽ được chuyển sang đen trắng trước khi nhận diện.</p>
               </div>
             </div>
             <section class="panel scan-results-panel" aria-labelledby="scanResultsTitle">
@@ -458,6 +475,104 @@ textarea.field { resize: vertical; line-height: 1.55; }
     return String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0') + ':' + String(secs).padStart(2, '0') + ',' + String(millis).padStart(3, '0');
   }
 
+  function initOcrRegionControls() {
+    const region = $('ocrRegion');
+    const frame = $('videoFrameWrap');
+    const handle = $('ocrResizeHandle');
+    let interaction = null;
+    const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+    const geometry = () => ({ top: parseFloat(region.style.top || '76%'), height: parseFloat(region.style.height || '18%') });
+    const apply = (top, height) => {
+      const safeHeight = clamp(height, 4, 96);
+      region.style.height = safeHeight + '%';
+      region.style.top = clamp(top, 0, 100 - safeHeight) + '%';
+    };
+    const start = (event, mode) => {
+      if (scanRunning || !selectedVideoFile) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const current = geometry();
+      interaction = { mode, pointerId: event.pointerId, startY: event.clientY, top: current.top, height: current.height, frameHeight: frame.getBoundingClientRect().height };
+      (mode === 'resize' ? handle : region).setPointerCapture(event.pointerId);
+    };
+    region.addEventListener('pointerdown', (event) => {
+      if (event.target === handle) return;
+      start(event, 'move');
+    });
+    handle.addEventListener('pointerdown', (event) => start(event, 'resize'));
+    const move = (event) => {
+      if (!interaction || event.pointerId !== interaction.pointerId) return;
+      const delta = (event.clientY - interaction.startY) / Math.max(1, interaction.frameHeight) * 100;
+      if (interaction.mode === 'move') apply(interaction.top + delta, interaction.height);
+      else apply(interaction.top, interaction.height + delta);
+    };
+    const end = (event) => {
+      if (!interaction || event.pointerId !== interaction.pointerId) return;
+      interaction = null;
+    };
+    region.addEventListener('pointermove', move);
+    handle.addEventListener('pointermove', move);
+    region.addEventListener('pointerup', end);
+    region.addEventListener('pointercancel', end);
+    handle.addEventListener('pointerup', end);
+    handle.addEventListener('pointercancel', end);
+    region.addEventListener('keydown', (event) => {
+      if (!['ArrowUp', 'ArrowDown'].includes(event.key)) return;
+      event.preventDefault();
+      const current = geometry();
+      const step = event.shiftKey ? 2 : 1;
+      if (event.shiftKey) apply(current.top, current.height + (event.key === 'ArrowDown' ? step : -step));
+      else apply(current.top + (event.key === 'ArrowDown' ? step : -step), current.height);
+    });
+  }
+
+  function clampOcr(value, min, max) {
+    return Math.min(max, Math.max(min, value));
+  }
+
+  function getOcrCrop(video) {
+    const frame = $('videoFrameWrap').getBoundingClientRect();
+    const region = $('ocrRegion').getBoundingClientRect();
+    if (!video.videoWidth || !video.videoHeight || !frame.width || !frame.height) throw new Error('Khung video chưa sẵn sàng để cắt vùng OCR.');
+    const videoRatio = video.videoWidth / video.videoHeight;
+    const frameRatio = frame.width / frame.height;
+    const contentWidth = videoRatio > frameRatio ? frame.width : frame.height * videoRatio;
+    const contentHeight = videoRatio > frameRatio ? frame.width / videoRatio : frame.height;
+    const contentLeft = (frame.width - contentWidth) / 2;
+    const contentTop = (frame.height - contentHeight) / 2;
+    const left = clampOcr(region.left - frame.left - contentLeft, 0, contentWidth);
+    const top = clampOcr(region.top - frame.top - contentTop, 0, contentHeight);
+    const right = clampOcr(region.right - frame.left - contentLeft, 0, contentWidth);
+    const bottom = clampOcr(region.bottom - frame.top - contentTop, 0, contentHeight);
+    const scaleX = video.videoWidth / contentWidth;
+    const scaleY = video.videoHeight / contentHeight;
+    const x = Math.max(0, Math.floor(left * scaleX));
+    const y = Math.max(0, Math.floor(top * scaleY));
+    const endX = Math.min(video.videoWidth, Math.ceil(right * scaleX));
+    const endY = Math.min(video.videoHeight, Math.ceil(bottom * scaleY));
+    if (endX <= x || endY <= y) throw new Error('Khung đỏ chưa nằm trên vùng hình ảnh video. Hãy kéo khung vào trong hình.');
+    return { x, y, width: endX - x, height: endY - y };
+  }
+
+  function captureGrayscaleOcrRegion(video, canvas, context) {
+    const crop = getOcrCrop(video);
+    canvas.width = crop.width;
+    canvas.height = crop.height;
+    context.filter = 'none';
+    context.drawImage(video, crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height);
+    const image = context.getImageData(0, 0, canvas.width, canvas.height);
+    const pixels = image.data;
+    for (let index = 0; index < pixels.length; index += 4) {
+      const luminance = 0.299 * pixels[index] + 0.587 * pixels[index + 1] + 0.114 * pixels[index + 2];
+      const gray = Math.max(0, Math.min(255, Math.round((luminance - 128) * 1.12 + 128)));
+      pixels[index] = gray;
+      pixels[index + 1] = gray;
+      pixels[index + 2] = gray;
+    }
+    context.putImageData(image, 0, 0);
+    return canvas;
+  }
+
   function normalizeScanText(value) {
     return String(value || '').normalize('NFKC').toLocaleLowerCase().replace(/[\s\p{P}\p{S}]/gu, '');
   }
@@ -586,13 +701,14 @@ textarea.field { resize: vertical; line-height: 1.55; }
     scanCues = [];
     renderScanResults();
     scanRunning = true;
+    $('scanPage').classList.add('scan-running');
     video.pause();
     button.disabled = true;
     button.textContent = 'Đang quét video...';
     $('stopScanBtn').hidden = false;
     $('scanProgress').hidden = false;
     $('scanProgressFill').style.width = '0%';
-    $('scanStatus').textContent = 'Đang tua và nhận diện tuần tự từng khung hình. Có thể dừng bất cứ lúc nào.';
+    $('scanStatus').textContent = 'Đang quét vùng bên trong khung đỏ, chuyển ảnh sang đen trắng rồi nhận diện.';
     toast('Đang khởi tạo OCR. Lần đầu tải dữ liệu ngôn ngữ có thể mất thêm thời gian.');
 
     let worker = null;
@@ -601,18 +717,11 @@ textarea.field { resize: vertical; line-height: 1.55; }
     try {
       worker = await window.Tesseract.createWorker(languageCode, 1);
       scanWorker = worker;
-      canvas.width = Math.max(1, Math.round(video.videoWidth * 0.90));
-      canvas.height = Math.max(1, Math.round(video.videoHeight * 0.40));
-      const cropX = Math.round(video.videoWidth * 0.05);
-      const cropY = Math.round(video.videoHeight * 0.60);
-      const cropWidth = video.videoWidth - cropX * 2;
-      const cropHeight = video.videoHeight - cropY;
-
       for (let sampleTime = 0; sampleTime < duration; sampleTime += SCAN_STEP_SECONDS) {
         if (scanId !== activeScanId) break;
         await seekVideoTo(video, sampleTime);
         if (scanId !== activeScanId) break;
-        context.drawImage(video, cropX, cropY, cropWidth, cropHeight, 0, 0, canvas.width, canvas.height);
+        captureGrayscaleOcrRegion(video, canvas, context);
         const result = await worker.recognize(canvas);
         if (scanId !== activeScanId) break;
 
@@ -677,6 +786,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
       }
       if (scanWorker === worker) scanWorker = null;
       scanRunning = false;
+      $('scanPage').classList.remove('scan-running');
       $('stopScanBtn').hidden = true;
       button.disabled = !selectedVideoFile;
       button.innerHTML = originalButtonHtml;
@@ -826,6 +936,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
     loadVideoFile(event.target.files[0]);
     event.target.value = '';
   });
+  initOcrRegionControls();
   $('videoDropZone').addEventListener('dragover', (event) => {
     event.preventDefault();
     $('videoDropZone').classList.add('drag');
