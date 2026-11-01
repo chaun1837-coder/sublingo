@@ -177,6 +177,33 @@ textarea.field { resize: vertical; line-height: 1.55; }
 .scan-preview-panel[hidden] { display: none !important; }
 .scan-video-stage { background: #091321; padding: 12px; }
 .scan-video-stage video { display: block; width: 100%; max-height: min(64vh, 620px); aspect-ratio: 16 / 9; object-fit: contain; margin: 0 auto; border-radius: 9px; background: #050A12; }
+.scan-monitor-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(290px, .85fr); gap: 14px; align-items: start; padding: 14px; }
+.scan-video-column { min-width: 0; overflow: hidden; border: 1px solid light-dark(#E0E7EF, #2B394D); border-radius: 13px; background: light-dark(#FFFFFF, #182335); }
+.scan-monitor-grid .scan-video-stage { padding: 10px; }
+.scan-monitor-grid .scan-actions { padding: 15px; }
+.scan-action-buttons { display: flex; width: min(100%, 430px); gap: 8px; }
+.scan-action-buttons .scan-start-button { flex: 1; min-width: 0; }
+.scan-stop-button { min-width: 92px; border: 1px solid light-dark(#E4CACA, #694646); border-radius: 12px; padding: 0 14px; color: light-dark(#A34444, #F0B7B7); background: light-dark(#FFF7F7, #321F25); font-size: 12px; font-weight: 800; }
+.scan-stop-button[hidden] { display: none !important; }
+.scan-progress { width: min(100%, 430px); }
+.scan-progress-meta { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 6px; color: light-dark(#6D7B8E, #AAB8C9); font-size: 10px; }
+.scan-progress-bar { width: 100%; height: 7px; overflow: hidden; border-radius: 99px; background: light-dark(#E8EEF4, #29384C); }
+.scan-progress-bar > span { display: block; width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #2C9B88, #397CB3); transition: width .12s ease; }
+.scan-results-panel { min-width: 0; overflow: hidden; }
+.scan-results-empty { padding: 44px 20px; color: light-dark(#8997A8, #91A0B4); text-align: center; font-size: 11px; line-height: 1.65; }
+.scan-results-empty[hidden] { display: none !important; }
+.scan-results-scroll { max-height: 610px; overflow: auto; }
+.scan-results-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.scan-results-table th, .scan-results-table td { padding: 10px 9px; border-bottom: 1px solid light-dark(#E9EEF3, #2A384B); text-align: left; vertical-align: top; }
+.scan-results-table th { position: sticky; top: 0; z-index: 1; color: light-dark(#758397, #A2B0C2); background: light-dark(#F8FAFC, #1D2A3D); font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; }
+.scan-results-table td { color: light-dark(#30445D, #D7E2EF); font-size: 11px; line-height: 1.5; overflow-wrap: anywhere; }
+.scan-results-table th:first-child, .scan-results-table td:first-child { width: 34px; text-align: center; }
+.scan-results-table th:nth-child(2), .scan-results-table td:nth-child(2) { width: 116px; }
+.scan-result-time { color: light-dark(#537365, #A8D8C7) !important; font-size: 9px !important; font-variant-numeric: tabular-nums; white-space: pre-line; }
+.scan-result-row { cursor: pointer; }
+.scan-result-row:hover { background: light-dark(#F2F8F6, #1D332F); }
+.scan-action-note { max-width: 470px; }
+@media (max-width: 900px) { .scan-monitor-grid { grid-template-columns: 1fr; } .scan-results-scroll { max-height: 360px; } }
 .scan-actions { display: flex; flex-direction: column; align-items: center; gap: 9px; padding: 20px 18px 22px; border-top: 1px solid light-dark(#E7ECF2, #2A384B); }
 .scan-language-control { width: min(100%, 430px); text-align: left; }
 .scan-start-button { width: min(100%, 430px); min-height: 54px; border: 0; border-radius: 13px; color: #FFFFFF; background: linear-gradient(135deg, #1C786E, #245F80); box-shadow: 0 9px 22px rgba(27, 104, 111, .2); font-size: 15px; font-weight: 800; letter-spacing: -.01em; transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease; }
@@ -266,27 +293,51 @@ textarea.field { resize: vertical; line-height: 1.55; }
             <div class="panel-title"><span class="step">02</span> Xem trước video</div>
             <span class="count">Trình phát video</span>
           </div>
-          <div class="scan-video-stage">
-            <video id="videoPlayer" controls playsinline preload="metadata">Trình duyệt của bạn không hỗ trợ phát video HTML5.</video>
-          </div>
-          <div class="scan-actions">
-            <div class="scan-language-control">
-              <label class="form-label" for="scanLanguage">Ngôn ngữ phụ đề trong video</label>
-              <select class="field" id="scanLanguage">
-                <option value="vie" selected>Tiếng Việt</option>
-                <option value="eng">Tiếng Anh</option>
-                <option value="chi_sim">Tiếng Trung (Giản thể)</option>
-                <option value="chi_tra">Tiếng Trung (Phồn thể)</option>
-                <option value="kor">Tiếng Hàn</option>
-                <option value="jpn">Tiếng Nhật</option>
-                <option value="fra">Tiếng Pháp</option>
-                <option value="spa">Tiếng Tây Ban Nha</option>
-                <option value="deu">Tiếng Đức</option>
-                <option value="tha">Tiếng Thái</option>
-              </select>
+          <div class="scan-monitor-grid">
+            <div class="scan-video-column">
+              <div class="scan-video-stage">
+                <video id="videoPlayer" controls playsinline preload="metadata">Trình duyệt của bạn không hỗ trợ phát video HTML5.</video>
+              </div>
+              <div class="scan-actions">
+                <div class="scan-language-control">
+                  <label class="form-label" for="scanLanguage">Ngôn ngữ phụ đề trong video</label>
+                  <select class="field" id="scanLanguage">
+                    <option value="vie" selected>Tiếng Việt</option>
+                    <option value="eng">Tiếng Anh</option>
+                    <option value="chi_sim">Tiếng Trung (Giản thể)</option>
+                    <option value="chi_tra">Tiếng Trung (Phồn thể)</option>
+                    <option value="kor">Tiếng Hàn</option>
+                    <option value="jpn">Tiếng Nhật</option>
+                    <option value="fra">Tiếng Pháp</option>
+                    <option value="spa">Tiếng Tây Ban Nha</option>
+                    <option value="deu">Tiếng Đức</option>
+                    <option value="tha">Tiếng Thái</option>
+                  </select>
+                </div>
+                <div class="scan-action-buttons">
+                  <button class="scan-start-button" id="startScanBtn" type="button" disabled>⌕&nbsp; Bắt đầu quét phụ đề</button>
+                  <button class="scan-stop-button" id="stopScanBtn" type="button" hidden>Dừng quét</button>
+                </div>
+                <div class="scan-progress" id="scanProgress" hidden>
+                  <div class="scan-progress-meta"><span id="scanProgressText">Đang chuẩn bị...</span><strong id="scanProgressPercent">0%</strong></div>
+                  <div class="scan-progress-bar"><span id="scanProgressFill"></span></div>
+                </div>
+                <p class="scan-action-note" id="scanStatus">Quét tuần tự từng khung hình cách nhau 0,5 giây. OCR chỉ xử lý vùng 40% phía dưới video.</p>
+              </div>
             </div>
-            <button class="scan-start-button" id="startScanBtn" type="button" disabled>⌕&nbsp; Bắt đầu quét phụ đề</button>
-            <p class="scan-action-note">Chọn ngôn ngữ, tua đến khung hình cần kiểm tra rồi bấm quét. Văn bản nhận diện sẽ được ghi trong Console (F12).</p>
+            <section class="panel scan-results-panel" aria-labelledby="scanResultsTitle">
+              <div class="panel-head">
+                <div class="panel-title" id="scanResultsTitle"><span class="step">03</span> Danh sách phụ đề</div>
+                <span class="count" id="scanCueCount">0 câu</span>
+              </div>
+              <div class="scan-results-empty" id="scanResultsEmpty">Các câu phụ đề được nhận diện sẽ xuất hiện tại đây, kèm thời gian bắt đầu và kết thúc.</div>
+              <div class="scan-results-scroll" id="scanResultsScroll" hidden>
+                <table class="scan-results-table">
+                  <thead><tr><th>#</th><th>Thời gian</th><th>Nội dung</th></tr></thead>
+                  <tbody id="scanResultsBody"></tbody>
+                </table>
+              </div>
+            </section>
           </div>
         </section>
       </div>
@@ -391,6 +442,243 @@ textarea.field { resize: vertical; line-height: 1.55; }
   const pageButtons = document.querySelectorAll('.sidebar-nav-button[data-page]');
   let selectedVideoUrl = '';
   let selectedVideoFile = null;
+  let scanCues = [];
+  let scanWorker = null;
+  let scanRunning = false;
+  let activeScanId = 0;
+  const SCAN_STEP_SECONDS = 0.5;
+
+  function formatScanTime(seconds) {
+    const totalMs = Math.max(0, Math.round(seconds * 1000));
+    const hours = Math.floor(totalMs / 3600000);
+    const minutes = Math.floor((totalMs % 3600000) / 60000);
+    const secs = Math.floor((totalMs % 60000) / 1000);
+    const millis = totalMs % 1000;
+    return String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0') + ':' + String(secs).padStart(2, '0') + ',' + String(millis).padStart(3, '0');
+  }
+
+  function normalizeScanText(value) {
+    return String(value || '').normalize('NFKC').toLocaleLowerCase().replace(/[\\s\\p{P}\\p{S}]/gu, '');
+  }
+
+  function scanTextSimilarity(first, second) {
+    const a = normalizeScanText(first);
+    const b = normalizeScanText(second);
+    if (!a || !b) return 0;
+    if (a === b) return 1;
+    const previous = Array.from({ length: b.length + 1 }, (_, index) => index);
+    for (let i = 1; i <= a.length; i += 1) {
+      let diagonal = previous[0];
+      previous[0] = i;
+      for (let j = 1; j <= b.length; j += 1) {
+        const above = previous[j];
+        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        previous[j] = Math.min(previous[j] + 1, previous[j - 1] + 1, diagonal + cost);
+        diagonal = above;
+      }
+    }
+    return 1 - previous[b.length] / Math.max(a.length, b.length);
+  }
+
+  function renderScanResults() {
+    const body = $('scanResultsBody');
+    body.replaceChildren();
+    scanCues.forEach((cue, index) => {
+      const row = document.createElement('tr');
+      row.className = 'scan-result-row';
+      row.title = 'Nhấn để tua video đến câu phụ đề này';
+      const number = document.createElement('td');
+      number.textContent = String(index + 1);
+      const time = document.createElement('td');
+      time.className = 'scan-result-time';
+      time.textContent = formatScanTime(cue.start) + '\\n' + formatScanTime(cue.end);
+      const text = document.createElement('td');
+      text.textContent = cue.text;
+      row.append(number, time, text);
+      row.addEventListener('click', () => {
+        const video = $('videoPlayer');
+        video.pause();
+        video.currentTime = cue.start;
+      });
+      body.append(row);
+    });
+    $('scanCueCount').textContent = scanCues.length + ' câu';
+    $('scanResultsEmpty').hidden = scanCues.length > 0;
+    $('scanResultsScroll').hidden = scanCues.length === 0;
+    $('scanResultsScroll').scrollTop = $('scanResultsScroll').scrollHeight;
+  }
+
+  function updateScanProgress(completed, total, currentTime) {
+    const percent = total ? Math.min(100, Math.round(completed / total * 100)) : 100;
+    $('scanProgressText').textContent = 'Đang quét ' + formatScanTime(currentTime);
+    $('scanProgressPercent').textContent = percent + '%';
+    $('scanProgressFill').style.width = percent + '%';
+  }
+
+  function seekVideoTo(video, time) {
+    return new Promise((resolve, reject) => {
+      let settled = false;
+      const cleanup = () => {
+        video.removeEventListener('seeked', onSeeked);
+        video.removeEventListener('error', onError);
+        clearTimeout(timeout);
+      };
+      const finish = (error) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        if (error) reject(error);
+        else resolve();
+      };
+      const onSeeked = () => finish();
+      const onError = () => finish(new Error('Không thể tua đến khung hình video cần quét.'));
+      const timeout = setTimeout(() => finish(new Error('Tua video quá thời gian chờ.')), 8000);
+      if (Math.abs(video.currentTime - time) < 0.01 && video.readyState >= 2) {
+        requestAnimationFrame(() => requestAnimationFrame(() => finish()));
+        return;
+      }
+      video.addEventListener('seeked', onSeeked, { once: true });
+      video.addEventListener('error', onError, { once: true });
+      video.currentTime = time;
+    });
+  }
+
+  async function runAutomaticScan() {
+    if (scanRunning || scanWorker) {
+      toast('Một quá trình quét đang chạy hoặc đang dừng.');
+      return;
+    }
+    const video = $('videoPlayer');
+    if (video.readyState < 2 || !video.videoWidth || !video.videoHeight || !Number.isFinite(video.duration)) {
+      toast('Video chưa sẵn sàng hoặc không xác định được thời lượng.');
+      return;
+    }
+    if (!window.Tesseract || typeof window.Tesseract.createWorker !== 'function') {
+      toast('Không tải được Tesseract.js. Hãy kiểm tra kết nối mạng rồi tải lại trang.');
+      return;
+    }
+
+    const languageCode = $('scanLanguage').value;
+    const button = $('startScanBtn');
+    const originalButtonHtml = button.innerHTML;
+    const scanId = ++activeScanId;
+    const duration = video.duration;
+    const totalSamples = Math.max(1, Math.ceil(duration / SCAN_STEP_SECONDS));
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    if (!context) {
+      toast('Không thể tạo canvas để chụp khung hình video.');
+      return;
+    }
+
+    scanCues = [];
+    renderScanResults();
+    scanRunning = true;
+    video.pause();
+    button.disabled = true;
+    button.textContent = 'Đang quét video...';
+    $('stopScanBtn').hidden = false;
+    $('scanProgress').hidden = false;
+    $('scanProgressFill').style.width = '0%';
+    $('scanStatus').textContent = 'Đang tua và nhận diện tuần tự từng khung hình. Có thể dừng bất cứ lúc nào.';
+    toast('Đang khởi tạo OCR. Lần đầu tải dữ liệu ngôn ngữ có thể mất thêm thời gian.');
+
+    let worker = null;
+    let currentCue = null;
+    let completed = 0;
+    try {
+      worker = await window.Tesseract.createWorker(languageCode, 1);
+      scanWorker = worker;
+      canvas.width = Math.max(1, Math.round(video.videoWidth * 0.90));
+      canvas.height = Math.max(1, Math.round(video.videoHeight * 0.40));
+      const cropX = Math.round(video.videoWidth * 0.05);
+      const cropY = Math.round(video.videoHeight * 0.60);
+      const cropWidth = video.videoWidth - cropX * 2;
+      const cropHeight = video.videoHeight - cropY;
+
+      for (let sampleTime = 0; sampleTime < duration; sampleTime += SCAN_STEP_SECONDS) {
+        if (scanId !== activeScanId) break;
+        await seekVideoTo(video, sampleTime);
+        if (scanId !== activeScanId) break;
+        context.drawImage(video, cropX, cropY, cropWidth, cropHeight, 0, 0, canvas.width, canvas.height);
+        const result = await worker.recognize(canvas);
+        if (scanId !== activeScanId) break;
+
+        const recognizedText = String(result?.data?.text || '')
+          .split(/\\r?\\n/)
+          .map(line => line.trim())
+          .filter(Boolean)
+          .join(' ')
+          .replace(/\\s+/g, ' ')
+          .trim();
+        const cleanText = normalizeScanText(recognizedText);
+        const confidence = Number(result?.data?.confidence || 0);
+
+        if (!cleanText) {
+          if (currentCue) {
+            currentCue.end = Math.max(currentCue.start, sampleTime);
+            currentCue = null;
+            renderScanResults();
+          }
+        } else if (currentCue && scanTextSimilarity(currentCue.text, recognizedText) >= 0.80) {
+          currentCue.end = Math.min(duration, sampleTime + SCAN_STEP_SECONDS);
+          if (recognizedText.length > currentCue.text.length || confidence > currentCue.confidence + 8) {
+            currentCue.text = recognizedText;
+            currentCue.confidence = confidence;
+          }
+          renderScanResults();
+        } else {
+          if (currentCue) currentCue.end = Math.max(currentCue.start, sampleTime);
+          currentCue = {
+            start: sampleTime,
+            end: Math.min(duration, sampleTime + SCAN_STEP_SECONDS),
+            text: recognizedText,
+            confidence: confidence
+          };
+          scanCues.push(currentCue);
+          renderScanResults();
+        }
+
+        completed += 1;
+        updateScanProgress(completed, totalSamples, sampleTime);
+      }
+
+      if (currentCue && scanId === activeScanId) {
+        currentCue.end = duration;
+        renderScanResults();
+      }
+      if (scanId === activeScanId) {
+        updateScanProgress(totalSamples, totalSamples, duration);
+        $('scanStatus').textContent = 'Hoàn tất: nhận diện được ' + scanCues.length + ' câu phụ đề. Nhấn vào một dòng để tua video đến thời điểm bắt đầu.';
+        toast('Đã quét xong video. Tìm thấy ' + scanCues.length + ' câu phụ đề.');
+      }
+    } catch (error) {
+      if (scanId === activeScanId) {
+        console.error('[SubLingo] Lỗi quét tự động:', error);
+        $('scanStatus').textContent = 'Quét bị gián đoạn: ' + (error.message || 'Lỗi không xác định.');
+        toast('Quét phụ đề thất bại: ' + (error.message || 'Lỗi không xác định.'));
+      }
+    } finally {
+      if (worker) {
+        try { await worker.terminate(); }
+        catch (terminationError) { console.warn('[SubLingo] Không thể đóng OCR worker:', terminationError); }
+      }
+      if (scanWorker === worker) scanWorker = null;
+      scanRunning = false;
+      $('stopScanBtn').hidden = true;
+      button.disabled = !selectedVideoFile;
+      button.innerHTML = originalButtonHtml;
+    }
+  }
+
+  $('stopScanBtn').addEventListener('click', () => {
+    if (!scanRunning) return;
+    activeScanId += 1;
+    $('videoPlayer').pause();
+    $('stopScanBtn').hidden = true;
+    $('scanStatus').textContent = 'Đang dừng sau khung hình OCR hiện tại. Những câu đã quét vẫn được giữ lại.';
+    toast('Đang dừng quét. Vui lòng đợi khung hình hiện tại xử lý xong.');
+  });
 
   function showPage(pageName) {
     if (!pageViews[pageName]) return;
@@ -453,6 +741,11 @@ textarea.field { resize: vertical; line-height: 1.55; }
     loadVideoFile(event.dataTransfer.files[0]);
   });
   $('removeVideo').addEventListener('click', () => {
+    if (scanRunning) {
+      activeScanId += 1;
+      $('videoPlayer').pause();
+      $('scanStatus').textContent = 'Đã dừng quét do video được gỡ.';
+    }
     $('videoPlayer').pause();
     $('videoPlayer').removeAttribute('src');
     $('videoPlayer').load();
@@ -469,77 +762,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
       toast('Vui lòng chọn video trước khi quét.');
       return;
     }
-
-    const video = $('videoPlayer');
-    if (video.readyState < 2 || !video.videoWidth || !video.videoHeight) {
-      toast('Video chưa sẵn sàng. Hãy đợi video tải khung hình rồi thử lại.');
-      return;
-    }
-
-    const languageSelect = $('scanLanguage');
-    const languageCode = languageSelect.value;
-    const languageName = languageSelect.selectedOptions[0]?.textContent.trim() || languageCode;
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-
-    const context = canvas.getContext('2d');
-    if (!context) {
-      toast('Không thể tạo canvas để chụp khung hình video.');
-      return;
-    }
-
-    // Chụp ngay khung hình đang hiển thị; OCR chạy sau đó trên canvas này.
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const capturedAt = video.currentTime;
-    const button = $('startScanBtn');
-    const originalButtonHtml = button.innerHTML;
-    let worker;
-
-    button.disabled = true;
-    button.textContent = 'Đang khởi tạo OCR...';
-    toast('Đang tải bộ nhận diện và dữ liệu ngôn ngữ. Lần đầu có thể mất thêm thời gian.');
-
-    try {
-      if (!window.Tesseract || typeof window.Tesseract.createWorker !== 'function') {
-        throw new Error('Không tải được Tesseract.js từ CDN. Hãy kiểm tra kết nối mạng rồi tải lại trang.');
-      }
-
-      worker = await window.Tesseract.createWorker(languageCode, 1);
-      button.textContent = 'Đang nhận diện khung hình...';
-
-      const result = await worker.recognize(canvas);
-      const recognizedText = String(result?.data?.text || '').trim();
-      const confidence = result?.data?.confidence ?? null;
-
-      console.log('[SubLingo] Kết quả OCR:', {
-        language: languageName,
-        languageCode,
-        videoTimeSeconds: capturedAt,
-        confidence,
-        text: recognizedText,
-        data: result.data
-      });
-
-      if (recognizedText) {
-        toast('Đã nhận diện xong. Mở Console (F12) để xem nội dung.');
-      } else {
-        toast('Chưa nhận diện được chữ ở khung hình này. Hãy thử thời điểm khác hoặc ngôn ngữ khác.');
-      }
-    } catch (error) {
-      console.error('[SubLingo] Lỗi OCR:', error);
-      toast('Quét phụ đề thất bại: ' + (error.message || 'Lỗi không xác định.'));
-    } finally {
-      if (worker) {
-        try {
-          await worker.terminate();
-        } catch (terminationError) {
-          console.warn('[SubLingo] Không thể đóng OCR worker:', terminationError);
-        }
-      }
-      button.disabled = !selectedVideoFile;
-      button.innerHTML = originalButtonHtml;
-    }
+    await runAutomaticScan();
   });
   window.addEventListener('beforeunload', () => {
     if (selectedVideoUrl) URL.revokeObjectURL(selectedVideoUrl);
