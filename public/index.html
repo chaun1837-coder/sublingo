@@ -150,7 +150,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
   <header class="topbar">
     <div class="brand">
       <div class="logo-mark" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 5.5C4 4.67 4.67 4 5.5 4h13c.83 0 1.5.67 1.5 1.5v9c0 .83-.67 1.5-1.5 1.5H11l-4.5 4v-4H5.5C4.67 16 4 15.33 4 14.5v-9Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 8.5h8M8 11.5h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
-      <div><div class="brand-name">SubLingo</div><div class="brand-sub">SUBTITLE WORKSPACE · SRT TRANSLATOR · v1.1.2</div></div>
+      <div><div class="brand-name">SubLingo</div><div class="brand-sub">SUBTITLE WORKSPACE · SRT TRANSLATOR · v1.1.3</div></div>
     </div>
     <div class="top-actions">
       <div class="google-login-wrap" id="googleSignInButton"></div>
@@ -210,7 +210,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
           <button class="btn btn-primary" id="translateBtn" style="width:100%">✦ Dịch phụ đề bằng AI</button>
           <div class="progress-track" id="translateProgress" role="progressbar" aria-label="Tiến độ dịch" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="progress-fill" id="translateProgressFill"></div></div>
           <div class="progress-summary" id="translateProgressSummary"><span id="translateProgressCount">0/0 câu đã dịch</span><span id="translateProgressPercent">0% · còn 0 câu</span></div>
-          <div class="helper" id="translateHelp" style="text-align:center;margin-top:8px">Chưa đăng nhập: có thể dùng Gemini 3.5 Flash-Lite. Đăng nhập để mở khóa Gemini 3.8 Flash và OpenAI.</div>
+          <div class="helper" id="translateHelp" style="text-align:center;margin-top:8px">Chưa đăng nhập: có thể dùng Gemini 3.5 Flash-Lite. Đăng nhập Google để mở khóa OpenAI.</div>
         </div>
       </aside>
 
@@ -500,13 +500,8 @@ textarea.field { resize: vertical; line-height: 1.55; }
         ['gpt-6-luna', 'GPT-6 Luna · tiết kiệm'],
         ['gpt-6.1-terra', 'GPT-6.1 Terra']
       ];
-    } else if (currentUser) {
-      options = [
-        ['gemini-3.8-flash', 'Gemini 3.8 Flash'],
-        ['gemini-3.5-flash-lite', 'Gemini 3.5 Flash-Lite']
-      ];
     } else {
-      options = [['gemini-3.5-flash-lite', 'Gemini 3.5 Flash-Lite']];
+      options = [['gemini-3.5-flash-lite', 'Gemini 3.5 Flash-Lite · ưu tiên miễn phí']];
     }
     $('model').innerHTML = options.map(([value, label]) => '<option value="' + value + '">' + label + '</option>').join('');
     if (options.some(([value]) => value === selected)) $('model').value = selected;
@@ -526,9 +521,9 @@ textarea.field { resize: vertical; line-height: 1.55; }
     }
     const googleLoginConfigured = Boolean(window.SUBLINGO_CONFIG && window.SUBLINGO_CONFIG.googleClientId);
     $('translateHelp').textContent = currentUser
-      ? 'Đã đăng nhập: bạn có thể dùng Gemini 3.8 Flash, Gemini 3.5 Flash-Lite và OpenAI.'
+      ? 'Đã đăng nhập: bạn có thể dùng Gemini 3.5 Flash-Lite và OpenAI.'
       : googleLoginConfigured
-        ? 'Chưa đăng nhập: có thể dùng Gemini 3.5 Flash-Lite. Đăng nhập để mở khóa Gemini 3.8 Flash và OpenAI.'
+        ? 'Chưa đăng nhập: có thể dùng Gemini 3.5 Flash-Lite. Đăng nhập để mở khóa OpenAI.'
         : 'Đăng nhập Google chưa được bật trên website. Hiện bạn vẫn có thể dùng Gemini 3.5 Flash-Lite.';
     if (currentUser) {
       $('userName').textContent = currentUser.name || currentUser.email || 'Đã đăng nhập';
@@ -697,7 +692,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
     updateProgress();
 
     const maxAttempts = requestProvider === 'gemini' ? 4 : 3;
-    const geminiMinIntervalMs = requestModel === 'gemini-3.8-flash' ? 6000 : 4500;
+    const geminiMinIntervalMs = 4500;
     let lastGeminiRequestAt = 0;
     let pendingRetryDelayMs = 0;
     try {

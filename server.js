@@ -293,7 +293,7 @@ async function callGemini(apiKey, model, prompt, clientSignal) {
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
       generationConfig: {
         responseMimeType: 'application/json',
-        thinkingConfig: { thinkingLevel: model === 'gemini-3.8-flash' ? 'LOW' : 'MINIMAL' },
+        thinkingConfig: { thinkingLevel: 'MINIMAL' },
         maxOutputTokens: 12000
       }
     }),
@@ -342,14 +342,10 @@ app.post('/api/translate', requireSameOrigin, noStore, optionalAuthenticate, tra
       return res.status(400).json({ error: 'Mô hình OpenAI không được hỗ trợ.' });
     }
   } else {
-    const allowedGeminiModels = req.user
-      ? ['gemini-3.8-flash', 'gemini-3.5-flash-lite']
-      : ['gemini-3.5-flash-lite'];
+    const allowedGeminiModels = ['gemini-3.5-flash-lite'];
     if (!allowedGeminiModels.includes(input.model)) {
-      return res.status(req.user ? 400 : 403).json({
-        error: req.user
-          ? 'Tài khoản không được chọn mô hình Gemini này.'
-          : 'Chưa đăng nhập chỉ được sử dụng Gemini 3.5 Flash-Lite. Hãy đăng nhập để mở khóa Gemini 3.8 Flash.'
+      return res.status(400).json({
+        error: 'SubLingo hiện chỉ bật Gemini 3.5 Flash-Lite để tránh chọn nhầm mô hình khác.'
       });
     }
   }

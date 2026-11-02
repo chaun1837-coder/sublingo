@@ -161,8 +161,11 @@ test('backend preserves upstream status codes for retry decisions', () => {
   assert.match(server, /Gemini đang tạm quá tải \(503\)/);
 });
 
-test('Gemini 3.8 Flash uses low thinking and Flash-Lite retains minimal thinking', () => {
-  assert.match(server, /thinkingConfig: \{ thinkingLevel: model === 'gemini-3\.8-flash' \? 'LOW' : 'MINIMAL' \}/);
+test('Gemini Flash-Lite is the only Gemini model enabled and uses minimal thinking', () => {
+  assert.match(server, /thinkingConfig: \{ thinkingLevel: 'MINIMAL' \}/);
+  assert.match(server, /const allowedGeminiModels = \['gemini-3\.5-flash-lite'\]/);
+  assert.doesNotMatch(server, /gemini-3\.8-flash/);
+  assert.doesNotMatch(html, /gemini-3\.8-flash|Gemini 3\.8 Flash/);
   assert.doesNotMatch(server.slice(server.indexOf('async function callGemini'), server.indexOf("app.post('/api/translate'")), /temperature:/);
 });
 
@@ -180,7 +183,7 @@ test('temporary upstream failures honor Retry-After and use capped exponential b
 });
 
 test('Gemini pacing uses request start times and does not add idle delay after slow responses', () => {
-  assert.match(html, /const geminiMinIntervalMs = requestModel === 'gemini-3\.8-flash' \? 6000 : 4500/);
+  assert.match(html, /const geminiMinIntervalMs = 4500/);
   assert.match(html, /const elapsed = Date\.now\(\) - lastGeminiRequestAt/);
   assert.match(html, /waitMs = Math\.max\(waitMs, geminiMinIntervalMs - elapsed\)/);
 });
@@ -188,7 +191,7 @@ test('Gemini pacing uses request start times and does not add idle delay after s
 test('backend only accepts current OpenAI and supported Gemini model IDs', () => {
   assert.match(server, /gpt-6-luna/);
   assert.match(server, /gpt-6\.1-terra/);
-  assert.match(server, /gemini-3\.8-flash/);
+  assert.doesNotMatch(server, /gemini-3\.8-flash/);
   assert.match(server, /gemini-3\.5-flash-lite/);
 });
 
@@ -235,8 +238,8 @@ test('index HTML is not cached so fixes appear without stale frontend code', () 
 });
 
 test('package and visible UI expose the same semantic version', () => {
-  assert.equal(pkg.version, '1.1.2');
-  assert.match(html, /SRT TRANSLATOR · v1\.1\.2/);
+  assert.equal(pkg.version, '1.1.3');
+  assert.match(html, /SRT TRANSLATOR · v1\.1\.3/);
   assert.match(server, /APP_VERSION/);
 });
 

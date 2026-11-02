@@ -1,6 +1,6 @@
-# SubLingo 1.1.2 — Dịch phụ đề SRT
+# SubLingo 1.1.3 — Dịch phụ đề SRT
 
-**Phiên bản hiện tại:** 1.1.2 — *Auth Session Caching & Gemini Error Diagnostics*.
+**Phiên bản hiện tại:** 1.1.3 — *Free-Model-Only Gemini Mode*.
 
 SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT bằng Google Gemini hoặc OpenAI.
 
@@ -19,10 +19,9 @@ SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT bằn
 | Nhà cung cấp | Model ID |
 |---|---|
 | OpenAI | gpt-6-luna, gpt-6.1-terra |
-| Gemini (đã đăng nhập) | gemini-3.8-flash, gemini-3.5-flash-lite |
-| Gemini (chưa đăng nhập) | gemini-3.5-flash-lite |
+| Gemini (tất cả người dùng) | gemini-3.5-flash-lite |
 
-Model khả dụng còn phụ thuộc quyền truy cập và hạn mức của API key do người dùng cung cấp.
+SubLingo đã tắt Gemini 3.8 Flash; chỉ bật Gemini 3.5 Flash-Lite cho tất cả người dùng. Mô hình này có Free Tier trong hạn mức Google, nhưng dự án đã liên kết billing vẫn có thể chịu giá Paid Tier. Muốn tránh phí, hãy xác nhận Google Cloud project/API key đang ở Free Tier và chưa bật billing; theo dõi Usage and Billing trong Google AI Studio.
 
 ## Chạy thử trên máy tính
 
@@ -62,7 +61,7 @@ Người dùng nhập OpenAI API key hoặc Gemini API key trong giao diện. Ke
 - Website public phải dùng HTTPS.
 - Không commit .env, API key, OAuth client secret hoặc SESSION_SECRET vào GitHub.
 - Đổi SESSION_SECRET sẽ làm hết hiệu lực các phiên đăng nhập hiện tại.
-- Giao diện chia file thành các nhóm tối đa 60 cue và 24.000 ký tự mỗi request; mỗi cue tối đa 5.000 ký tự. Gemini 3.8 Flash dùng thinking LOW và giới hạn khoảng cách tối thiểu 6 giây giữa thời điểm bắt đầu hai request; Gemini 3.5 Flash-Lite giữ mức thinking MINIMAL và khoảng cách 4,5 giây. Khoảng chờ chỉ được áp dụng khi cần, không cộng thêm sau một phản hồi vốn đã chậm.
+- Giao diện chia file thành các nhóm tối đa 60 cue và 24.000 ký tự mỗi request; mỗi cue tối đa 5.000 ký tự. Gemini 3.5 Flash-Lite dùng thinking MINIMAL và giới hạn khoảng cách tối thiểu 4,5 giây giữa thời điểm bắt đầu hai request. Khoảng chờ chỉ được áp dụng khi cần, không cộng thêm sau một phản hồi vốn đã chậm.
 - Khi gặp lỗi tạm thời như 408, 429, 5xx hoặc lỗi mạng, ứng dụng thử lại với exponential backoff và jitter; với Gemini, thời gian Retry-After/RetryInfo từ Google được ưu tiên. Hạn mức theo ngày không bị thử lại liên tục; sau nhiều lần 429, ứng dụng dừng gửi thêm nhóm để tránh làm nặng thêm giới hạn.
 - Hủy lượt dịch ở trình duyệt sẽ đóng request và báo backend hủy tiếp công việc gọi AI nếu kết nối đã bị ngắt.
 - Backend giới hạn 80 cue/request, 30.000 ký tự/request và 120 request/15 phút/IP.
@@ -77,6 +76,11 @@ npm test
 GitHub Actions tự chạy bộ test khi có push hoặc pull request vào nhánh main.
 
 ## Nhật ký phiên bản
+
+### 1.1.3
+- Gỡ Gemini 3.8 Flash khỏi giao diện và từ chối model này ở backend.
+- Chỉ giữ Gemini 3.5 Flash-Lite cho mọi người dùng; chuẩn hóa thinking MINIMAL và nhịp gửi 4,5 giây.
+- Ghi rõ lưu ý Free Tier và cấu hình billing của Google.
 
 ### 1.1.2
 - Chặn cache cho API đăng nhập, thông tin phiên và nội dung dịch; trình duyệt luôn lấy trạng thái phiên mới.
