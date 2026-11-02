@@ -1,6 +1,6 @@
-# SubLingo 1.1.1 — Dịch phụ đề SRT
+# SubLingo 1.1.2 — Dịch phụ đề SRT
 
-**Phiên bản hiện tại:** 1.1.1 — *Gemini Flash Latency & Quota Retry Improvements*.
+**Phiên bản hiện tại:** 1.1.2 — *Auth Session Caching & Gemini Error Diagnostics*.
 
 SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT bằng Google Gemini hoặc OpenAI.
 
@@ -42,14 +42,16 @@ Kiểm tra backend:
 curl http://localhost:10000/api/health
 ~~~
 
-Endpoint trả về trạng thái cùng phiên bản hiện tại, ví dụ {"ok":true,"service":"sublingo-api","version":"1.1.0"}.
+Endpoint trả về trạng thái cùng phiên bản hiện tại, ví dụ {"ok":true,"service":"sublingo-api","version":"1.1.2"}.
 
 ## Đưa lên Render
 
-1. Kết nối repository GitHub với Render và tạo Web Service (Build Command npm install, Start Command npm start) hoặc dùng Blueprint có sẵn.
-2. Trong Environment của Render, đặt GOOGLE_CLIENT_ID là OAuth Client ID loại Web. SESSION_SECRET cần là chuỗi ngẫu nhiên dài; Blueprint tạo giá trị tự động.
-3. Trong Google Cloud Console, thêm URL website Render vào **Authorized JavaScript origins** của OAuth Client ID. Ứng dụng dùng Google Identity Services popup nên không cần redirect URI.
-4. Sau khi deploy, kiểm tra /api/health và xác nhận trường version là 1.1.0.
+1. Kết nối repository GitHub với Render và tạo Web Service (Build Command `npm install`, Start Command `npm start`).
+2. Trong **Environment** của Render, đặt `GOOGLE_CLIENT_ID` bằng OAuth Client ID loại **Web application**. Giữ `SESSION_SECRET` là chuỗi ngẫu nhiên dài đã tạo cho service.
+3. Trong Google Cloud Console, thêm `https://sublingo-srt-translator.onrender.com` vào **Authorized JavaScript origins** của OAuth Client ID. Ứng dụng dùng Google Identity Services popup nên không cần redirect URI.
+4. Lưu cấu hình và chờ Render khởi động lại service. Khi chưa có `GOOGLE_CLIENT_ID`, nút đăng nhập sẽ hiển thị trạng thái đang chờ cấu hình; đây không phải lỗi tài khoản Google.
+5. Ứng dụng hiện hỗ trợ **đăng nhập bằng Google**, chưa có đăng ký email/mật khẩu riêng. Phiên đăng nhập được lưu bằng cookie HttpOnly trong 7 ngày; ứng dụng chưa lưu hồ sơ người dùng hoặc lịch sử dịch vào database.
+4. Sau khi deploy, kiểm tra /api/health và xác nhận trường version là 1.1.2.
 
 ## Cấu hình API key
 
@@ -75,6 +77,12 @@ npm test
 GitHub Actions tự chạy bộ test khi có push hoặc pull request vào nhánh main.
 
 ## Nhật ký phiên bản
+
+### 1.1.2
+- Chặn cache cho API đăng nhập, thông tin phiên và nội dung dịch; trình duyệt luôn lấy trạng thái phiên mới.
+- Phân biệt rõ lỗi Gemini 400, 401 và 403 để hướng dẫn sửa đúng nguyên nhân.
+- Hiển thị thông báo rõ ràng khi Google Client ID chưa được cấu hình.
+- Đồng bộ số phiên bản giữa giao diện, package và hướng dẫn triển khai.
 
 ### 1.1.1
 - Gemini 3.8 Flash dùng thinking LOW; Gemini 3.5 Flash-Lite giữ thinking MINIMAL.

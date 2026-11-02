@@ -235,9 +235,33 @@ test('index HTML is not cached so fixes appear without stale frontend code', () 
 });
 
 test('package and visible UI expose the same semantic version', () => {
-  assert.equal(pkg.version, '1.1.1');
-  assert.match(html, /SRT TRANSLATOR · v1\.1\.1/);
+  assert.equal(pkg.version, '1.1.2');
+  assert.match(html, /SRT TRANSLATOR · v1\.1\.2/);
   assert.match(server, /APP_VERSION/);
+});
+
+test('Google session and translation API responses are never cached', () => {
+  assert.match(server, /function noStore\(_req, res, next\)/);
+  assert.match(server, /app\.get\('\/api\/me', noStore, authenticate/);
+  assert.match(server, /app\.get\('\/api\/auth\/nonce', requireSameOrigin, noStore/);
+  assert.match(server, /app\.post\('\/api\/auth\/google', requireSameOrigin, noStore/);
+  assert.match(server, /app\.post\('\/api\/auth\/logout', requireSameOrigin, noStore/);
+  assert.match(server, /app\.post\('\/api\/translate', requireSameOrigin, noStore/);
+  assert.match(html, /fetch\('\/api\/me', \{ credentials: 'same-origin', cache: 'no-store' \}\)/);
+});
+
+test('Gemini errors distinguish invalid requests, invalid keys, and forbidden access', () => {
+  const gemini = server.slice(server.indexOf('async function callGemini'), server.indexOf("app.post('/api/translate'"));
+  assert.match(gemini, /response\.status === 400/);
+  assert.match(gemini, /response\.status === 401/);
+  assert.match(gemini, /response\.status === 403/);
+  assert.match(gemini, /Gemini không chấp nhận API key \(401\)/);
+  assert.match(gemini, /API key hiện không có quyền dùng Gemini \(403\)/);
+});
+
+test('Google login explains when OAuth Client ID has not been configured', () => {
+  assert.match(html, /Đăng nhập Google đang chờ cấu hình/);
+  assert.match(html, /Đăng nhập Google chưa được bật trên website/);
 });
 
 test('OpenAI Responses JSON mode is enabled and prompt explicitly requests JSON', () => {

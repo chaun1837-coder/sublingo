@@ -69,6 +69,10 @@ function requireSameOrigin(req, res, next) {
   if (!safeEqualOrigin(req)) return res.status(403).json({ error: 'Yêu cầu không hợp lệ.' });
   next();
 }
+function noStore(_req, res, next) {
+  res.set('Cache-Control', 'no-store');
+  next();
+}
 function getCookie(req, name) {
   const raw = req.headers.cookie || '';
   for (const part of raw.split(';')) {
@@ -134,13 +138,13 @@ app.get('/config.js', (_req, res) => {
 });
 app.get('/api/health', (_req, res) => res.set('Cache-Control', 'no-store').json({ ok: true, service: 'sublingo-api', version: APP_VERSION }));
 
-app.get('/api/auth/nonce', requireSameOrigin, authLimiter, (req, res) => {
+app.get('/api/auth/nonce', requireSameOrigin, noStore, authLimiter, (req, res) => {
   const nonce = crypto.randomBytes(24).toString('base64url');
   setNonceCookie(res, nonce);
   res.set('Cache-Control', 'no-store').json({ nonce });
 });
 
-app.post('/api/auth/google', requireSameOrigin, authLimiter, async (req, res) => {
+app.post('/api/auth/google', requireSameOrigin, noStore, authLimiter, async (req, res) => {
   if (!GOOGLE_CLIENT_ID) return res.status(503).json({ error: 'Máy chủ chưa cấu hình Google Client ID.' });
   const credential = typeof req.body?.credential === 'string' ? req.body.credential : '';
   if (!credential || credential.length > 10000) return res.status(400).json({ error: 'Google credential không hợp lệ.' });
@@ -168,11 +172,11 @@ app.post('/api/auth/google', requireSameOrigin, authLimiter, async (req, res) =>
   }
 });
 
-app.get('/api/me', authenticate, (req, res) => {
+app.get('/api/me', noStore, authenticate, (req, res) => {
   const { sub, email, name, picture } = req.user;
   res.json({ user: { sub, email, name, picture } });
 });
-app.post('/api/auth/logout', requireSameOrigin, (_req, res) => {
+app.post('/api/auth/logout', requireSameOrigin, noStore, (_req, res) => {
   clearSessionCookie(res);
   res.json({ ok: true });
 });
@@ -298,8 +302,12 @@ async function callGemini(apiKey, model, prompt, clientSignal) {
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     let message;
-    if (response.status === 400 || response.status === 401 || response.status === 403) {
-      message = 'Google Gemini từ chối API key, quyền truy cập hoặc yêu cầu. Hãy kiểm tra key và model.';
+    if (response.status === 400) {
+      message = 'Yêu cầu gửi đến Gemini không hợp lệ (400). Hãy tải lại trang và chọn mô hình được hỗ trợ.';
+    } else if (response.status === 401) {
+      message = 'Gemini không chấp nhận API key (401). Hãy kiểm tra key hoặc tạo key mới trong Google AI Studio.';
+    } else if (response.status === 403) {
+      message = 'API key hiện không có quyền dùng Gemini (403). Hãy kiểm tra quyền truy cập và các giới hạn của key.';
     } else if (response.status === 404) {
       message = 'Không tìm thấy mô hình Gemini đã chọn. Hãy tải lại trang và chọn mô hình đang được hỗ trợ.';
     } else if (response.status === 429 && isDailyQuotaExceeded(data)) {
@@ -324,7 +332,7 @@ async function callGemini(apiKey, model, prompt, clientSignal) {
   return parseJsonResponse(content);
 }
 
-app.post('/api/translate', requireSameOrigin, optionalAuthenticate, translateLimiter, async (req, res) => {
+app.post('/api/translate', requireSameOrigin, noStore, optionalAuthenticate, translateLimiter, async (req, res) => {
   const parsed = translateSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'Dữ liệu dịch không hợp lệ. Mỗi lượt chỉ gửi tối đa 80 câu.' });
   const input = parsed.data;
