@@ -150,7 +150,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
   <header class="topbar">
     <div class="brand">
       <div class="logo-mark" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 5.5C4 4.67 4.67 4 5.5 4h13c.83 0 1.5.67 1.5 1.5v9c0 .83-.67 1.5-1.5 1.5H11l-4.5 4v-4H5.5C4.67 16 4 15.33 4 14.5v-9Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 8.5h8M8 11.5h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
-      <div><div class="brand-name">SubLingo</div><div class="brand-sub">SUBTITLE WORKSPACE · SRT TRANSLATOR · v1.1.3</div></div>
+      <div><div class="brand-name">SubLingo</div><div class="brand-sub">SUBTITLE WORKSPACE · SRT TRANSLATOR · v1.1.4</div></div>
     </div>
     <div class="top-actions">
       <div class="google-login-wrap" id="googleSignInButton"></div>
@@ -206,6 +206,16 @@ textarea.field { resize: vertical; line-height: 1.55; }
           <div class="form-group">
             <label class="form-label" for="model">Mô hình</label>
             <select class="field" id="model"><option value="gemini-3.5-flash-lite">Gemini 3.5 Flash-Lite</option></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="thinkingLevel">Mức suy luận Gemini</label>
+            <select class="field" id="thinkingLevel">
+              <option value="MINIMAL">MINIMAL · nhanh nhất, tiết kiệm nhất</option>
+              <option value="LOW">LOW · suy luận nhẹ</option>
+              <option value="MEDIUM">MEDIUM · cân bằng</option>
+              <option value="HIGH">HIGH · suy luận sâu nhất</option>
+            </select>
+            <div class="helper" id="thinkingLevelHelp">Mặc định MINIMAL. Chọn MEDIUM hoặc HIGH để thử suy luận kỹ hơn; có thể mất thời gian và token hơn.</div>
           </div>
           <button class="btn btn-primary" id="translateBtn" style="width:100%">✦ Dịch phụ đề bằng AI</button>
           <div class="progress-track" id="translateProgress" role="progressbar" aria-label="Tiến độ dịch" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="progress-fill" id="translateProgressFill"></div></div>
@@ -460,6 +470,26 @@ textarea.field { resize: vertical; line-height: 1.55; }
     try { return localStorage.getItem(savedKeyStorageName(providerName)) || ''; }
     catch (_) { return ''; }
   }
+  const thinkingLevelStorageKey = 'sublingo_gemini_thinking_level';
+  const validThinkingLevels = ['MINIMAL', 'LOW', 'MEDIUM', 'HIGH'];
+  function loadSavedThinkingLevel() {
+    try {
+      const saved = localStorage.getItem(thinkingLevelStorageKey);
+      return validThinkingLevels.includes(saved) ? saved : 'MINIMAL';
+    } catch (_) {
+      return 'MINIMAL';
+    }
+  }
+  $('thinkingLevel').value = loadSavedThinkingLevel();
+  $('thinkingLevel').addEventListener('change', () => {
+    const selected = $('thinkingLevel').value;
+    if (!validThinkingLevels.includes(selected)) {
+      $('thinkingLevel').value = 'MINIMAL';
+      return;
+    }
+    try { localStorage.setItem(thinkingLevelStorageKey, selected); }
+    catch (_) { toast('Không thể lưu mức suy luận trong trình duyệt này.'); }
+  });
   $('saveKeyBtn').addEventListener('click', () => {
     const key = $('apiKey').value.trim();
     if (!key) { toast('Hãy nhập API key trước khi lưu.'); $('apiKey').focus(); return; }
@@ -505,6 +535,10 @@ textarea.field { resize: vertical; line-height: 1.55; }
     }
     $('model').innerHTML = options.map(([value, label]) => '<option value="' + value + '">' + label + '</option>').join('');
     if (options.some(([value]) => value === selected)) $('model').value = selected;
+    $('thinkingLevel').disabled = provider !== 'gemini';
+    $('thinkingLevelHelp').textContent = provider === 'gemini'
+      ? 'MINIMAL nhanh và tiết kiệm nhất; LOW suy luận nhẹ; MEDIUM cân bằng; HIGH suy luận sâu hơn nhưng có thể chậm và dùng nhiều token hơn.'
+      : 'Tùy chọn này chỉ áp dụng cho Gemini. Khi dùng OpenAI, mức suy luận do mô hình OpenAI xử lý riêng.';
   }
 
   function setLoggedIn(user) {
@@ -663,6 +697,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
     const requestSourceLang = $('sourceLang').value;
     const requestTargetLang = $('targetLang').value;
     const requestStyle = $('style').value;
+    const requestThinkingLevel = $('thinkingLevel').value;
     const requestController = new AbortController();
     activeTranslationController = requestController;
     const requestSignal = requestController.signal;
@@ -733,7 +768,12 @@ textarea.field { resize: vertical; line-height: 1.55; }
             const response = await fetch('/api/translate', {
               method: 'POST', credentials: 'same-origin', signal: requestSignal,
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ provider: requestProvider, apiKey: activeApiKey, model: requestModel, sourceLang: requestSourceLang, targetLang: requestTargetLang, style: requestStyle, cues: batch })
+              body: JSON.stringify({
+                provider: requestProvider, apiKey: activeApiKey, model: requestModel,
+                sourceLang: requestSourceLang, targetLang: requestTargetLang, style: requestStyle,
+                ...(requestProvider === 'gemini' ? { thinkingLevel: requestThinkingLevel } : {}),
+                cues: batch
+              })
             });
             const data = await response.json().catch(() => ({}));
             if (!response.ok) {

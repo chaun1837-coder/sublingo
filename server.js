@@ -15,7 +15,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = Number(process.env.PORT || 10000);
-const APP_VERSION = process.env.npm_package_version || '1.1.1';
+const APP_VERSION = process.env.npm_package_version || '1.1.4';
 const isProduction = process.env.NODE_ENV === 'production';
 const SESSION_SECRET = process.env.SESSION_SECRET || (isProduction ? '' : crypto.randomBytes(48).toString('hex'));
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
@@ -192,6 +192,7 @@ const translateSchema = z.object({
   sourceLang: z.string().min(1).max(60),
   targetLang: z.string().min(1).max(60),
   style: z.string().max(3000).default(''),
+  thinkingLevel: z.enum(['MINIMAL', 'LOW', 'MEDIUM', 'HIGH']).default('MINIMAL'),
   cues: z.array(cueSchema).min(1).max(80)
 }).strict();
 
@@ -284,7 +285,7 @@ function isDailyQuotaExceeded(data) {
   return /quota[_\s-]*exceeded|daily quota|requests?[_\s-]*per[_\s-]*day|GenerateRequestsPerDay|perday/i.test(message);
 }
 
-async function callGemini(apiKey, model, prompt, clientSignal) {
+async function callGemini(apiKey, model, prompt, thinkingLevel, clientSignal) {
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
   const response = await fetch(endpoint, {
     method: 'POST',
@@ -293,7 +294,7 @@ async function callGemini(apiKey, model, prompt, clientSignal) {
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
       generationConfig: {
         responseMimeType: 'application/json',
-        thinkingConfig: { thinkingLevel: 'MINIMAL' },
+        thinkingConfig: { thinkingLevel },
         maxOutputTokens: 12000
       }
     }),
@@ -362,7 +363,7 @@ app.post('/api/translate', requireSameOrigin, noStore, optionalAuthenticate, tra
     const prompt = buildPrompt(input);
     const result = input.provider === 'openai'
       ? await callOpenAI(input.apiKey, input.model, prompt, clientController.signal)
-      : await callGemini(input.apiKey, input.model, prompt, clientController.signal);
+      : await callGemini(input.apiKey, input.model, prompt, input.thinkingLevel, clientController.signal);
     const returned = result?.translations;
     if (!Array.isArray(returned)) throw new Error('AI trả về sai định dạng JSON.');
     const expectedIds = new Set(input.cues.map((cue) => cue.id));

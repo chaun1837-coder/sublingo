@@ -161,8 +161,14 @@ test('backend preserves upstream status codes for retry decisions', () => {
   assert.match(server, /Gemini đang tạm quá tải \(503\)/);
 });
 
-test('Gemini Flash-Lite is the only Gemini model enabled and uses minimal thinking', () => {
-  assert.match(server, /thinkingConfig: \{ thinkingLevel: 'MINIMAL' \}/);
+test('Gemini Flash-Lite supports user-selectable thinking levels', () => {
+  assert.match(html, /id="thinkingLevel"/);
+  for (const level of ['MINIMAL', 'LOW', 'MEDIUM', 'HIGH']) assert.match(html, new RegExp('value="' + level + '"'));
+  assert.match(html, /const thinkingLevelStorageKey = 'sublingo_gemini_thinking_level'/);
+  assert.match(html, /thinkingLevel: requestThinkingLevel/);
+  assert.match(server, /thinkingLevel: z\.enum\(\['MINIMAL', 'LOW', 'MEDIUM', 'HIGH'\]\)\.default\('MINIMAL'\)/);
+  assert.match(server, /thinkingConfig: \{ thinkingLevel \}/);
+  assert.match(server, /input\.thinkingLevel/);
   assert.match(server, /const allowedGeminiModels = \['gemini-3\.5-flash-lite'\]/);
   assert.doesNotMatch(server, /gemini-3\.8-flash/);
   assert.doesNotMatch(html, /gemini-3\.8-flash|Gemini 3\.8 Flash/);
@@ -238,8 +244,8 @@ test('index HTML is not cached so fixes appear without stale frontend code', () 
 });
 
 test('package and visible UI expose the same semantic version', () => {
-  assert.equal(pkg.version, '1.1.3');
-  assert.match(html, /SRT TRANSLATOR · v1\.1\.3/);
+  assert.equal(pkg.version, '1.1.4');
+  assert.match(html, /SRT TRANSLATOR · v1\.1\.4/);
   assert.match(server, /APP_VERSION/);
 });
 

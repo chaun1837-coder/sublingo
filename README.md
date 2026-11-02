@@ -1,6 +1,6 @@
-# SubLingo 1.1.3 — Dịch phụ đề SRT
+# SubLingo 1.1.4 — Dịch phụ đề SRT
 
-**Phiên bản hiện tại:** 1.1.3 — *Free-Model-Only Gemini Mode*.
+**Phiên bản hiện tại:** 1.1.4 — *User-Selectable Gemini Thinking Levels*.
 
 SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT bằng Google Gemini hoặc OpenAI.
 
@@ -9,6 +9,7 @@ SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT bằn
 - Đăng nhập Google bằng Google Identity Services; backend xác minh ID token, nonce dùng một lần và tạo cookie phiên HttpOnly.
 - Đăng xuất xóa hai API key đã lưu trong trình duyệt, dữ liệu phụ đề tạm và hủy lượt dịch đang chạy.
 - Gửi lời thoại theo từng nhóm tới Google Gemini hoặc OpenAI.
+- Người dùng tự chọn mức suy luận Gemini: MINIMAL, LOW, MEDIUM hoặc HIGH; lựa chọn được lưu trên trình duyệt. Mặc định là MINIMAL.
 - Giữ nguyên số thứ tự, timestamp, metadata, dấu phân cách và kiểu xuống dòng từ file SRT gốc.
 - Có thể chọn lưu API key trên thiết bị bằng localStorage. Tùy chọn này **không mã hóa key**; chỉ nên dùng trên thiết bị cá nhân.
 - Giới hạn file ở 10 MB và 5.000 cue để tránh treo trình duyệt; mỗi cue tối đa 5.000 ký tự.
@@ -21,7 +22,7 @@ SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT bằn
 | OpenAI | gpt-6-luna, gpt-6.1-terra |
 | Gemini (tất cả người dùng) | gemini-3.5-flash-lite |
 
-SubLingo đã tắt Gemini 3.8 Flash; chỉ bật Gemini 3.5 Flash-Lite cho tất cả người dùng. Mô hình này có Free Tier trong hạn mức Google, nhưng dự án đã liên kết billing vẫn có thể chịu giá Paid Tier. Muốn tránh phí, hãy xác nhận Google Cloud project/API key đang ở Free Tier và chưa bật billing; theo dõi Usage and Billing trong Google AI Studio.
+SubLingo đã tắt Gemini 3.8 Flash; chỉ bật Gemini 3.5 Flash-Lite cho tất cả người dùng. Gemini 3.5 Flash-Lite hỗ trợ bốn mức suy luận MINIMAL, LOW, MEDIUM và HIGH. Mặc định là MINIMAL để ưu tiên tốc độ và tiết kiệm; mức cao hơn có thể cần thêm thời gian và token, đồng thời có thể ảnh hưởng hạn mức hoặc chi phí API theo cấu hình tài khoản Google. Mô hình này có Free Tier trong hạn mức Google, nhưng dự án đã liên kết billing vẫn có thể chịu giá Paid Tier. Muốn tránh phí, hãy xác nhận Google Cloud project/API key đang ở Free Tier và chưa bật billing; theo dõi Usage and Billing trong Google AI Studio.
 
 ## Chạy thử trên máy tính
 
@@ -41,7 +42,7 @@ Kiểm tra backend:
 curl http://localhost:10000/api/health
 ~~~
 
-Endpoint trả về trạng thái cùng phiên bản hiện tại, ví dụ {"ok":true,"service":"sublingo-api","version":"1.1.2"}.
+Endpoint trả về trạng thái cùng phiên bản hiện tại, ví dụ {"ok":true,"service":"sublingo-api","version":"1.1.4"}.
 
 ## Đưa lên Render
 
@@ -61,7 +62,7 @@ Người dùng nhập OpenAI API key hoặc Gemini API key trong giao diện. Ke
 - Website public phải dùng HTTPS.
 - Không commit .env, API key, OAuth client secret hoặc SESSION_SECRET vào GitHub.
 - Đổi SESSION_SECRET sẽ làm hết hiệu lực các phiên đăng nhập hiện tại.
-- Giao diện chia file thành các nhóm tối đa 60 cue và 24.000 ký tự mỗi request; mỗi cue tối đa 5.000 ký tự. Gemini 3.5 Flash-Lite dùng thinking MINIMAL và giới hạn khoảng cách tối thiểu 4,5 giây giữa thời điểm bắt đầu hai request. Khoảng chờ chỉ được áp dụng khi cần, không cộng thêm sau một phản hồi vốn đã chậm.
+- Giao diện chia file thành các nhóm tối đa 60 cue và 24.000 ký tự mỗi request; mỗi cue tối đa 5.000 ký tự. Gemini 3.5 Flash-Lite nhận mức suy luận do người dùng chọn (MINIMAL/LOW/MEDIUM/HIGH), mặc định MINIMAL; giới hạn khoảng cách tối thiểu 4,5 giây giữa thời điểm bắt đầu hai request. Khoảng chờ chỉ được áp dụng khi cần, không cộng thêm sau một phản hồi vốn đã chậm.
 - Khi gặp lỗi tạm thời như 408, 429, 5xx hoặc lỗi mạng, ứng dụng thử lại với exponential backoff và jitter; với Gemini, thời gian Retry-After/RetryInfo từ Google được ưu tiên. Hạn mức theo ngày không bị thử lại liên tục; sau nhiều lần 429, ứng dụng dừng gửi thêm nhóm để tránh làm nặng thêm giới hạn.
 - Hủy lượt dịch ở trình duyệt sẽ đóng request và báo backend hủy tiếp công việc gọi AI nếu kết nối đã bị ngắt.
 - Backend giới hạn 80 cue/request, 30.000 ký tự/request và 120 request/15 phút/IP.
@@ -76,6 +77,11 @@ npm test
 GitHub Actions tự chạy bộ test khi có push hoặc pull request vào nhánh main.
 
 ## Nhật ký phiên bản
+
+### 1.1.4
+- Thêm tùy chọn suy luận MINIMAL, LOW, MEDIUM, HIGH cho Gemini 3.5 Flash-Lite.
+- Lưu lựa chọn suy luận trong trình duyệt; mặc định MINIMAL.
+- Backend kiểm tra giá trị hợp lệ và gửi đúng mức người dùng chọn tới Gemini.
 
 ### 1.1.3
 - Gỡ Gemini 3.8 Flash khỏi giao diện và từ chối model này ở backend.
