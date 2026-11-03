@@ -348,8 +348,8 @@ test('Gemini Transcribe rate limits use automatic retries but daily quota is not
   assert.match(server, /Hãy đợi quota được đặt lại/);
 });
 
-test('Gemini Transcribe extracts word_info annotations and keeps chunks at nine minutes', () => {
-  assert.match(server, /const AUDIO_CHUNK_SECONDS = 540/);
+test('Gemini Transcribe extracts word_info annotations and uses 18-minute chunks', () => {
+  assert.match(server, /const AUDIO_CHUNK_SECONDS = 1080/);
   assert.match(server, /function geminiOffsetSeconds/);
   assert.match(server, /annotation\.type !== 'word_info'/);
   assert.match(server, /annotation\.start_offset/);
