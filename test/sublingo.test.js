@@ -356,3 +356,12 @@ test('Gemini Transcribe extracts word_info annotations and keeps chunks at nine 
   assert.match(server, /annotation\.end_offset/);
   assert.match(server, /store: false/);
 });
+
+
+test('Page 2 progress bar matches Page 1 sizing and exposes accessible live progress', () => {
+  assert.match(html, /\.stt-progress-track \{ height:18px;/);
+  assert.match(html, /id="sttProgressTrack" role="progressbar"/);
+  assert.match(html, /aria-label="Tiến độ tạo phụ đề"/);
+  assert.match(html, /sttProgressTrack'\)\.setAttribute\('aria-valuenow'/);
+  assert.match(html, /sttProgressFill'\)\.style\.width = safePercent \+ '%'/);
+});

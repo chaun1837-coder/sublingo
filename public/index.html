@@ -181,9 +181,9 @@ textarea.field { resize: vertical; line-height: 1.55; }
 .stt-step.active .stt-step-bullet { background:light-dark(#E8F6F2,#1B3934); border-color:#56A99C; color:light-dark(#26796D,#A6DED5); }
 .stt-step.done .stt-step-bullet { background:#328D7F; border-color:#328D7F; color:#FFFFFF; }
 .stt-progress { margin-top:14px; }
-.stt-progress-heading { display:flex; justify-content:space-between; gap:10px; margin-bottom:7px; color:light-dark(#52677F,#C2CDDA); font-size:10px; font-weight:750; }
-.stt-progress-track { height:8px; overflow:hidden; border-radius:99px; background:light-dark(#E5ECF2,#2B3A4E); }
-.stt-progress-fill { width:0; height:100%; background:linear-gradient(90deg,#3B9B8B,#78C9B9); border-radius:inherit; transition:width .25s ease; }
+.stt-progress-heading { display:flex; justify-content:space-between; gap:10px; margin-bottom:8px; color:light-dark(#486078,#C2D0DF); font-size:11px; font-weight:800; font-variant-numeric:tabular-nums; }
+.stt-progress-track { height:18px; border:1px solid light-dark(#C9D8E4,#40536B); border-radius:99px; background:light-dark(#E7EDF3,#2D3B50); overflow:hidden; box-shadow:inset 0 1px 2px rgba(20,40,60,.10); }
+.stt-progress-fill { width:0; height:100%; background:linear-gradient(90deg,#43A995,#75C8B8); border-radius:inherit; transition:width .25s ease; }
 .stt-actions { display:flex; gap:8px; margin-top:15px; }
 .stt-actions .btn { flex:1; }
 .stt-actions .btn:disabled { opacity:.48; }
@@ -402,7 +402,9 @@ textarea.field { resize: vertical; line-height: 1.55; }
 
             <div class="stt-progress is-hidden" id="sttProgress" aria-live="polite">
               <div class="stt-progress-heading"><span id="sttProgressStatus">Đang chuẩn bị...</span><span id="sttProgressPercent">0%</span></div>
-              <div class="stt-progress-track"><div class="stt-progress-fill" id="sttProgressFill"></div></div>
+              <div class="stt-progress-track" id="sttProgressTrack" role="progressbar" aria-label="Tiến độ tạo phụ đề" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="0 phần trăm">
+                <div class="stt-progress-fill" id="sttProgressFill"></div>
+              </div>
             </div>
             <div class="stt-actions">
               <button class="btn btn-primary" id="sttStartBtn" type="button" disabled>✦ Tạo phụ đề bằng AI</button>
@@ -1089,6 +1091,8 @@ textarea.field { resize: vertical; line-height: 1.55; }
     $('sttProgress').classList.remove('is-hidden');
     $('sttProgressStatus').textContent = message || 'Đang xử lý video...';
     $('sttProgressPercent').textContent = Math.round(safePercent) + '%';
+    $('sttProgressTrack').setAttribute('aria-valuenow', String(Math.round(safePercent)));
+    $('sttProgressTrack').setAttribute('aria-valuetext', Math.round(safePercent) + ' phần trăm. ' + (message || 'Đang xử lý video...'));
     $('sttProgressFill').style.width = safePercent + '%';
     const ids = ['sttStepExtract', 'sttStepRecognize', 'sttStepNormalize', 'sttStepAlign'];
     ids.forEach((id, index) => {
@@ -1132,6 +1136,8 @@ textarea.field { resize: vertical; line-height: 1.55; }
     $('sttProgress').classList.add('is-hidden');
     $('sttProgressFill').style.width = '0%';
     $('sttProgressPercent').textContent = '0%';
+    $('sttProgressTrack').setAttribute('aria-valuenow', '0');
+    $('sttProgressTrack').setAttribute('aria-valuetext', '0 phần trăm');
     $('sttProgressStatus').textContent = 'Đang chuẩn bị...';
     resetSttSteps();
   }
