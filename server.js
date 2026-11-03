@@ -20,7 +20,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = Number(process.env.PORT || 10000);
-const APP_VERSION = process.env.npm_package_version || '1.2.0';
+const APP_VERSION = process.env.npm_package_version || '1.2.1';
 const isProduction = process.env.NODE_ENV === 'production';
 const SESSION_SECRET = process.env.SESSION_SECRET || (isProduction ? '' : crypto.randomBytes(48).toString('hex'));
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
@@ -490,7 +490,7 @@ async function transcribeAudioChunk(apiKey, audioPath, language, clientSignal) {
   }
   const form = new FormData();
   form.append('file', new Blob([audioBuffer], { type: 'audio/mpeg' }), path.basename(audioPath));
-  form.append('model', 'whisper-1');
+  form.append('model', 'gpt-transcribe');
   form.append('response_format', 'verbose_json');
   form.append('timestamp_granularities[]', 'word');
   form.append('temperature', '0');

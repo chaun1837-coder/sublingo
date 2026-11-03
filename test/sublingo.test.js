@@ -263,8 +263,8 @@ test('index HTML is not cached so fixes appear without stale frontend code', () 
 });
 
 test('package and visible UI expose the same semantic version', () => {
-  assert.equal(pkg.version, '1.2.0');
-  assert.match(html, /SRT TRANSLATOR · v1\.2\.0/);
+  assert.equal(pkg.version, '1.2.1');
+  assert.match(html, /SRT TRANSLATOR · v1\.2\.1/);
   assert.match(server, /APP_VERSION/);
 });
 
@@ -308,7 +308,7 @@ test('speech-to-text uploads are bounded and use FFmpeg plus secure multipart up
 });
 
 test('speech-to-text uses word timestamps and removes temporary files', () => {
-  assert.ok(server.includes("form.append('model', 'whisper-1')"));
+  assert.ok(server.includes("form.append('model', 'gpt-transcribe')"));
   assert.ok(server.includes("form.append('timestamp_granularities[]', 'word')"));
   assert.ok(server.includes('function groupTimedWords(words, language'));
   assert.ok(server.includes('await unlink(uploadedPath)'));
