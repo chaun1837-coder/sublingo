@@ -138,7 +138,8 @@ const translateLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 120, stand
 const transcribeLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 8, standardHeaders: 'draft-8', legacyHeaders: false });
 const MAX_VIDEO_BYTES = 150 * 1024 * 1024;
 const MAX_AUDIO_CHUNK_BYTES = 24 * 1024 * 1024;
-const AUDIO_CHUNK_SECONDS = 540;
+// Gemini supports up to 30 minutes with word timestamps; keep headroom.
+const AUDIO_CHUNK_SECONDS = 1080;
 const VIDEO_EXTENSIONS = new Set(['.mp4', '.mov', '.mkv', '.webm', '.avi', '.m4v', '.mpeg', '.mpg']);
 const videoUpload = multer({
   storage: multer.diskStorage({
@@ -682,7 +683,8 @@ async function transcribeAudioChunk(apiKey, audioPath, language, clientSignal, o
     uploadedFileName = String(uploadedFile?.name || '');
     if (!fileUri || !/^files\/[A-Za-z0-9-]+$/.test(uploadedFileName)) throw new Error('Google đã nhận âm thanh nhưng không trả về thông tin file hợp lệ.');
     const transcriptionConfig = { mode: { type: 'verbatim', timestamp_granularities: ['word'] } };
-    if (language !== 'auto') transcriptionConfig.language_codes = [language];
+    const languageCodes = { vi: 'vi-VN', en: 'en-US', zh: 'zh-CN', ja: 'ja-JP', ko: 'ko-KR', th: 'th-TH', fr: 'fr-FR', es: 'es-ES', de: 'de-DE' };
+    if (language !== 'auto') transcriptionConfig.language_codes = [languageCodes[language] || language];
     const interactionResponse = await fetchGeminiWithRetry('https://generativelanguage.googleapis.com/v1beta/interactions', {
       method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
       body: JSON.stringify({
@@ -753,7 +755,7 @@ app.post('/api/transcribe', requireSameOrigin, noStore, transcribeLimiter, handl
     const baseArgs = [
       '-hide_banner', '-loglevel', 'error', '-y', '-i', uploadedPath,
       ...trimArgs, '-map', '0:a:0', '-vn', '-ac', '1', '-ar', '16000',
-      '-c:a', 'libmp3lame', '-b:a', '48k',
+      '-c:a', 'libmp3lame', '-b:a', '48k', '-threads', '1',
       '-f', 'segment', '-segment_time', String(AUDIO_CHUNK_SECONDS),
       '-reset_timestamps', '1', '-segment_list', segmentListPath, '-segment_list_type', 'csv', pattern
     ];

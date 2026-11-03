@@ -263,8 +263,8 @@ test('index HTML is not cached so fixes appear without stale frontend code', () 
 });
 
 test('package and visible UI expose the same semantic version', () => {
-  assert.equal(pkg.version, '1.2.3');
-  assert.match(html, /SRT TRANSLATOR · v1\.2\.3/);
+  assert.equal(pkg.version, '1.2.4');
+  assert.match(html, /SRT TRANSLATOR · v1\.2\.4/);
   assert.match(server, /APP_VERSION/);
 });
 
@@ -417,4 +417,31 @@ test('Filler cleanup removes isolated “thì là mà” but keeps ordinary uses
 test('Manual time adjustment supports long intros up to ten minutes', () => {
   assert.ok(html.includes('min="-600" max="600"'));
   assert.ok(html.includes('Math.max(-600, Math.min(600, value))'));
+});
+
+
+test('Page 2 paginates the caption editor at 50 rows and keeps stable global cue indexes', () => {
+  assert.ok(html.includes('const STT_CAPTION_PAGE_SIZE = 50'));
+  assert.ok(html.includes('for (let index = firstIndex; index < endIndex; index += 1)'));
+  assert.ok(html.includes('id="sttPagination"'));
+  assert.ok(html.includes('id="sttPrevPage"'));
+  assert.ok(html.includes('id="sttNextPage"'));
+  assert.ok(html.includes('dataset.cueIndex'));
+});
+
+test('Page 2 finds the active video caption with binary search', () => {
+  assert.ok(html.includes('while (low <= high)'));
+  assert.ok(html.includes('const middle = (low + high) >> 1'));
+  assert.ok(html.includes('sttCaptions[middle].start <= time'));
+});
+
+test('Gemini transcription uses BCP-47 language hints and 18-minute audio batches', () => {
+  assert.ok(server.includes('const AUDIO_CHUNK_SECONDS = 1080'));
+  for (const code of ['vi-VN','en-US','zh-CN','ja-JP','ko-KR','th-TH','fr-FR','es-ES','de-DE']) assert.ok(server.includes(code));
+  assert.ok(server.includes("timestamp_granularities: ['word']"));
+  assert.ok(server.includes("type: 'verbatim'"));
+});
+
+test('FFmpeg audio encoding is limited to one worker thread', () => {
+  assert.ok(server.includes("'-threads', '1'"));
 });

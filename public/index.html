@@ -207,6 +207,9 @@ textarea.field { resize: vertical; line-height: 1.55; }
 .stt-caption-heading strong { color:light-dark(#30465F,#DEE8F3); font-size:12px; }
 .stt-caption-meta { color:light-dark(#8492A4,#9EADBF); font-size:10px; }
 .stt-caption-list { display:grid; gap:8px; max-height:500px; overflow:auto; padding:2px 3px 2px 0; }
+.stt-pagination { display:flex; align-items:center; justify-content:center; gap:10px; margin-top:10px; color:light-dark(#728399,#A5B4C6); font-size:10px; }
+.stt-pagination button { border:1px solid light-dark(#D8E2EB,#3B4A60); background:light-dark(#F7FAFC,#172437); color:light-dark(#52677F,#C3D0DE); border-radius:7px; padding:6px 10px; font-size:10px; font-weight:700; }
+.stt-pagination button:disabled { opacity:.4; cursor:not-allowed; }
 .stt-caption-row { display:grid; grid-template-columns:92px minmax(0,1fr); gap:10px; align-items:start; padding:10px; border:1px solid light-dark(#E3EAF1,#334359); border-radius:10px; background:light-dark(#FFFFFF,#172438); }
 .stt-caption-row:focus-within { border-color:#65AFA4; box-shadow:0 0 0 2px rgba(80,160,145,.12); }
 .stt-caption-time { white-space:pre-line; width:100%; border:0; border-radius:7px; padding:7px 5px; background:light-dark(#EEF3F7,#243247); color:light-dark(#536980,#C1CDDA); font-size:9px; font-weight:800; font-variant-numeric:tabular-nums; text-align:center; }
@@ -232,7 +235,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
   <header class="topbar">
     <div class="brand">
       <div class="logo-mark" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 5.5C4 4.67 4.67 4 5.5 4h13c.83 0 1.5.67 1.5 1.5v9c0 .83-.67 1.5-1.5 1.5H11l-4.5 4v-4H5.5C4.67 16 4 15.33 4 14.5v-9Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 8.5h8M8 11.5h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
-      <div><div class="brand-name">SubLingo</div><div class="brand-sub">SUBTITLE WORKSPACE · SRT TRANSLATOR · v1.2.3</div></div>
+      <div><div class="brand-name">SubLingo</div><div class="brand-sub">SUBTITLE WORKSPACE · SRT TRANSLATOR · v1.2.4</div></div>
     </div>
     <div class="top-actions">
       <div class="google-login-wrap" id="googleSignInButton"></div>
@@ -452,6 +455,11 @@ textarea.field { resize: vertical; line-height: 1.55; }
             <div class="stt-caption-list" id="sttCaptionList">
               <div class="stt-caption-empty">Sau khi AI xử lý video, từng câu phụ đề sẽ hiển thị ở đây để bạn chỉnh sửa.</div>
             </div>
+            <div class="stt-pagination is-hidden" id="sttPagination" aria-label="Phân trang phụ đề">
+              <button id="sttPrevPage" type="button" disabled>← Trước</button>
+              <span id="sttPageLabel">Trang 1/1</span>
+              <button id="sttNextPage" type="button" disabled>Tiếp →</button>
+            </div>
             <div class="stt-time-adjust">
               <label for="sttTimeOffset">Hiệu chỉnh lệch thời gian (giây)</label>
               <input class="field" id="sttTimeOffset" type="number" min="-600" max="600" step="0.1" value="0">
@@ -481,6 +489,8 @@ textarea.field { resize: vertical; line-height: 1.55; }
   let sttObjectUrl = '';
   let sttVideoFile = null;
   let sttCaptions = [];
+  let sttCaptionPage = 0;
+  const STT_CAPTION_PAGE_SIZE = 50;
   let sttLastOverlayCueId = null;
   function showPage(pageNumber) {
     const isPageOne = pageNumber === 1;
@@ -1123,6 +1133,13 @@ textarea.field { resize: vertical; line-height: 1.55; }
     }
   }
 
+  function sttPaginationSafeReset() {
+    const pagination = $('sttPagination');
+    if (pagination) pagination.classList.add('is-hidden');
+    if ($('sttPrevPage')) $('sttPrevPage').disabled = true;
+    if ($('sttNextPage')) $('sttNextPage').disabled = true;
+  }
+
   function clearSttVideo() {
     if (sttXhr) sttXhr.abort();
     sttXhr = null;
@@ -1130,6 +1147,8 @@ textarea.field { resize: vertical; line-height: 1.55; }
     sttObjectUrl = '';
     sttVideoFile = null;
     sttCaptions = [];
+    sttCaptionPage = 0;
+    sttPaginationSafeReset();
     sttLastOverlayCueId = null;
     const video = $('sttVideoPreview');
     video.pause();
@@ -1236,8 +1255,8 @@ textarea.field { resize: vertical; line-height: 1.55; }
   }
   function updateSttTimeLabels() {
     const offset = getSttTimeOffset();
-    document.querySelectorAll('.stt-caption-time').forEach((button, index) => {
-      const cue = sttCaptions[index];
+    document.querySelectorAll('.stt-caption-time').forEach((button) => {
+      const cue = sttCaptions[Number(button.dataset.cueIndex)];
       if (cue) button.textContent = formatSttClock(cue.start + offset) + '\n' + formatSttClock(cue.end + offset);
     });
     updateSttVideoCaption();
@@ -1248,7 +1267,16 @@ textarea.field { resize: vertical; line-height: 1.55; }
     const video = $('sttVideoPreview');
     const caption = $('sttPreviewCaption');
     const time = (video.currentTime || 0) - getSttTimeOffset();
-    const active = sttCaptions.find((cue) => time >= cue.start && time <= cue.end && cue.text.trim());
+    let low = 0;
+    let high = sttCaptions.length - 1;
+    let candidate = -1;
+    while (low <= high) {
+      const middle = (low + high) >> 1;
+      if (sttCaptions[middle].start <= time) { candidate = middle; low = middle + 1; }
+      else high = middle - 1;
+    }
+    const possible = candidate >= 0 ? sttCaptions[candidate] : null;
+    const active = possible && time <= possible.end && possible.text.trim() ? possible : null;
     if (!active) {
       caption.textContent = '';
       caption.classList.remove('visible');
@@ -1272,18 +1300,25 @@ textarea.field { resize: vertical; line-height: 1.55; }
     list.replaceChildren();
     if (!sttCaptions.length) {
       list.innerHTML = '<div class="stt-caption-empty">Chưa có câu phụ đề để hiển thị.</div>';
+      $('sttPagination').classList.add('is-hidden');
       $('sttDownloadBtn').disabled = true;
       $('sttResetBtn').disabled = true;
       $('sttCaptionMeta').textContent = 'Chưa có câu nào';
       return;
     }
-    sttCaptions.forEach((cue, index) => {
+    const pageCount = Math.ceil(sttCaptions.length / STT_CAPTION_PAGE_SIZE);
+    sttCaptionPage = Math.max(0, Math.min(sttCaptionPage, pageCount - 1));
+    const firstIndex = sttCaptionPage * STT_CAPTION_PAGE_SIZE;
+    const endIndex = Math.min(sttCaptions.length, firstIndex + STT_CAPTION_PAGE_SIZE);
+    const timeOffset = getSttTimeOffset();
+    for (let index = firstIndex; index < endIndex; index += 1) {
+      const cue = sttCaptions[index];
       const row = document.createElement('div');
       row.className = 'stt-caption-row';
       const timeButton = document.createElement('button');
       timeButton.type = 'button';
       timeButton.className = 'stt-caption-time';
-      const timeOffset = getSttTimeOffset();
+      timeButton.dataset.cueIndex = String(index);
       timeButton.textContent = formatSttClock(cue.start + timeOffset) + '\n' + formatSttClock(cue.end + timeOffset);
       timeButton.title = 'Tua video đến câu này';
       timeButton.addEventListener('click', () => {
@@ -1300,13 +1335,27 @@ textarea.field { resize: vertical; line-height: 1.55; }
       });
       row.append(timeButton, textInput);
       list.append(row);
-    });
+    }
+    $('sttPagination').classList.toggle('is-hidden', pageCount <= 1);
+    $('sttPrevPage').disabled = sttCaptionPage <= 0;
+    $('sttNextPage').disabled = sttCaptionPage >= pageCount - 1;
+    $('sttPageLabel').textContent = 'Trang ' + (sttCaptionPage + 1) + '/' + pageCount + ' · ' + (firstIndex + 1) + '–' + endIndex + '/' + sttCaptions.length + ' câu';
     $('sttCaptionMeta').textContent = sttCaptions.length + ' câu phụ đề';
     $('sttDownloadBtn').disabled = false;
     $('sttResetBtn').disabled = false;
     $('sttWordCount').textContent = sttCaptions.length + ' câu · ' + (window.sttWordCount || 0) + ' từ';
     updateSttVideoCaption();
   }
+  $('sttPrevPage').addEventListener('click', () => {
+    if (sttCaptionPage <= 0) return;
+    sttCaptionPage -= 1;
+    renderSttCaptions();
+  });
+  $('sttNextPage').addEventListener('click', () => {
+    if ((sttCaptionPage + 1) * STT_CAPTION_PAGE_SIZE >= sttCaptions.length) return;
+    sttCaptionPage += 1;
+    renderSttCaptions();
+  });
 
   function requestSttTranscription(formData) {
     return new Promise((resolve, reject) => {
@@ -1408,6 +1457,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
     }
 
     sttCaptions = [];
+    sttCaptionPage = 0;
     window.sttWordCount = 0;
     $('sttTimeOffset').value = '0';
     $('sttCaptionList').innerHTML = '<div class="stt-caption-empty">AI đang xử lý video. Danh sách phụ đề sẽ xuất hiện sau khi hoàn tất.</div>';
@@ -1482,7 +1532,9 @@ textarea.field { resize: vertical; line-height: 1.55; }
 
   $('sttResetBtn').addEventListener('click', () => {
     sttCaptions = [];
+    sttCaptionPage = 0;
     window.sttWordCount = 0;
+    $('sttPagination').classList.add('is-hidden');
     $('sttCaptionList').innerHTML = '<div class="stt-caption-empty">Đã xóa kết quả. Bạn có thể tạo phụ đề lại từ video hiện tại.</div>';
     $('sttPreviewCaption').textContent = '';
     $('sttPreviewCaption').classList.remove('visible');
