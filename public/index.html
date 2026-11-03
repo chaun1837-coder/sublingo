@@ -229,7 +229,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
   <header class="topbar">
     <div class="brand">
       <div class="logo-mark" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 5.5C4 4.67 4.67 4 5.5 4h13c.83 0 1.5.67 1.5 1.5v9c0 .83-.67 1.5-1.5 1.5H11l-4.5 4v-4H5.5C4.67 16 4 15.33 4 14.5v-9Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 8.5h8M8 11.5h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
-      <div><div class="brand-name">SubLingo</div><div class="brand-sub">SUBTITLE WORKSPACE · SRT TRANSLATOR · v1.2.1</div></div>
+      <div><div class="brand-name">SubLingo</div><div class="brand-sub">SUBTITLE WORKSPACE · SRT TRANSLATOR · v1.2.2</div></div>
     </div>
     <div class="top-actions">
       <div class="google-login-wrap" id="googleSignInButton"></div>
@@ -378,16 +378,16 @@ textarea.field { resize: vertical; line-height: 1.55; }
             </div>
 
             <div class="stt-field-group">
-              <label class="form-label" for="sttApiKey">OpenAI API key</label>
+              <label class="form-label" for="sttApiKey">Google Gemini API key</label>
               <div class="stt-api-wrap">
-                <input class="field" id="sttApiKey" type="password" placeholder="Dán OpenAI API key tại đây" autocomplete="off">
+                <input class="field" id="sttApiKey" type="password" placeholder="Dùng key Gemini đã lưu ở Trang 1" autocomplete="off">
                 <button id="sttToggleKey" type="button">Hiện</button>
               </div>
               <div class="stt-key-options">
-                <label><input id="sttRememberKey" type="checkbox"> Nhớ key trên thiết bị này</label>
-                <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">Lấy API key ↗</a>
+                <label><input id="sttRememberKey" type="checkbox"> Nhớ key trên thiết bị này (dùng chung Trang 1)</label>
+                <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer">Lấy API key ↗</a>
               </div>
-              <div class="stt-help">Key chỉ được gửi để gọi dịch vụ nhận diện giọng nói; SubLingo không lưu key trên máy chủ.</div>
+              <div class="stt-help">Trang 2 dùng chung Google Gemini API key đã lưu ở Trang 1. Key chỉ gửi để gọi Google Gemini; SubLingo không lưu key trên máy chủ. localStorage không mã hóa key.</div>
             </div>
 
             <div class="stt-process-card">
@@ -408,7 +408,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
               <button class="btn btn-primary" id="sttStartBtn" type="button" disabled>✦ Tạo phụ đề bằng AI</button>
               <button class="btn btn-ghost is-hidden" id="sttCancelBtn" type="button">Hủy</button>
             </div>
-            <p class="stt-warning">Dùng OpenAI API key và có thể phát sinh phí theo tài khoản OpenAI. AI tạo mốc thời gian từng từ; hãy rà soát tên riêng, giọng vùng miền và câu nói không rõ.</p>
+            <p class="stt-warning">Gemini 3.5 Transcribe có thể miễn phí trong Free Tier và hạn mức Google, nhưng không miễn phí vô hạn. Khi gặp giới hạn tốc độ, SubLingo sẽ tự chờ và thử lại; nếu hết quota ngày, bạn cần đợi Google đặt lại. Lưu ý: dữ liệu gửi qua Free Tier có thể được Google dùng để cải thiện sản phẩm; không tải video nhạy cảm hoặc bí mật.</p>
           </div>
         </aside>
 
@@ -1175,7 +1175,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
   });
   $('sttClearVideo').addEventListener('click', clearSttVideo);
 
-  $('sttApiKey').value = loadSavedKey('openai');
+  $('sttApiKey').value = loadSavedKey('gemini');
   $('sttRememberKey').checked = Boolean($('sttApiKey').value);
   $('sttToggleKey').addEventListener('click', () => {
     const input = $('sttApiKey');
@@ -1186,9 +1186,9 @@ textarea.field { resize: vertical; line-height: 1.55; }
     try {
       if ($('sttRememberKey').checked) {
         const key = $('sttApiKey').value.trim();
-        if (key) localStorage.setItem(savedKeyStorageName('openai'), key);
+        if (key) localStorage.setItem(savedKeyStorageName('gemini'), key);
       } else {
-        localStorage.removeItem(savedKeyStorageName('openai'));
+        localStorage.removeItem(savedKeyStorageName('gemini'));
       }
     } catch (_) {
       toast('Trình duyệt không cho phép lưu API key.');
@@ -1355,13 +1355,13 @@ textarea.field { resize: vertical; line-height: 1.55; }
     }
     const apiKey = $('sttApiKey').value.trim();
     if (!apiKey) {
-      toast('Hãy nhập OpenAI API key để nhận diện giọng nói.');
+      toast('Hãy nhập Google Gemini API key hoặc lưu key ở Trang 1.');
       $('sttApiKey').focus();
       return;
     }
     try {
-      if ($('sttRememberKey').checked) localStorage.setItem(savedKeyStorageName('openai'), apiKey);
-      else localStorage.removeItem(savedKeyStorageName('openai'));
+      if ($('sttRememberKey').checked) localStorage.setItem(savedKeyStorageName('gemini'), apiKey);
+      else localStorage.removeItem(savedKeyStorageName('gemini'));
     } catch (_) {
       toast('Không thể cập nhật tùy chọn lưu API key trong trình duyệt.');
     }

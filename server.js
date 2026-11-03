@@ -20,7 +20,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = Number(process.env.PORT || 10000);
-const APP_VERSION = process.env.npm_package_version || '1.2.1';
+const APP_VERSION = process.env.npm_package_version || '1.2.2';
 const isProduction = process.env.NODE_ENV === 'production';
 const SESSION_SECRET = process.env.SESSION_SECRET || (isProduction ? '' : crypto.randomBytes(48).toString('hex'));
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
@@ -304,7 +304,48 @@ function parseRetryAfterMs(response, data) {
 function isDailyQuotaExceeded(data) {
   const details = JSON.stringify(data?.error?.details || []);
   const message = [data?.error?.message, data?.error?.status, details].filter(Boolean).join(' ');
-  return /quota[_\s-]*exceeded|daily quota|requests?[_\s-]*per[_\s-]*day|GenerateRequestsPerDay|perday/i.test(message);
+  return /daily quota|requests?[_\s-]*per[_\s-]*day|GenerateRequestsPerDay|perday|daily[_\s-]*limit|PerDay/i.test(message);
+}
+function waitForRetry(ms, signal) {
+  return new Promise((resolve, reject) => {
+    if (signal.aborted) return reject(new DOMException('Transcription cancelled', 'AbortError'));
+    const timer = setTimeout(() => { signal.removeEventListener('abort', onAbort); resolve(); }, ms);
+    const onAbort = () => { clearTimeout(timer); signal.removeEventListener('abort', onAbort); reject(new DOMException('Transcription cancelled', 'AbortError')); };
+    signal.addEventListener('abort', onAbort, { once: true });
+  });
+}
+function geminiTranscribeApiError(status, data, response) {
+  const detail = String(data?.error?.message || '').slice(0, 220);
+  const daily = status === 429 && isDailyQuotaExceeded(data);
+  let message;
+  if (status === 400) message = 'Google Gemini từ chối yêu cầu hoặc định dạng âm thanh (400). ' + detail;
+  else if (status === 401) message = 'Gemini không chấp nhận API key. Hãy kiểm tra key trong Google AI Studio.';
+  else if (status === 403) message = 'API key Gemini chưa có quyền dùng Gemini 3.5 Transcribe hoặc dự án chưa được cấp quyền. ' + detail;
+  else if (status === 404) message = 'Không tìm thấy Gemini 3.5 Transcribe cho dự án này. Hãy kiểm tra quyền truy cập model.';
+  else if (daily) message = 'Gemini đã hết hạn mức theo ngày. Hãy đợi quota được đặt lại rồi thử lại; ứng dụng không thể tự vượt giới hạn ngày.';
+  else if (status === 429) message = 'Gemini đang giới hạn tốc độ. SubLingo đã thử chờ và thử lại nhưng vẫn chưa được cấp lượt gọi.';
+  else if (status === 503) message = 'Gemini đang tạm quá tải. SubLingo đã thử lại nhưng dịch vụ vẫn chưa sẵn sàng.';
+  else message = 'Gemini Transcribe gặp lỗi (' + status + '). ' + detail;
+  const error = new Error(message);
+  error.upstreamStatus = status;
+  error.retryAfterMs = response ? parseRetryAfterMs(response, data) : null;
+  error.quotaType = daily ? 'daily' : status === 429 ? 'rate' : null;
+  throw error;
+}
+async function fetchGeminiWithRetry(url, options, clientSignal, onRetry) {
+  const maxAttempts = 4;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    const response = await fetch(url, { ...options, signal: AbortSignal.any([clientSignal, AbortSignal.timeout(8 * 60 * 1000)]) });
+    if (response.ok) return response;
+    const data = await response.clone().json().catch(() => ({}));
+    const retryable = response.status === 503 || (response.status === 429 && !isDailyQuotaExceeded(data));
+    if (!retryable || attempt === maxAttempts) geminiTranscribeApiError(response.status, data, response);
+    const retryAfterMs = parseRetryAfterMs(response, data);
+    const waitMs = retryAfterMs || Math.min(60000, 3000 * (2 ** (attempt - 1)));
+    if (onRetry) await onRetry(waitMs, attempt, response.status);
+    await waitForRetry(waitMs, clientSignal);
+  }
+  throw new Error('Gemini Transcribe không thể hoàn tất yêu cầu.');
 }
 
 async function callGemini(apiKey, model, prompt, thinkingLevel, clientSignal) {
@@ -483,47 +524,80 @@ function groupTimedWords(words, language = '') {
   return captions;
 }
 
-async function transcribeAudioChunk(apiKey, audioPath, language, clientSignal) {
-  const audioBuffer = await readFile(audioPath);
-  if (audioBuffer.byteLength > MAX_AUDIO_CHUNK_BYTES) {
-    throw new Error('Đoạn âm thanh sau khi nén vẫn vượt giới hạn 24 MB. Hãy thử video ngắn hơn hoặc dung lượng nhỏ hơn.');
-  }
-  const form = new FormData();
-  form.append('file', new Blob([audioBuffer], { type: 'audio/mpeg' }), path.basename(audioPath));
-  form.append('model', 'gpt-transcribe');
-  form.append('response_format', 'verbose_json');
-  form.append('timestamp_granularities[]', 'word');
-  form.append('temperature', '0');
-  if (language !== 'auto') form.append('language', language);
-
-  const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-    method: 'POST',
-    headers: { Authorization: 'Bearer ' + apiKey },
-    body: form,
-    signal: AbortSignal.any([clientSignal, AbortSignal.timeout(180000)])
-  });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    let message;
-    if (response.status === 401 || response.status === 403) {
-      message = 'OpenAI không chấp nhận API key hoặc tài khoản chưa có quyền dùng dịch vụ chuyển giọng nói thành văn bản.';
-    } else if (response.status === 429) {
-      message = 'OpenAI đang giới hạn lượt gọi hoặc tài khoản đã hết hạn mức. Hãy kiểm tra Usage/Billing rồi thử lại.';
-    } else if (response.status === 400) {
-      message = 'OpenAI từ chối file âm thanh. ' + String(data?.error?.message || '').slice(0, 180);
-    } else {
-      message = 'Dịch vụ nhận diện giọng nói gặp lỗi (' + response.status + '). ' + String(data?.error?.message || '').slice(0, 180);
-    }
-    const error = new Error(message);
-    error.upstreamStatus = response.status;
-    throw error;
-  }
-  if (!Array.isArray(data?.words) || !data.words.length) {
-    throw new Error('AI không nghe được lời thoại rõ ràng trong video. Hãy thử video có âm thanh giọng nói rõ hơn.');
-  }
-  return data;
+function geminiOffsetSeconds(value) {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  const raw = String(value || '').trim();
+  const simple = raw.match(/^(\d+(?:\.\d+)?)(ms|s)?$/i);
+  if (simple) return Number(simple[1]) / (simple[2]?.toLowerCase() === 'ms' ? 1000 : 1);
+  const clock = raw.match(/^(?:(\d+):)?(\d{1,2}):(\d{2}(?:\.\d+)?)$/);
+  if (clock) return (Number(clock[1] || 0) * 3600) + (Number(clock[2]) * 60) + Number(clock[3]);
+  return NaN;
 }
-
+async function deleteGeminiFile(apiKey, fileName) {
+  if (!/^files\/[A-Za-z0-9-]+$/.test(String(fileName || ''))) return;
+  const encodedName = fileName.split('/').map(encodeURIComponent).join('/');
+  try {
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/' + encodedName, {
+      method: 'DELETE', headers: { 'x-goog-api-key': apiKey }, signal: AbortSignal.timeout(10000)
+    });
+    if (!response.ok && response.status !== 404) console.warn('Gemini temporary file cleanup returned status:', response.status);
+  } catch (error) {
+    console.warn('Gemini temporary file cleanup failed:', error?.message || 'unknown error');
+  }
+}
+async function transcribeAudioChunk(apiKey, audioPath, language, clientSignal, onRetry) {
+  const audioBuffer = await readFile(audioPath);
+  if (audioBuffer.byteLength > MAX_AUDIO_CHUNK_BYTES) throw new Error('Đoạn âm thanh sau khi nén vẫn vượt giới hạn 24 MB. Hãy thử video ngắn hơn hoặc dung lượng nhỏ hơn.');
+  let uploadedFileName = '';
+  try {
+    const startResponse = await fetchGeminiWithRetry('https://generativelanguage.googleapis.com/upload/v1beta/files', {
+      method: 'POST',
+      headers: {
+        'x-goog-api-key': apiKey, 'X-Goog-Upload-Protocol': 'resumable', 'X-Goog-Upload-Command': 'start',
+        'X-Goog-Upload-Header-Content-Length': String(audioBuffer.byteLength),
+        'X-Goog-Upload-Header-Content-Type': 'audio/mpeg', 'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ file: { display_name: path.basename(audioPath) } })
+    }, clientSignal, onRetry);
+    const uploadUrl = startResponse.headers.get('x-goog-upload-url');
+    if (!uploadUrl) throw new Error('Google không trả về đường dẫn tải âm thanh. Hãy thử lại.');
+    const parsedUploadUrl = new URL(uploadUrl);
+    if (parsedUploadUrl.protocol !== 'https:' || !parsedUploadUrl.hostname.endsWith('.googleapis.com')) throw new Error('Đường dẫn tải âm thanh từ Google không hợp lệ.');
+    const uploadResponse = await fetchGeminiWithRetry(uploadUrl, {
+      method: 'POST', headers: { 'Content-Type': 'audio/mpeg', 'X-Goog-Upload-Offset': '0', 'X-Goog-Upload-Command': 'upload, finalize' }, body: audioBuffer
+    }, clientSignal, onRetry);
+    const uploadData = await uploadResponse.json().catch(() => ({}));
+    const uploadedFile = uploadData?.file || uploadData;
+    const fileUri = uploadedFile?.uri;
+    uploadedFileName = String(uploadedFile?.name || '');
+    if (!fileUri || !/^files\/[A-Za-z0-9-]+$/.test(uploadedFileName)) throw new Error('Google đã nhận âm thanh nhưng không trả về thông tin file hợp lệ.');
+    const transcriptionConfig = { mode: { type: 'verbatim', timestamp_granularities: ['word'] } };
+    if (language !== 'auto') transcriptionConfig.language_codes = [language];
+    const interactionResponse = await fetchGeminiWithRetry('https://generativelanguage.googleapis.com/v1beta/interactions', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+      body: JSON.stringify({
+        model: 'gemini-3.5-transcribe',
+        input: [{ type: 'audio', uri: fileUri, mime_type: uploadedFile?.mime_type || uploadedFile?.mimeType || 'audio/mpeg' }],
+        generation_config: { transcription_config: transcriptionConfig },
+        store: false
+      })
+    }, clientSignal, onRetry);
+    const interaction = await interactionResponse.json().catch(() => ({}));
+    if (interaction?.status && interaction.status !== 'completed') throw new Error('Gemini chưa hoàn tất nhận diện âm thanh. Hãy thử lại.');
+    const words = [];
+    for (const step of interaction?.steps || []) for (const content of step?.content || []) for (const annotation of content?.annotations || []) {
+      if (annotation?.type !== 'word_info') continue;
+      const word = String(annotation.text || '').trim();
+      const start = geminiOffsetSeconds(annotation.start_offset);
+      const end = geminiOffsetSeconds(annotation.end_offset);
+      if (word && Number.isFinite(start) && Number.isFinite(end) && end > start) words.push({ word, start, end });
+    }
+    if (!words.length) throw new Error('Gemini không trả về mốc thời gian cho từng từ. Hãy thử lại với video có giọng nói rõ hơn.');
+    return { words };
+  } finally {
+    if (uploadedFileName) await deleteGeminiFile(apiKey, uploadedFileName);
+  }
+}
 function handleVideoUpload(req, res, next) {
   videoUpload.single('video')(req, res, (error) => {
     if (!error) return next();
@@ -592,7 +666,13 @@ app.post('/api/transcribe', requireSameOrigin, noStore, transcribeLimiter, handl
         percent,
         message: 'AI đang nghe đoạn ' + (index + 1) + '/' + chunkFiles.length + '...'
       });
-      const result = await transcribeAudioChunk(parsed.data.apiKey, path.join(workDir, chunkFiles[index]), parsed.data.language, clientController.signal);
+      const result = await transcribeAudioChunk(
+        parsed.data.apiKey, path.join(workDir, chunkFiles[index]), parsed.data.language, clientController.signal,
+        async (waitMs, attempt) => sendEvent({
+          type: 'progress', stage: 'recognizing', percent,
+          message: 'Google đang giới hạn tốc độ. SubLingo sẽ tự thử lại sau ' + Math.ceil(waitMs / 1000) + ' giây (lần ' + attempt + '/3)...'
+        })
+      );
       if (!detectedLanguage && typeof result.language === 'string') detectedLanguage = result.language;
       const offset = index * AUDIO_CHUNK_SECONDS;
       for (const word of result.words) {

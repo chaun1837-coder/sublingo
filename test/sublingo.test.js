@@ -263,8 +263,8 @@ test('index HTML is not cached so fixes appear without stale frontend code', () 
 });
 
 test('package and visible UI expose the same semantic version', () => {
-  assert.equal(pkg.version, '1.2.1');
-  assert.match(html, /SRT TRANSLATOR · v1\.2\.1/);
+  assert.equal(pkg.version, '1.2.2');
+  assert.match(html, /SRT TRANSLATOR · v1\.2\.2/);
   assert.match(server, /APP_VERSION/);
 });
 
@@ -307,9 +307,14 @@ test('speech-to-text uploads are bounded and use FFmpeg plus secure multipart up
   assert.ok(server.includes("app.post('/api/transcribe'"));
 });
 
-test('speech-to-text uses word timestamps and removes temporary files', () => {
-  assert.ok(server.includes("form.append('model', 'gpt-transcribe')"));
-  assert.ok(server.includes("form.append('timestamp_granularities[]', 'word')"));
+test('speech-to-text uses Gemini word timestamps and removes temporary files', () => {
+  assert.ok(server.includes("model: 'gemini-3.5-transcribe'"));
+  assert.ok(server.includes("timestamp_granularities: ['word']"));
+  assert.ok(server.includes("type: 'word_info'"));
+  assert.ok(server.includes("https://generativelanguage.googleapis.com/v1beta/interactions"));
+  assert.ok(server.includes("https://generativelanguage.googleapis.com/upload/v1beta/files"));
+  assert.ok(server.includes('async function deleteGeminiFile'));
+  assert.ok(server.includes('await deleteGeminiFile(apiKey, uploadedFileName)'));
   assert.ok(server.includes('function groupTimedWords(words, language'));
   assert.ok(server.includes('await unlink(uploadedPath)'));
   assert.ok(server.includes('await rm(workDir, { recursive: true, force: true })'));
@@ -318,10 +323,36 @@ test('speech-to-text uses word timestamps and removes temporary files', () => {
   assert.ok(server.includes("stage: 'aligning'"));
 });
 
-test('speech-to-text frontend supports upload, preview, edits, cancellation and SRT export', () => {
+test('speech-to-text frontend shares Gemini key from Page 1 and supports export', () => {
   for (const id of ['sttVideoInput', 'sttLanguage', 'sttApiKey', 'sttVideoPreview', 'sttCaptionList', 'sttCancelBtn', 'sttDownloadBtn']) {
     assert.ok(html.includes('id="' + id + '"'));
   }
+  assert.ok(html.includes("loadSavedKey('gemini')"));
+  assert.ok(html.includes("savedKeyStorageName('gemini')"));
+  assert.ok(html.includes('Google Gemini API key'));
   assert.ok(html.includes('function makeSttSrt(captions)'));
   assert.ok(html.includes("anchor.download = base + '_auto.srt'"));
+  const pageTwoStart = html.indexOf('id="pageTwoContent"');
+  const pageTwoEnd = html.indexOf('</main>', pageTwoStart);
+  assert.doesNotMatch(html.slice(pageTwoStart, pageTwoEnd), /OpenAI API key/);
+});
+
+
+test('Gemini Transcribe rate limits use automatic retries but daily quota is not retried', () => {
+  assert.match(server, /async function fetchGeminiWithRetry/);
+  assert.match(server, /const maxAttempts = 4/);
+  assert.match(server, /response\.status === 429 && !isDailyQuotaExceeded\(data\)/);
+  assert.match(server, /parseRetryAfterMs\(response, data\)/);
+  assert.match(server, /await waitForRetry\(waitMs, clientSignal\)/);
+  assert.match(server, /SubLingo sẽ tự thử lại sau/);
+  assert.match(server, /Hãy đợi quota được đặt lại/);
+});
+
+test('Gemini Transcribe extracts word_info annotations and keeps chunks at nine minutes', () => {
+  assert.match(server, /const AUDIO_CHUNK_SECONDS = 540/);
+  assert.match(server, /function geminiOffsetSeconds/);
+  assert.match(server, /annotation\.type !== 'word_info'/);
+  assert.match(server, /annotation\.start_offset/);
+  assert.match(server, /annotation\.end_offset/);
+  assert.match(server, /store: false/);
 });

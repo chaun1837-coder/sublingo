@@ -1,6 +1,6 @@
-# SubLingo 1.2.1 — Dịch phụ đề SRT & tạo phụ đề tự động
+# SubLingo 1.2.2 — Dịch phụ đề SRT & tạo phụ đề tự động
 
-**Phiên bản hiện tại:** 1.2.1 — *AI Speech-to-Text*.
+**Phiên bản hiện tại:** 1.2.2 — *AI Speech-to-Text*.
 
 SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT bằng Google Gemini hoặc OpenAI.
 
@@ -10,7 +10,7 @@ SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT bằn
 - Đăng xuất xóa hai API key đã lưu trong trình duyệt, dữ liệu phụ đề tạm và hủy lượt dịch đang chạy.
 - Gửi lời thoại theo từng nhóm tới Google Gemini hoặc OpenAI.
 - Người dùng tự chọn mức suy luận Gemini: MINIMAL, LOW, MEDIUM hoặc HIGH; lựa chọn được lưu trên trình duyệt. Mặc định là MINIMAL.
-- Trang 2 tạo phụ đề tự động từ video bằng OpenAI gpt-transcribe, có xem trước video, sửa lời thoại, tùy chỉnh kiểu chữ xem trước và xuất SRT.
+- Trang 2 tạo phụ đề tự động từ video bằng Google Gemini 3.5 Transcribe, có xem trước video, sửa lời thoại, tùy chỉnh kiểu chữ xem trước và xuất SRT.
 - Giữ nguyên số thứ tự, timestamp, metadata, dấu phân cách và kiểu xuống dòng từ file SRT gốc.
 - Có thể chọn lưu API key trên thiết bị bằng localStorage. Tùy chọn này **không mã hóa key**; chỉ nên dùng trên thiết bị cá nhân.
 - Giới hạn file ở 10 MB và 5.000 cue để tránh treo trình duyệt; mỗi cue tối đa 5.000 ký tự.
@@ -19,14 +19,16 @@ SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT bằn
 ## Tạo phụ đề tự động bằng AI (Trang 2)
 
 - Tải video MP4, MOV, MKV, WebM, AVI, M4V, MPEG hoặc MPG; giới hạn hiện tại 150 MB.
-- Chọn ngôn ngữ hoặc để tự động nhận diện; nhập OpenAI API key của chính bạn. Có thể chọn lưu key trong trình duyệt trên thiết bị cá nhân (localStorage không mã hóa).
-- Backend dùng FFmpeg tách âm thanh mono 16 kHz, nén MP3 và áp dụng bộ lọc cơ bản (high-pass, low-pass, afftdn) để giảm một phần tiếng ồn nền; đây không phải mô hình tách giọng nói khỏi nhạc.
-- Âm thanh được chia thành từng đoạn 9 phút để gửi đến OpenAI Audio Transcriptions. Kết quả từ gpt-transcribe có timestamp theo từ; SubLingo gom các từ gần nhau thành câu phụ đề, hiển thị tiến độ theo từng bước.
-- Có thể xem video, bấm mốc thời gian để tua đến câu tương ứng, sửa văn bản và xem thử phụ đề trên video. Cỡ chữ, màu và hiệu ứng chỉ áp dụng trong khung xem trước; SRT xuất ra giữ nội dung và timestamp.
-- Video và âm thanh tạm được ghi trong thư mục tạm của máy chủ và xóa sau khi xử lý; ứng dụng không lưu chúng vào database.
-- Tính năng này dùng OpenAI API và có thể phát sinh phí theo tài khoản/đơn giá của OpenAI. Không gửi API key qua chat; hãy nhập trực tiếp trong giao diện website.
+- Trang 2 dùng chung Google Gemini API key đã lưu ở Trang 1; cũng có thể nhập key trực tiếp tại Trang 2. Có thể lưu key trong localStorage trên thiết bị cá nhân (không được mã hóa).
+- Backend dùng FFmpeg tách âm thanh mono 16 kHz, nén MP3 và áp dụng bộ lọc cơ bản để giảm một phần tiếng ồn nền; đây không phải mô hình tách giọng nói khỏi nhạc.
+- Âm thanh được chia thành từng đoạn 9 phút để gửi đến Google Gemini 3.5 Transcribe qua Files API và Interactions API. Model trả về timestamp từng từ; SubLingo gom các từ gần nhau thành câu phụ đề.
+- Model giới hạn âm thanh tối đa 30 phút mỗi yêu cầu khi bật timestamp từng từ; các đoạn 9 phút của SubLingo nằm trong giới hạn đó.
+- Khi Google trả về lỗi giới hạn tốc độ 429, SubLingo tự chờ theo Retry-After/RetryInfo hoặc backoff rồi thử lại tối đa 3 lần. Hạn mức theo ngày cần chờ quota được đặt lại.
+- Video và âm thanh gốc tạm được ghi trong thư mục tạm trên máy chủ và xóa sau khi xử lý. Tệp âm thanh tải lên Google Files API được xóa ngay sau khi nhận diện; tệp còn sót sẽ tự hết hạn sau tối đa 48 giờ.
+- Gemini 3.5 Transcribe có Free Tier trong hạn mức được cấp; nếu dự án thuộc Paid Tier hoặc vượt quota, có thể phát sinh phí Google. Không có bảo đảm miễn phí vô hạn.
+- **Lưu ý quyền riêng tư:** Nội dung gửi qua Free Tier/unpaid quota có thể được Google dùng để cải thiện sản phẩm và có thể được người đánh giá xử lý. Không tải video có thông tin nhạy cảm hoặc bí mật nếu không chấp nhận điều khoản này.
+- Không gửi API key qua chat; hãy nhập trực tiếp trong giao diện website.
 
-**Lưu ý về timestamp từng từ:** SubLingo dùng mô hình `gpt-transcribe` với `response_format=verbose_json` và `timestamp_granularities[]=word` theo API OpenAI. Tạo timestamp từng từ có thể mất thêm thời gian; độ chính xác vẫn phụ thuộc chất lượng giọng nói và tạp âm.
 
 ## Model hiện hỗ trợ
 
@@ -34,8 +36,17 @@ SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT bằn
 |---|---|
 | OpenAI | gpt-6-luna, gpt-6.1-terra |
 | Gemini (tất cả người dùng) | gemini-3.5-flash-lite |
+| Gemini Speech-to-Text (Trang 2) | gemini-3.5-transcribe |
 
 SubLingo đã tắt Gemini 3.8 Flash; chỉ bật Gemini 3.5 Flash-Lite cho tất cả người dùng. Gemini 3.5 Flash-Lite hỗ trợ bốn mức suy luận MINIMAL, LOW, MEDIUM và HIGH. Mặc định là MINIMAL để ưu tiên tốc độ và tiết kiệm; mức cao hơn có thể cần thêm thời gian và token, đồng thời có thể ảnh hưởng hạn mức hoặc chi phí API theo cấu hình tài khoản Google. Mô hình này có Free Tier trong hạn mức Google, nhưng dự án đã liên kết billing vẫn có thể chịu giá Paid Tier. Muốn tránh phí, hãy xác nhận Google Cloud project/API key đang ở Free Tier và chưa bật billing; theo dõi Usage and Billing trong Google AI Studio.
+
+### Lịch sử phiên bản
+
+#### 1.2.2
+- Chuyển nhận diện giọng nói Trang 2 từ OpenAI sang Google Gemini 3.5 Transcribe.
+- Dùng chung API key Gemini đã lưu ở Trang 1.
+- Tự chờ và thử lại khi Google giới hạn tốc độ; dừng khi hết quota ngày.
+- Xóa tệp âm thanh tạm trên Google sau khi nhận diện.
 
 Third-party license information: see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
