@@ -6,6 +6,11 @@ import { OAuth2Client } from 'google-auth-library';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
+import { spawn } from 'node:child_process';
+import os from 'node:os';
+import { mkdtemp, readdir, readFile, rm, unlink } from 'node:fs/promises';
+import multer from 'multer';
+import ffmpegPath from 'ffmpeg-static';
 import { z } from 'zod';
 import dotenv from 'dotenv';
 
@@ -15,7 +20,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = Number(process.env.PORT || 10000);
-const APP_VERSION = process.env.npm_package_version || '1.1.4';
+const APP_VERSION = process.env.npm_package_version || '1.2.0';
 const isProduction = process.env.NODE_ENV === 'production';
 const SESSION_SECRET = process.env.SESSION_SECRET || (isProduction ? '' : crypto.randomBytes(48).toString('hex'));
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
@@ -130,6 +135,23 @@ function optionalAuthenticate(req, res, next) {
 
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 20, standardHeaders: 'draft-8', legacyHeaders: false });
 const translateLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 120, standardHeaders: 'draft-8', legacyHeaders: false });
+const transcribeLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 8, standardHeaders: 'draft-8', legacyHeaders: false });
+const MAX_VIDEO_BYTES = 150 * 1024 * 1024;
+const MAX_AUDIO_CHUNK_BYTES = 24 * 1024 * 1024;
+const AUDIO_CHUNK_SECONDS = 540;
+const VIDEO_EXTENSIONS = new Set(['.mp4', '.mov', '.mkv', '.webm', '.avi', '.m4v', '.mpeg', '.mpg']);
+const videoUpload = multer({
+  storage: multer.diskStorage({
+    destination: os.tmpdir(),
+    filename: (_req, file, callback) => callback(null, 'sublingo-' + crypto.randomBytes(16).toString('hex') + path.extname(file.originalname).toLowerCase())
+  }),
+  limits: { fileSize: MAX_VIDEO_BYTES, files: 1, fields: 3, fieldSize: 1000 },
+  fileFilter: (_req, file, callback) => {
+    const extension = path.extname(file.originalname).toLowerCase();
+    if (!VIDEO_EXTENSIONS.has(extension)) return callback(new Error('Định dạng video chưa được hỗ trợ. Hãy dùng MP4, MOV, MKV, WebM hoặc AVI.'));
+    callback(null, true);
+  }
+});
 
 app.get('/config.js', (_req, res) => {
   res.type('application/javascript').set('Cache-Control', 'no-store').send(
@@ -397,6 +419,226 @@ app.post('/api/translate', requireSameOrigin, noStore, optionalAuthenticate, tra
       ...(Number.isFinite(error?.retryAfterMs) ? { retryAfterMs: error.retryAfterMs } : {}),
       ...(error?.quotaType ? { quotaType: error.quotaType } : {})
     });
+  }
+});
+
+
+const transcribeSchema = z.object({
+  apiKey: z.string().min(12).max(500),
+  language: z.enum(['auto', 'vi', 'en', 'zh', 'ja', 'ko', 'th', 'fr', 'es', 'de'])
+}).strict();
+
+function runFfmpeg(args, signal) {
+  return new Promise((resolve, reject) => {
+    if (!ffmpegPath) return reject(new Error('Máy chủ chưa có FFmpeg để xử lý video.'));
+    if (signal.aborted) return reject(new DOMException('Transcription cancelled', 'AbortError'));
+    const child = spawn(ffmpegPath, args, { stdio: ['ignore', 'ignore', 'pipe'] });
+    let stderr = '';
+    const onAbort = () => child.kill('SIGTERM');
+    signal.addEventListener('abort', onAbort, { once: true });
+    child.stderr.on('data', (chunk) => {
+      if (stderr.length < 7000) stderr += chunk.toString();
+    });
+    child.once('error', (error) => {
+      signal.removeEventListener('abort', onAbort);
+      reject(new Error('Không khởi chạy được FFmpeg: ' + error.message));
+    });
+    child.once('close', (code) => {
+      signal.removeEventListener('abort', onAbort);
+      if (signal.aborted) return reject(new DOMException('Transcription cancelled', 'AbortError'));
+      if (code !== 0) return reject(new Error('Không thể tách âm thanh từ video. ' + stderr.trim().slice(-1400)));
+      resolve();
+    });
+  });
+}
+
+function groupTimedWords(words, language = '') {
+  const captions = [];
+  let current = [];
+  const compactScript = /^(zh|chinese|ja|japanese)/i.test(String(language || ''));
+  const textOf = (items) => items.map((item) => item.text).join(compactScript ? '' : ' ').replace(/\s+/g, ' ').trim();
+  const flush = () => {
+    if (!current.length) return;
+    const text = textOf(current);
+    const start = Math.max(0, Number(current[0].start) || 0);
+    const end = Math.max(start + 0.08, Number(current[current.length - 1].end) || start + 0.08);
+    captions.push({ id: captions.length + 1, start: Number(start.toFixed(3)), end: Number(end.toFixed(3)), text });
+    current = [];
+  };
+  for (const item of words) {
+    const text = String(item?.word || '').trim();
+    const start = Number(item?.start);
+    const end = Number(item?.end);
+    if (!text || !Number.isFinite(start) || !Number.isFinite(end) || end <= start) continue;
+    if (current.length) {
+      const previous = current[current.length - 1];
+      const candidate = textOf(current.concat({ text }));
+      const gap = start - previous.end;
+      const previousEndsSentence = /[.!?。！？]["'”’)\]]*$/u.test(previous.text);
+      if (previousEndsSentence || gap > 0.72 || candidate.length > 44 || end - current[0].start > 5.2) flush();
+    }
+    current.push({ text, start, end });
+  }
+  flush();
+  return captions;
+}
+
+async function transcribeAudioChunk(apiKey, audioPath, language, clientSignal) {
+  const audioBuffer = await readFile(audioPath);
+  if (audioBuffer.byteLength > MAX_AUDIO_CHUNK_BYTES) {
+    throw new Error('Đoạn âm thanh sau khi nén vẫn vượt giới hạn 24 MB. Hãy thử video ngắn hơn hoặc dung lượng nhỏ hơn.');
+  }
+  const form = new FormData();
+  form.append('file', new Blob([audioBuffer], { type: 'audio/mpeg' }), path.basename(audioPath));
+  form.append('model', 'whisper-1');
+  form.append('response_format', 'verbose_json');
+  form.append('timestamp_granularities[]', 'word');
+  form.append('temperature', '0');
+  if (language !== 'auto') form.append('language', language);
+
+  const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + apiKey },
+    body: form,
+    signal: AbortSignal.any([clientSignal, AbortSignal.timeout(180000)])
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    let message;
+    if (response.status === 401 || response.status === 403) {
+      message = 'OpenAI không chấp nhận API key hoặc tài khoản chưa có quyền dùng dịch vụ chuyển giọng nói thành văn bản.';
+    } else if (response.status === 429) {
+      message = 'OpenAI đang giới hạn lượt gọi hoặc tài khoản đã hết hạn mức. Hãy kiểm tra Usage/Billing rồi thử lại.';
+    } else if (response.status === 400) {
+      message = 'OpenAI từ chối file âm thanh. ' + String(data?.error?.message || '').slice(0, 180);
+    } else {
+      message = 'Dịch vụ nhận diện giọng nói gặp lỗi (' + response.status + '). ' + String(data?.error?.message || '').slice(0, 180);
+    }
+    const error = new Error(message);
+    error.upstreamStatus = response.status;
+    throw error;
+  }
+  if (!Array.isArray(data?.words) || !data.words.length) {
+    throw new Error('AI không nghe được lời thoại rõ ràng trong video. Hãy thử video có âm thanh giọng nói rõ hơn.');
+  }
+  return data;
+}
+
+function handleVideoUpload(req, res, next) {
+  videoUpload.single('video')(req, res, (error) => {
+    if (!error) return next();
+    if (error instanceof multer.MulterError && error.code === 'LIMIT_FILE_SIZE') {
+      return res.status(413).json({ error: 'Video vượt quá giới hạn 150 MB. Hãy nén video hoặc chọn đoạn ngắn hơn.' });
+    }
+    return res.status(400).json({ error: error.message || 'Không thể nhận file video.' });
+  });
+}
+
+app.post('/api/transcribe', requireSameOrigin, noStore, transcribeLimiter, handleVideoUpload, async (req, res) => {
+  let workDir = '';
+  const uploadedPath = req.file?.path || '';
+  const clientController = new AbortController();
+  req.once('aborted', () => clientController.abort());
+  res.once('close', () => { if (!res.writableEnded) clientController.abort(); });
+  const sendEvent = (event) => {
+    if (res.destroyed || res.writableEnded) return false;
+    res.write(JSON.stringify(event) + '\n');
+    return true;
+  };
+  try {
+    if (!req.file) return res.status(400).json({ error: 'Hãy chọn video trước khi tạo phụ đề.' });
+    const parsed = transcribeSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: 'API key hoặc ngôn ngữ nhận diện chưa hợp lệ.' });
+    if (!ffmpegPath) return res.status(503).json({ error: 'Máy chủ chưa cài công cụ xử lý video.' });
+
+    workDir = await mkdtemp(path.join(os.tmpdir(), 'sublingo-stt-'));
+    res.status(200)
+      .set('Content-Type', 'application/x-ndjson; charset=utf-8')
+      .set('Cache-Control', 'no-store')
+      .set('X-Accel-Buffering', 'no')
+      .flushHeaders();
+
+    sendEvent({ type: 'progress', stage: 'extracting', percent: 24, message: 'Đang tách và làm sạch âm thanh...' });
+    const pattern = path.join(workDir, 'audio-%03d.mp3');
+    const baseArgs = [
+      '-hide_banner', '-loglevel', 'error', '-y', '-i', uploadedPath,
+      '-map', '0:a:0', '-vn', '-ac', '1', '-ar', '16000',
+      '-c:a', 'libmp3lame', '-b:a', '48k',
+      '-f', 'segment', '-segment_time', String(AUDIO_CHUNK_SECONDS),
+      '-reset_timestamps', '1', pattern
+    ];
+    try {
+      await runFfmpeg([
+        ...baseArgs.slice(0, 9), '-af', 'highpass=f=70,lowpass=f=7600,afftdn=nf=-25', ...baseArgs.slice(9)
+      ], clientController.signal);
+    } catch (error) {
+      if (clientController.signal.aborted) throw error;
+      if (!/No such filter|Error initializing filter|Option .* not found/i.test(error.message)) throw error;
+      await runFfmpeg(baseArgs, clientController.signal);
+    }
+
+    const chunkFiles = (await readdir(workDir)).filter((name) => /^audio-\d+\.mp3$/i.test(name)).sort();
+    if (!chunkFiles.length) throw new Error('Video không có track âm thanh hoặc không thể đọc âm thanh.');
+    sendEvent({ type: 'progress', stage: 'recognizing', percent: 42, message: 'Đã tách âm thanh. AI đang nhận diện ' + chunkFiles.length + ' đoạn...' });
+
+    const allWords = [];
+    let detectedLanguage = parsed.data.language === 'auto' ? '' : parsed.data.language;
+    for (let index = 0; index < chunkFiles.length; index += 1) {
+      if (clientController.signal.aborted) throw new DOMException('Transcription cancelled', 'AbortError');
+      const percent = Math.min(88, 44 + Math.round((index / chunkFiles.length) * 42));
+      sendEvent({
+        type: 'progress',
+        stage: 'recognizing',
+        percent,
+        message: 'AI đang nghe đoạn ' + (index + 1) + '/' + chunkFiles.length + '...'
+      });
+      const result = await transcribeAudioChunk(parsed.data.apiKey, path.join(workDir, chunkFiles[index]), parsed.data.language, clientController.signal);
+      if (!detectedLanguage && typeof result.language === 'string') detectedLanguage = result.language;
+      const offset = index * AUDIO_CHUNK_SECONDS;
+      for (const word of result.words) {
+        allWords.push({
+          word: word.word,
+          start: Number(word.start) + offset,
+          end: Number(word.end) + offset
+        });
+      }
+      sendEvent({
+        type: 'progress',
+        stage: 'recognizing',
+        percent: Math.min(90, 45 + Math.round(((index + 1) / chunkFiles.length) * 43)),
+        message: 'Đã nhận diện ' + (index + 1) + '/' + chunkFiles.length + ' đoạn âm thanh.'
+      });
+    }
+
+    sendEvent({ type: 'progress', stage: 'normalizing', percent: 92, message: 'Đang chuẩn hóa chữ, dấu câu và khoảng trắng...' });
+    const normalizedWords = allWords.map((item) => ({ ...item, word: String(item.word || '').replace(/\s+/g, ' ').trim() })).filter((item) => item.word);
+    sendEvent({ type: 'progress', stage: 'aligning', percent: 96, message: 'Đang căn chỉnh thời gian cho từng từ và ghép thành câu phụ đề...' });
+    const captions = groupTimedWords(normalizedWords, detectedLanguage || parsed.data.language);
+    if (!captions.length) throw new Error('Không tạo được câu phụ đề từ âm thanh. Hãy thử lại với video khác.');
+    const duration = captions[captions.length - 1].end;
+    sendEvent({
+      type: 'done',
+      result: {
+        language: detectedLanguage || parsed.data.language,
+        duration,
+        wordCount: allWords.length,
+        cues: captions
+      }
+    });
+    res.end();
+  } catch (error) {
+    if (clientController.signal.aborted || res.destroyed) return;
+    const status = Number.isInteger(error?.upstreamStatus) ? error.upstreamStatus : 502;
+    if (res.headersSent) {
+      sendEvent({ type: 'error', error: error?.message || 'Không thể tạo phụ đề lúc này.' });
+      res.end();
+    } else {
+      res.status(status).json({ error: error?.message || 'Không thể tạo phụ đề lúc này.' });
+    }
+    console.error('Speech-to-text request failed:', status, error?.message || 'unknown error');
+  } finally {
+    if (uploadedPath) await unlink(uploadedPath).catch(() => {});
+    if (workDir) await rm(workDir, { recursive: true, force: true }).catch(() => {});
   }
 });
 

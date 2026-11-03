@@ -162,18 +162,22 @@ test('backend preserves upstream status codes for retry decisions', () => {
 });
 
 
-test('two-page navigation keeps all existing features on page one and page two blank', () => {
+test('two-page navigation keeps all existing features on page one and Page 2 contains the speech-to-text workspace', () => {
   assert.match(html, /id="pageOneTab"/);
   assert.match(html, /id="pageOneTab"[^>]*>Dịch phụ đề SRT<\/button>/);
   assert.match(html, /id="pageTwoTab"/);
   assert.match(html, /id="pageOneContent"/);
-  assert.match(html, /id="pageTwoContent" hidden><\/section>/);
+  assert.match(html, /id="pageTwoContent" class="stt-page" hidden/);
   assert.match(html, /function showPage\(pageNumber\)/);
   assert.match(html, /\$\('pageOneContent'\)\.hidden = !isPageOne/);
   assert.match(html, /\$\('pageTwoContent'\)\.hidden = isPageOne/);
   assert.ok(html.indexOf('id="pageOneTab"') < html.indexOf('id="pageTwoTab"'));
   assert.ok(html.indexOf('id="pageOneContent"') < html.indexOf('Tải video đa nền tảng'));
   assert.ok(html.indexOf('id="pageOneContent"') < html.indexOf('id="translateBtn"'));
+  assert.match(html, /class="stt-layout"/);
+  assert.match(html, /id="sttVideoInput"/);
+  assert.match(html, /id="sttCaptionList"/);
+  assert.match(html, /id="sttDownloadBtn"/)
 });
 
 test('Gemini Flash-Lite supports user-selectable thinking levels', () => {
@@ -259,8 +263,8 @@ test('index HTML is not cached so fixes appear without stale frontend code', () 
 });
 
 test('package and visible UI expose the same semantic version', () => {
-  assert.equal(pkg.version, '1.1.6');
-  assert.match(html, /SRT TRANSLATOR · v1\.1\.5/);
+  assert.equal(pkg.version, '1.2.0');
+  assert.match(html, /SRT TRANSLATOR · v1\.2\.0/);
   assert.match(server, /APP_VERSION/);
 });
 
@@ -291,4 +295,33 @@ test('Google login explains when OAuth Client ID has not been configured', () =>
 test('OpenAI Responses JSON mode is enabled and prompt explicitly requests JSON', () => {
   assert.match(server, /text: \{ format: \{ type: 'json_object' \} \}/);
   assert.match(server, /Output only JSON/);
+});
+
+test('speech-to-text uploads are bounded and use FFmpeg plus secure multipart upload', () => {
+  assert.equal(pkg.dependencies.multer, '^2.5.0');
+  assert.equal(pkg.dependencies['ffmpeg-static'], '^5.3.0');
+  assert.ok(server.includes('MAX_VIDEO_BYTES = 150 * 1024 * 1024'));
+  assert.ok(server.includes('MAX_AUDIO_CHUNK_BYTES = 24 * 1024 * 1024'));
+  assert.ok(server.includes('transcribeLimiter = rateLimit'));
+  assert.ok(server.includes("videoUpload.single('video')"));
+  assert.ok(server.includes("app.post('/api/transcribe'"));
+});
+
+test('speech-to-text uses word timestamps and removes temporary files', () => {
+  assert.ok(server.includes("form.append('model', 'whisper-1')"));
+  assert.ok(server.includes("form.append('timestamp_granularities[]', 'word')"));
+  assert.ok(server.includes('function groupTimedWords(words, language'));
+  assert.ok(server.includes('await unlink(uploadedPath)'));
+  assert.ok(server.includes('await rm(workDir, { recursive: true, force: true })'));
+  assert.ok(server.includes('afftdn=nf=-25'));
+  assert.ok(server.includes("stage: 'normalizing'"));
+  assert.ok(server.includes("stage: 'aligning'"));
+});
+
+test('speech-to-text frontend supports upload, preview, edits, cancellation and SRT export', () => {
+  for (const id of ['sttVideoInput', 'sttLanguage', 'sttApiKey', 'sttVideoPreview', 'sttCaptionList', 'sttCancelBtn', 'sttDownloadBtn']) {
+    assert.ok(html.includes('id="' + id + '"'));
+  }
+  assert.ok(html.includes('function makeSttSrt(captions)'));
+  assert.ok(html.includes("anchor.download = base + '_auto.srt'"));
 });

@@ -1,6 +1,6 @@
-# SubLingo 1.1.6 — Dịch phụ đề SRT
+# SubLingo 1.2.0 — Dịch phụ đề SRT & tạo phụ đề tự động
 
-**Phiên bản hiện tại:** 1.1.6 — *Feature Tab Label*.
+**Phiên bản hiện tại:** 1.2.0 — *AI Speech-to-Text*.
 
 SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT bằng Google Gemini hoặc OpenAI.
 
@@ -10,11 +10,23 @@ SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT bằn
 - Đăng xuất xóa hai API key đã lưu trong trình duyệt, dữ liệu phụ đề tạm và hủy lượt dịch đang chạy.
 - Gửi lời thoại theo từng nhóm tới Google Gemini hoặc OpenAI.
 - Người dùng tự chọn mức suy luận Gemini: MINIMAL, LOW, MEDIUM hoặc HIGH; lựa chọn được lưu trên trình duyệt. Mặc định là MINIMAL.
-- Đổi nhãn nút Trang 1 thành “Dịch phụ đề SRT”; toàn bộ tính năng hiện tại vẫn nằm ở nút này và Trang 2 vẫn để trống.
+- Trang 2 tạo phụ đề tự động từ video bằng OpenAI Whisper, có xem trước video, sửa lời thoại, tùy chỉnh kiểu chữ xem trước và xuất SRT.
 - Giữ nguyên số thứ tự, timestamp, metadata, dấu phân cách và kiểu xuống dòng từ file SRT gốc.
 - Có thể chọn lưu API key trên thiết bị bằng localStorage. Tùy chọn này **không mã hóa key**; chỉ nên dùng trên thiết bị cá nhân.
 - Giới hạn file ở 10 MB và 5.000 cue để tránh treo trình duyệt; mỗi cue tối đa 5.000 ký tự.
 - Không lưu API key hoặc file phụ đề trong database trên máy chủ. OpenAI Responses được gọi với store: false.
+
+## Tạo phụ đề tự động bằng AI (Trang 2)
+
+- Tải video MP4, MOV, MKV, WebM, AVI, M4V, MPEG hoặc MPG; giới hạn hiện tại 150 MB.
+- Chọn ngôn ngữ hoặc để tự động nhận diện; nhập OpenAI API key của chính bạn. Có thể chọn lưu key trong trình duyệt trên thiết bị cá nhân (localStorage không mã hóa).
+- Backend dùng FFmpeg tách âm thanh mono 16 kHz, nén MP3 và áp dụng bộ lọc cơ bản (high-pass, low-pass, afftdn) để giảm một phần tiếng ồn nền; đây không phải mô hình tách giọng nói khỏi nhạc.
+- Âm thanh được chia thành từng đoạn 9 phút để gửi đến OpenAI Audio Transcriptions. Kết quả từ Whisper có timestamp theo từ; SubLingo gom các từ gần nhau thành câu phụ đề, hiển thị tiến độ theo từng bước.
+- Có thể xem video, bấm mốc thời gian để tua đến câu tương ứng, sửa văn bản và xem thử phụ đề trên video. Cỡ chữ, màu và hiệu ứng chỉ áp dụng trong khung xem trước; SRT xuất ra giữ nội dung và timestamp.
+- Video và âm thanh tạm được ghi trong thư mục tạm của máy chủ và xóa sau khi xử lý; ứng dụng không lưu chúng vào database.
+- Tính năng này dùng OpenAI API và có thể phát sinh phí theo tài khoản/đơn giá của OpenAI. Không gửi API key qua chat; hãy nhập trực tiếp trong giao diện website.
+
+**Lưu ý về timestamp từng từ:** tài liệu OpenAI hiện quy định `timestamp_granularities[]=word` chỉ hỗ trợ `whisper-1` và tệp âm thanh gửi trực tiếp không vượt 25 MB. SubLingo chia nhỏ âm thanh và giữ mỗi phần dưới ngưỡng đó. OpenAI cũng đã công bố kế hoạch ngừng `whisper-1` vào ngày 26/02/2027; cần chuyển sang mô hình khác kết hợp công cụ căn chỉnh thời gian trước thời điểm này.
 
 ## Model hiện hỗ trợ
 
@@ -24,6 +36,8 @@ SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT bằn
 | Gemini (tất cả người dùng) | gemini-3.5-flash-lite |
 
 SubLingo đã tắt Gemini 3.8 Flash; chỉ bật Gemini 3.5 Flash-Lite cho tất cả người dùng. Gemini 3.5 Flash-Lite hỗ trợ bốn mức suy luận MINIMAL, LOW, MEDIUM và HIGH. Mặc định là MINIMAL để ưu tiên tốc độ và tiết kiệm; mức cao hơn có thể cần thêm thời gian và token, đồng thời có thể ảnh hưởng hạn mức hoặc chi phí API theo cấu hình tài khoản Google. Mô hình này có Free Tier trong hạn mức Google, nhưng dự án đã liên kết billing vẫn có thể chịu giá Paid Tier. Muốn tránh phí, hãy xác nhận Google Cloud project/API key đang ở Free Tier và chưa bật billing; theo dõi Usage and Billing trong Google AI Studio.
+
+Third-party license information: see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 ## Chạy thử trên máy tính
 
@@ -43,7 +57,7 @@ Kiểm tra backend:
 curl http://localhost:10000/api/health
 ~~~
 
-Endpoint trả về trạng thái cùng phiên bản hiện tại, ví dụ {"ok":true,"service":"sublingo-api","version":"1.1.4"}.
+Endpoint trả về trạng thái cùng phiên bản hiện tại, ví dụ {"ok":true,"service":"sublingo-api","version":"1.2.0"}.
 
 ## Đưa lên Render
 
@@ -52,7 +66,7 @@ Endpoint trả về trạng thái cùng phiên bản hiện tại, ví dụ {"ok
 3. Trong Google Cloud Console, thêm `https://sublingo-srt-translator.onrender.com` vào **Authorized JavaScript origins** của OAuth Client ID. Ứng dụng dùng Google Identity Services popup nên không cần redirect URI.
 4. Lưu cấu hình và chờ Render khởi động lại service. Khi chưa có `GOOGLE_CLIENT_ID`, nút đăng nhập sẽ hiển thị trạng thái đang chờ cấu hình; đây không phải lỗi tài khoản Google.
 5. Ứng dụng hiện hỗ trợ **đăng nhập bằng Google**, chưa có đăng ký email/mật khẩu riêng. Phiên đăng nhập được lưu bằng cookie HttpOnly trong 7 ngày; ứng dụng chưa lưu hồ sơ người dùng hoặc lịch sử dịch vào database.
-4. Sau khi deploy, kiểm tra /api/health và xác nhận trường version là 1.1.2.
+4. Sau khi deploy, kiểm tra /api/health và xác nhận trường version là 1.2.0. Bản cài đặt cần tải thêm binary FFmpeg từ package ffmpeg-static.
 
 ## Cấu hình API key
 
@@ -78,6 +92,11 @@ npm test
 GitHub Actions tự chạy bộ test khi có push hoặc pull request vào nhánh main.
 
 ## Nhật ký phiên bản
+
+### 1.2.0
+- Thêm Trang 2 tạo phụ đề tự động từ video bằng OpenAI Whisper với timestamp từng từ.
+- Thêm tách/lọc âm thanh cơ bản bằng FFmpeg, tiến độ xử lý, xem trước video, chỉnh sửa câu phụ đề và xuất SRT.
+- Video và âm thanh tạm được xóa sau khi xử lý; bổ sung giới hạn dung lượng và giới hạn lượt gọi.
 
 ### 1.1.6
 - Đổi nhãn nút Trang 1 thành “Dịch phụ đề SRT” để nêu rõ chức năng đang có.

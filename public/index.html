@@ -145,6 +145,80 @@ textarea.field { resize: vertical; line-height: 1.55; }
 .modal p { color: light-dark(#718096, #AAB8C9); font-size: 12px; line-height: 1.65; margin: 0 0 17px; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
 .decor { position: fixed; pointer-events: none; opacity: var(--site-decoration-opacity); inset: auto 0 0 auto; width: 240px; height: 240px; background: radial-gradient(circle, rgba(92, 176, 160, .11), transparent 68%); z-index: 0; }
+
+.stt-intro { display:flex; justify-content:space-between; align-items:flex-end; gap:18px; margin:4px 0 22px; }
+.stt-intro h2 { margin:0; color:light-dark(#1D3049,#EEF4FC); font-size:clamp(1.45rem,2.4vw,1.9rem); letter-spacing:-.04em; line-height:1.15; }
+.stt-intro p { margin:8px 0 0; color:light-dark(#697A8F,#AAB8C9); font-size:12px; line-height:1.6; max-width:700px; }
+.stt-layout { display:grid; grid-template-columns:minmax(280px,350px) minmax(0,1fr); gap:20px; align-items:start; }
+.stt-config-panel,.stt-preview-panel { min-width:0; }
+.stt-drop { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; min-height:172px; padding:18px; border:1.5px dashed light-dark(#AFC5D4,#50627A); background:light-dark(#F7FAFC,#142235); border-radius:14px; text-align:center; cursor:pointer; transition:.18s ease; }
+.stt-drop:hover,.stt-drop.drag { border-color:#3B9C8D; background:light-dark(#ECF8F5,#1A3734); }
+.stt-drop-icon { display:grid; place-items:center; width:44px; height:44px; border-radius:14px; background:light-dark(#E3F2EF,#203D39); color:#328B7D; font-size:22px; }
+.stt-drop strong { color:light-dark(#2E425B,#DEE8F3); font-size:12px; }
+.stt-drop span:last-child { color:light-dark(#8896A7,#9EADC0); font-size:10px; line-height:1.5; }
+.stt-file-meta { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:11px; padding:10px 12px; border:1px solid light-dark(#CFE6DF,#31594F); background:light-dark(#EFF8F5,#192F2C); border-radius:10px; }
+.stt-file-meta strong { display:block; max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:light-dark(#2E6258,#B8DED5); font-size:11px; }
+.stt-file-meta small { display:block; margin-top:3px; color:light-dark(#78938C,#8FB8AE); font-size:10px; }
+.stt-file-meta button { flex:0 0 auto; border:0; background:transparent; color:#B65D5D; font-weight:800; font-size:11px; padding:7px; }
+.stt-field-group { margin-top:17px; }
+.stt-field-group .form-label { margin-bottom:7px; }
+.stt-help { margin-top:6px; color:light-dark(#8291A3,#97A7BB); font-size:10px; line-height:1.55; }
+.stt-api-wrap { position:relative; }
+.stt-api-wrap .field { padding-right:48px; }
+.stt-api-wrap button { position:absolute; right:7px; top:6px; border:0; background:transparent; color:light-dark(#738399,#A8B6C8); font-size:10px; font-weight:800; padding:7px; }
+.stt-key-options { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:8px; flex-wrap:wrap; }
+.stt-key-options label { display:flex; align-items:center; gap:6px; color:light-dark(#748398,#AAB7C7); font-size:10px; }
+.stt-key-options a { color:light-dark(#337F75,#8FCFC2); font-size:10px; text-decoration:none; font-weight:700; }
+.stt-key-options a:hover { text-decoration:underline; }
+.stt-process-card { margin-top:18px; padding:13px; border:1px solid light-dark(#E1E8EF,#34445A); border-radius:12px; background:light-dark(#FAFCFD,#141F30); }
+.stt-process-title { margin-bottom:12px; font-size:11px; font-weight:850; color:light-dark(#344A63,#D9E4F0); }
+.stt-steps { list-style:none; display:grid; gap:10px; padding:0; margin:0; }
+.stt-step { display:flex; align-items:flex-start; gap:9px; opacity:.56; }
+.stt-step-bullet { width:22px; height:22px; flex:0 0 22px; display:grid; place-items:center; border-radius:50%; border:1px solid light-dark(#C9D5E1,#495A70); color:light-dark(#6D7F94,#ACB9C9); font-size:10px; font-weight:800; }
+.stt-step b { display:block; color:light-dark(#42566E,#D3DFEC); font-size:10px; line-height:1.35; }
+.stt-step small { display:block; margin-top:2px; color:light-dark(#8795A6,#99A9BC); font-size:9px; line-height:1.4; }
+.stt-step.active,.stt-step.done { opacity:1; }
+.stt-step.active .stt-step-bullet { background:light-dark(#E8F6F2,#1B3934); border-color:#56A99C; color:light-dark(#26796D,#A6DED5); }
+.stt-step.done .stt-step-bullet { background:#328D7F; border-color:#328D7F; color:#FFFFFF; }
+.stt-progress { margin-top:14px; }
+.stt-progress-heading { display:flex; justify-content:space-between; gap:10px; margin-bottom:7px; color:light-dark(#52677F,#C2CDDA); font-size:10px; font-weight:750; }
+.stt-progress-track { height:8px; overflow:hidden; border-radius:99px; background:light-dark(#E5ECF2,#2B3A4E); }
+.stt-progress-fill { width:0; height:100%; background:linear-gradient(90deg,#3B9B8B,#78C9B9); border-radius:inherit; transition:width .25s ease; }
+.stt-actions { display:flex; gap:8px; margin-top:15px; }
+.stt-actions .btn { flex:1; }
+.stt-actions .btn:disabled { opacity:.48; }
+.stt-warning { margin:12px 0 0; padding:10px 11px; border:1px solid light-dark(#E8DFC7,#5A4B34); border-radius:9px; background:light-dark(#FCF9F1,#2A241B); color:light-dark(#7D6B48,#D5C39D); font-size:9px; line-height:1.55; }
+.stt-video-stage { position:relative; width:100%; aspect-ratio:16/9; overflow:hidden; display:grid; place-items:center; background:#0D1522; border-radius:12px; }
+.stt-video-stage video { display:none; width:100%; height:100%; object-fit:contain; background:#0D1522; }
+.stt-video-stage.has-video video { display:block; }
+.stt-video-empty { padding:20px; color:#AAB9CA; text-align:center; font-size:12px; line-height:1.7; }
+.stt-video-empty span { display:block; margin-bottom:10px; font-size:30px; opacity:.75; }
+.stt-video-stage.has-video .stt-video-empty { display:none; }
+.stt-preview-caption { display:none; position:absolute; left:6%; right:6%; bottom:13%; padding:7px 12px; border-radius:7px; background:rgba(0,0,0,.48); color:#FFFFFF; text-align:center; font-size:32px; font-weight:800; line-height:1.25; text-shadow:0 2px 5px rgba(0,0,0,.95); pointer-events:none; overflow-wrap:anywhere; }
+.stt-preview-caption.visible { display:block; }
+.stt-preview-caption.fade { animation:sttFadeIn .22s ease both; }
+@keyframes sttFadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+.stt-style-bar { display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin:12px 0 17px; padding:10px 12px; border:1px solid light-dark(#E1E8EF,#34445A); border-radius:10px; background:light-dark(#FAFCFD,#141F30); }
+.stt-style-item { display:flex; align-items:center; gap:7px; color:light-dark(#697B90,#B8C5D4); font-size:10px; }
+.stt-style-item input[type=range] { width:86px; accent-color:#3C998B; }
+.stt-style-item input[type=color] { width:25px; height:24px; padding:1px; border:1px solid light-dark(#D7E1EA,#47566A); border-radius:6px; background:transparent; }
+.stt-style-item select { min-height:29px; padding:4px 7px; font-size:10px; }
+.stt-caption-heading { display:flex; justify-content:space-between; align-items:center; gap:12px; margin:3px 0 10px; }
+.stt-caption-heading strong { color:light-dark(#30465F,#DEE8F3); font-size:12px; }
+.stt-caption-meta { color:light-dark(#8492A4,#9EADBF); font-size:10px; }
+.stt-caption-list { display:grid; gap:8px; max-height:500px; overflow:auto; padding:2px 3px 2px 0; }
+.stt-caption-row { display:grid; grid-template-columns:92px minmax(0,1fr); gap:10px; align-items:start; padding:10px; border:1px solid light-dark(#E3EAF1,#334359); border-radius:10px; background:light-dark(#FFFFFF,#172438); }
+.stt-caption-row:focus-within { border-color:#65AFA4; box-shadow:0 0 0 2px rgba(80,160,145,.12); }
+.stt-caption-time { white-space:pre-line; width:100%; border:0; border-radius:7px; padding:7px 5px; background:light-dark(#EEF3F7,#243247); color:light-dark(#536980,#C1CDDA); font-size:9px; font-weight:800; font-variant-numeric:tabular-nums; text-align:center; }
+.stt-caption-row textarea { width:100%; min-height:46px; padding:7px 8px; resize:vertical; border:1px solid light-dark(#E0E7EF,#3B4B60); border-radius:7px; background:light-dark(#FBFCFE,#111B2B); color:light-dark(#273D56,#E1EAF4); font-size:11px; line-height:1.5; }
+.stt-caption-empty { padding:32px 15px; border:1px dashed light-dark(#D4DFE8,#415169); border-radius:10px; color:light-dark(#8997A8,#A0AEC0); text-align:center; font-size:11px; line-height:1.7; }
+.stt-preview-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:13px; flex-wrap:wrap; }
+.stt-preview-note { margin-top:9px; color:light-dark(#8492A4,#98A8BA); font-size:9px; line-height:1.55; }
+.is-hidden { display:none !important; }
+@media (max-width: 1000px) { .stt-layout { grid-template-columns:minmax(260px,320px) minmax(0,1fr); } .stt-caption-row { grid-template-columns:82px minmax(0,1fr); } }
+@media (max-width: 780px) { .stt-intro { align-items:flex-start; flex-direction:column; } .stt-layout { grid-template-columns:1fr; } .stt-caption-list { max-height:420px; } }
+@media (max-width: 480px) { .stt-style-bar { gap:9px; } .stt-style-item input[type=range] { width:65px; } .stt-caption-row { grid-template-columns:76px minmax(0,1fr); gap:7px; padding:8px; } .stt-preview-actions .btn { flex:1; } }
+
 @media (max-width: 980px) { .workspace { grid-template-columns: 300px minmax(0, 1fr); } .cue-card { grid-template-columns: 35px minmax(0, 1fr); } .cue-content.translation-col { grid-column: 2; } }
 @media (max-width: 760px) { .workspace { grid-template-columns: 1fr; } .hero { align-items: flex-start; flex-direction: column; } .topbar { padding-inline: 16px; } .brand-sub { display: none; } .top-actions .btn { padding: 9px 10px; font-size: 11px; } .page { padding-top: 24px; } }
 @media (max-width: 480px) { .cue-card { grid-template-columns: 30px minmax(0, 1fr); gap: 7px; } .cue-content.translation-col { grid-column: 2; } .field-row { grid-template-columns: 1fr; } .bottom-actions { width: 100%; } .bottom-actions .btn { flex: 1; } }
@@ -155,7 +229,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
   <header class="topbar">
     <div class="brand">
       <div class="logo-mark" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 5.5C4 4.67 4.67 4 5.5 4h13c.83 0 1.5.67 1.5 1.5v9c0 .83-.67 1.5-1.5 1.5H11l-4.5 4v-4H5.5C4.67 16 4 15.33 4 14.5v-9Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 8.5h8M8 11.5h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
-      <div><div class="brand-name">SubLingo</div><div class="brand-sub">SUBTITLE WORKSPACE · SRT TRANSLATOR · v1.1.6</div></div>
+      <div><div class="brand-name">SubLingo</div><div class="brand-sub">SUBTITLE WORKSPACE · SRT TRANSLATOR · v1.2.0</div></div>
     </div>
     <div class="top-actions">
       <div class="google-login-wrap" id="googleSignInButton"></div>
@@ -261,7 +335,119 @@ textarea.field { resize: vertical; line-height: 1.55; }
     </section>
     <div class="notice"><span>ⓘ</span><div><b>Cơ chế bảo vệ file:</b> Trình đọc chỉ cho phép chỉnh sửa vùng lời thoại. Số thứ tự, dòng thời gian, phần metadata và dấu phân cách được giữ lại từ file gốc khi xuất. Bản triển khai gửi từng nhóm lời thoại tới backend để gọi AI; backend không lưu API key hay file phụ đề. Số thứ tự, timestamp và phần metadata luôn được giữ ở trình duyệt.</div></div>
     </section>
-    <section id="pageTwoContent" hidden></section>
+    <section id="pageTwoContent" class="stt-page" hidden aria-labelledby="sttTitle">
+      <div class="stt-intro">
+        <div>
+          <div class="eyebrow">AI SPEECH-TO-TEXT</div>
+          <h2 id="sttTitle">Tạo phụ đề tự động bằng AI</h2>
+          <p>Tải video lên, nhận diện lời thoại, tự căn thời gian và chỉnh lại từng câu trước khi tải file SRT.</p>
+        </div>
+        <div class="status-pill"><span class="status-dot"></span> Tạo phụ đề từ giọng nói</div>
+      </div>
+
+      <div class="stt-layout">
+        <aside class="panel stt-config-panel">
+          <div class="panel-head"><div class="panel-title"><span class="step">01</span> Tải video & cấu hình</div></div>
+          <div class="panel-body">
+            <label class="stt-drop" id="sttDropZone" for="sttVideoInput">
+              <input id="sttVideoInput" type="file" accept=".mp4,.mov,.mkv,.webm,.avi,.m4v,.mpeg,.mpg,video/*" hidden>
+              <span class="stt-drop-icon">↑</span>
+              <strong>Chọn video hoặc kéo thả vào đây</strong>
+              <span>MP4, MOV, MKV, WebM, AVI · tối đa 150 MB</span>
+            </label>
+            <div class="stt-file-meta is-hidden" id="sttFileMeta">
+              <div><strong id="sttFileName">Chưa chọn video</strong><small id="sttFileSize"></small></div>
+              <button id="sttClearVideo" type="button">Xóa</button>
+            </div>
+
+            <div class="stt-field-group">
+              <label class="form-label" for="sttLanguage">Ngôn ngữ trong video</label>
+              <select class="field" id="sttLanguage">
+                <option value="auto">Tự động nhận diện</option>
+                <option value="vi">Tiếng Việt</option>
+                <option value="en">Tiếng Anh</option>
+                <option value="zh">Tiếng Trung</option>
+                <option value="ja">Tiếng Nhật</option>
+                <option value="ko">Tiếng Hàn</option>
+                <option value="th">Tiếng Thái</option>
+                <option value="fr">Tiếng Pháp</option>
+                <option value="es">Tiếng Tây Ban Nha</option>
+                <option value="de">Tiếng Đức</option>
+              </select>
+              <div class="stt-help">Chọn đúng ngôn ngữ giúp AI nhận diện tên riêng và từ ngữ tốt hơn. Có thể để tự động.</div>
+            </div>
+
+            <div class="stt-field-group">
+              <label class="form-label" for="sttApiKey">OpenAI API key</label>
+              <div class="stt-api-wrap">
+                <input class="field" id="sttApiKey" type="password" placeholder="Dán OpenAI API key tại đây" autocomplete="off">
+                <button id="sttToggleKey" type="button">Hiện</button>
+              </div>
+              <div class="stt-key-options">
+                <label><input id="sttRememberKey" type="checkbox"> Nhớ key trên thiết bị này</label>
+                <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">Lấy API key ↗</a>
+              </div>
+              <div class="stt-help">Key chỉ được gửi để gọi dịch vụ nhận diện giọng nói; SubLingo không lưu key trên máy chủ.</div>
+            </div>
+
+            <div class="stt-process-card">
+              <div class="stt-process-title">Quy trình tạo phụ đề</div>
+              <ol class="stt-steps" id="sttSteps">
+                <li class="stt-step" id="sttStepExtract"><span class="stt-step-bullet">1</span><span><b>Tách và làm sạch âm thanh</b><small>Tách track tiếng nói, lọc nhiễu nền cơ bản</small></span></li>
+                <li class="stt-step" id="sttStepRecognize"><span class="stt-step-bullet">2</span><span><b>Nhận diện giọng nói</b><small>Chuyển lời thoại thành từ ngữ</small></span></li>
+                <li class="stt-step" id="sttStepNormalize"><span class="stt-step-bullet">3</span><span><b>Chuẩn hóa văn bản</b><small>Viết hoa, dấu câu và khoảng trắng</small></span></li>
+                <li class="stt-step" id="sttStepAlign"><span class="stt-step-bullet">4</span><span><b>Căn chỉnh thời gian</b><small>Gắn mốc từng từ, ghép thành câu phụ đề</small></span></li>
+              </ol>
+            </div>
+
+            <div class="stt-progress is-hidden" id="sttProgress" aria-live="polite">
+              <div class="stt-progress-heading"><span id="sttProgressStatus">Đang chuẩn bị...</span><span id="sttProgressPercent">0%</span></div>
+              <div class="stt-progress-track"><div class="stt-progress-fill" id="sttProgressFill"></div></div>
+            </div>
+            <div class="stt-actions">
+              <button class="btn btn-primary" id="sttStartBtn" type="button" disabled>✦ Tạo phụ đề bằng AI</button>
+              <button class="btn btn-ghost is-hidden" id="sttCancelBtn" type="button">Hủy</button>
+            </div>
+            <p class="stt-warning">Dùng OpenAI API key và có thể phát sinh phí theo tài khoản OpenAI. Hiện tại mốc thời gian từng từ dùng Whisper; hãy kiểm tra lại tên riêng, giọng địa phương và câu nói không rõ.</p>
+          </div>
+        </aside>
+
+        <section class="panel stt-preview-panel">
+          <div class="panel-head">
+            <div class="panel-title"><span class="step">02</span> Xem trước & chỉnh sửa nhanh</div>
+            <span class="count" id="sttWordCount">Chưa có kết quả</span>
+          </div>
+          <div class="panel-body">
+            <div class="stt-video-stage" id="sttVideoStage">
+              <video id="sttVideoPreview" controls playsinline preload="metadata"></video>
+              <div class="stt-video-empty" id="sttVideoEmpty"><span>▶</span>Video sẽ xuất hiện tại đây sau khi bạn chọn file.</div>
+              <div class="stt-preview-caption" id="sttPreviewCaption"></div>
+            </div>
+
+            <div class="stt-style-bar">
+              <label class="stt-style-item">Cỡ chữ <input id="sttFontSize" type="range" min="20" max="48" value="32"><span id="sttFontSizeValue">32px</span></label>
+              <label class="stt-style-item">Màu chữ <input id="sttTextColor" type="color" value="#FFFFFF"></label>
+              <label class="stt-style-item">Hiệu ứng
+                <select class="field" id="sttCaptionEffect"><option value="none">Tĩnh</option><option value="fade">Mờ dần</option></select>
+              </label>
+            </div>
+
+            <div class="stt-caption-heading">
+              <strong>Danh sách phụ đề</strong>
+              <span class="stt-caption-meta" id="sttCaptionMeta">Chưa có câu nào</span>
+            </div>
+            <div class="stt-caption-list" id="sttCaptionList">
+              <div class="stt-caption-empty">Sau khi AI xử lý video, từng câu phụ đề sẽ hiển thị ở đây để bạn chỉnh sửa.</div>
+            </div>
+            <div class="stt-preview-actions">
+              <button class="btn btn-ghost" id="sttResetBtn" type="button" disabled>Xóa kết quả</button>
+              <button class="btn btn-primary" id="sttDownloadBtn" type="button" disabled>↓ Tải phụ đề SRT</button>
+            </div>
+            <div class="stt-preview-note">Bấm vào mốc thời gian để tua video đến câu tương ứng. Cỡ chữ, màu và hiệu ứng chỉ áp dụng trong khung xem trước; file SRT xuất ra giữ nội dung và thời gian.</div>
+          </div>
+        </section>
+      </div>
+    </section>
   </main>
   <div class="decor" aria-hidden="true"></div>
 </div>
@@ -273,6 +459,11 @@ textarea.field { resize: vertical; line-height: 1.55; }
 (() => {
   const $ = (id) => document.getElementById(id);
   let provider = 'gemini';
+  let sttXhr = null;
+  let sttObjectUrl = '';
+  let sttVideoFile = null;
+  let sttCaptions = [];
+  let sttLastOverlayCueId = null;
   function showPage(pageNumber) {
     const isPageOne = pageNumber === 1;
     $('pageOneContent').hidden = !isPageOne;
@@ -663,6 +854,11 @@ textarea.field { resize: vertical; line-height: 1.55; }
       }
     } catch (_) { /* Storage may be blocked by the browser. */ }
     $('apiKey').value = '';
+    if (sttXhr) sttXhr.abort();
+    sttXhr = null;
+    $('sttApiKey').value = '';
+    $('sttRememberKey').checked = false;
+    clearSttVideo();
     $('apiKey').type = 'password';
     $('toggleKey').textContent = 'Hiện';
     activeApiKey = '';
@@ -862,6 +1058,396 @@ textarea.field { resize: vertical; line-height: 1.55; }
   }
 
   $('translateBtn').addEventListener('click', translateAll);
+
+  function formatSttClock(seconds) {
+    const totalMs = Math.max(0, Math.round((Number(seconds) || 0) * 1000));
+    const hours = Math.floor(totalMs / 3600000);
+    const minutes = Math.floor((totalMs % 3600000) / 60000);
+    const secs = Math.floor((totalMs % 60000) / 1000);
+    const millis = totalMs % 1000;
+    return String(hours).padStart(2, '0') + ':' +
+      String(minutes).padStart(2, '0') + ':' +
+      String(secs).padStart(2, '0') + ',' +
+      String(millis).padStart(3, '0');
+  }
+
+  function formatSttFileSize(bytes) {
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  function resetSttSteps() {
+    ['sttStepExtract', 'sttStepRecognize', 'sttStepNormalize', 'sttStepAlign'].forEach((id) => {
+      $(id).classList.remove('active', 'done');
+    });
+  }
+
+  function updateSttProgress(stage, percent, message) {
+    const stageOrder = ['extracting', 'recognizing', 'normalizing', 'aligning'];
+    const currentIndex = stageOrder.indexOf(stage);
+    const safePercent = Math.max(0, Math.min(100, Number(percent) || 0));
+    $('sttProgress').classList.remove('is-hidden');
+    $('sttProgressStatus').textContent = message || 'Đang xử lý video...';
+    $('sttProgressPercent').textContent = Math.round(safePercent) + '%';
+    $('sttProgressFill').style.width = safePercent + '%';
+    const ids = ['sttStepExtract', 'sttStepRecognize', 'sttStepNormalize', 'sttStepAlign'];
+    ids.forEach((id, index) => {
+      $(id).classList.toggle('done', currentIndex >= 0 && index < currentIndex);
+      $(id).classList.toggle('active', currentIndex === index);
+    });
+    if (stage === 'done') {
+      ids.forEach((id) => {
+        $(id).classList.remove('active');
+        $(id).classList.add('done');
+      });
+    }
+  }
+
+  function clearSttVideo() {
+    if (sttXhr) sttXhr.abort();
+    sttXhr = null;
+    if (sttObjectUrl) URL.revokeObjectURL(sttObjectUrl);
+    sttObjectUrl = '';
+    sttVideoFile = null;
+    sttCaptions = [];
+    sttLastOverlayCueId = null;
+    const video = $('sttVideoPreview');
+    video.pause();
+    video.removeAttribute('src');
+    video.load();
+    $('sttVideoStage').classList.remove('has-video');
+    $('sttFileMeta').classList.add('is-hidden');
+    $('sttFileName').textContent = 'Chưa chọn video';
+    $('sttFileSize').textContent = '';
+    $('sttStartBtn').disabled = true;
+    $('sttClearVideo').disabled = false;
+    $('sttCancelBtn').classList.add('is-hidden');
+    $('sttResetBtn').disabled = true;
+    $('sttDownloadBtn').disabled = true;
+    $('sttWordCount').textContent = 'Chưa có kết quả';
+    $('sttCaptionMeta').textContent = 'Chưa có câu nào';
+    $('sttCaptionList').innerHTML = '<div class="stt-caption-empty">Sau khi AI xử lý video, từng câu phụ đề sẽ hiển thị ở đây để bạn chỉnh sửa.</div>';
+    $('sttPreviewCaption').textContent = '';
+    $('sttPreviewCaption').classList.remove('visible', 'fade');
+    $('sttProgress').classList.add('is-hidden');
+    $('sttProgressFill').style.width = '0%';
+    $('sttProgressPercent').textContent = '0%';
+    $('sttProgressStatus').textContent = 'Đang chuẩn bị...';
+    resetSttSteps();
+  }
+
+  function chooseSttVideo(file) {
+    if (!file) return;
+    const allowed = /\.(mp4|mov|mkv|webm|avi|m4v|mpeg|mpg)$/i;
+    if (!allowed.test(file.name)) {
+      toast('Định dạng video chưa được hỗ trợ. Hãy chọn MP4, MOV, MKV, WebM hoặc AVI.');
+      return;
+    }
+    if (file.size > 150 * 1024 * 1024) {
+      toast('Video vượt quá 150 MB. Hãy nén video hoặc chọn đoạn ngắn hơn.');
+      return;
+    }
+    clearSttVideo();
+    sttVideoFile = file;
+    sttObjectUrl = URL.createObjectURL(file);
+    $('sttVideoPreview').src = sttObjectUrl;
+    $('sttVideoStage').classList.add('has-video');
+    $('sttFileMeta').classList.remove('is-hidden');
+    $('sttFileName').textContent = file.name;
+    $('sttFileSize').textContent = formatSttFileSize(file.size);
+    $('sttStartBtn').disabled = false;
+    toast('Đã nhận video. Hãy kiểm tra API key và chọn ngôn ngữ trước khi tạo phụ đề.');
+  }
+
+  $('sttVideoInput').addEventListener('change', (event) => {
+    chooseSttVideo(event.target.files[0]);
+    event.target.value = '';
+  });
+  $('sttDropZone').addEventListener('dragover', (event) => {
+    event.preventDefault();
+    $('sttDropZone').classList.add('drag');
+  });
+  $('sttDropZone').addEventListener('dragleave', () => $('sttDropZone').classList.remove('drag'));
+  $('sttDropZone').addEventListener('drop', (event) => {
+    event.preventDefault();
+    $('sttDropZone').classList.remove('drag');
+    chooseSttVideo(event.dataTransfer.files[0]);
+  });
+  $('sttClearVideo').addEventListener('click', clearSttVideo);
+
+  $('sttApiKey').value = loadSavedKey('openai');
+  $('sttRememberKey').checked = Boolean($('sttApiKey').value);
+  $('sttToggleKey').addEventListener('click', () => {
+    const input = $('sttApiKey');
+    input.type = input.type === 'password' ? 'text' : 'password';
+    $('sttToggleKey').textContent = input.type === 'password' ? 'Hiện' : 'Ẩn';
+  });
+  $('sttRememberKey').addEventListener('change', () => {
+    try {
+      if ($('sttRememberKey').checked) {
+        const key = $('sttApiKey').value.trim();
+        if (key) localStorage.setItem(savedKeyStorageName('openai'), key);
+      } else {
+        localStorage.removeItem(savedKeyStorageName('openai'));
+      }
+    } catch (_) {
+      toast('Trình duyệt không cho phép lưu API key.');
+    }
+  });
+
+  function applySttPreviewStyle() {
+    const caption = $('sttPreviewCaption');
+    caption.style.fontSize = $('sttFontSize').value + 'px';
+    caption.style.color = $('sttTextColor').value;
+    caption.classList.toggle('fade', $('sttCaptionEffect').value === 'fade');
+    $('sttFontSizeValue').textContent = $('sttFontSize').value + 'px';
+  }
+  $('sttFontSize').addEventListener('input', applySttPreviewStyle);
+  $('sttTextColor').addEventListener('input', applySttPreviewStyle);
+  $('sttCaptionEffect').addEventListener('change', applySttPreviewStyle);
+  applySttPreviewStyle();
+
+  function updateSttVideoCaption() {
+    const video = $('sttVideoPreview');
+    const caption = $('sttPreviewCaption');
+    const time = video.currentTime || 0;
+    const active = sttCaptions.find((cue) => time >= cue.start && time <= cue.end && cue.text.trim());
+    if (!active) {
+      caption.textContent = '';
+      caption.classList.remove('visible');
+      sttLastOverlayCueId = null;
+      return;
+    }
+    caption.textContent = active.text;
+    caption.classList.add('visible');
+    if (sttLastOverlayCueId !== active.id) {
+      caption.classList.remove('fade');
+      void caption.offsetWidth;
+      if ($('sttCaptionEffect').value === 'fade') caption.classList.add('fade');
+      sttLastOverlayCueId = active.id;
+    }
+  }
+  $('sttVideoPreview').addEventListener('timeupdate', updateSttVideoCaption);
+  $('sttVideoPreview').addEventListener('seeked', updateSttVideoCaption);
+
+  function renderSttCaptions() {
+    const list = $('sttCaptionList');
+    list.replaceChildren();
+    if (!sttCaptions.length) {
+      list.innerHTML = '<div class="stt-caption-empty">Chưa có câu phụ đề để hiển thị.</div>';
+      $('sttDownloadBtn').disabled = true;
+      $('sttResetBtn').disabled = true;
+      $('sttCaptionMeta').textContent = 'Chưa có câu nào';
+      return;
+    }
+    sttCaptions.forEach((cue, index) => {
+      const row = document.createElement('div');
+      row.className = 'stt-caption-row';
+      const timeButton = document.createElement('button');
+      timeButton.type = 'button';
+      timeButton.className = 'stt-caption-time';
+      timeButton.textContent = formatSttClock(cue.start) + '\n' + formatSttClock(cue.end);
+      timeButton.title = 'Tua video đến câu này';
+      timeButton.addEventListener('click', () => {
+        $('sttVideoPreview').currentTime = cue.start;
+        $('sttVideoPreview').play().catch(() => {});
+      });
+      const textInput = document.createElement('textarea');
+      textInput.rows = 2;
+      textInput.value = cue.text;
+      textInput.setAttribute('aria-label', 'Chỉnh sửa câu phụ đề ' + (index + 1));
+      textInput.addEventListener('input', () => {
+        cue.text = textInput.value;
+        updateSttVideoCaption();
+      });
+      row.append(timeButton, textInput);
+      list.append(row);
+    });
+    $('sttCaptionMeta').textContent = sttCaptions.length + ' câu phụ đề';
+    $('sttDownloadBtn').disabled = false;
+    $('sttResetBtn').disabled = false;
+    $('sttWordCount').textContent = sttCaptions.length + ' câu · ' + (window.sttWordCount || 0) + ' từ';
+    updateSttVideoCaption();
+  }
+
+  function requestSttTranscription(formData) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      sttXhr = xhr;
+      let cursor = 0;
+      let buffer = '';
+      let finalResult = null;
+      let serverError = '';
+
+      const readEvents = (final) => {
+        const responseText = xhr.responseText || '';
+        buffer += responseText.slice(cursor);
+        cursor = responseText.length;
+        const lines = buffer.split(/\r?\n/);
+        buffer = lines.pop() || '';
+        const handleLine = (line) => {
+          if (!line.trim()) return;
+          let event;
+          try { event = JSON.parse(line); }
+          catch (_) { return; }
+          if (event.type === 'progress') {
+            updateSttProgress(event.stage, event.percent, event.message);
+          } else if (event.type === 'done') {
+            finalResult = event.result;
+          } else if (event.type === 'error') {
+            serverError = event.error || 'Không thể tạo phụ đề lúc này.';
+          } else if (event.error) {
+            serverError = event.error;
+          }
+        };
+        lines.forEach(handleLine);
+        if (final && buffer.trim()) handleLine(buffer);
+      };
+
+      xhr.open('POST', '/api/transcribe');
+      xhr.setRequestHeader('Accept', 'application/x-ndjson');
+      xhr.timeout = 15 * 60 * 1000;
+      xhr.upload.addEventListener('progress', (event) => {
+        if (event.lengthComputable) {
+          const percent = Math.round((event.loaded / event.total) * 18);
+          $('sttProgress').classList.remove('is-hidden');
+          $('sttProgressStatus').textContent = 'Đang tải video lên máy chủ...';
+          $('sttProgressPercent').textContent = percent + '%';
+          $('sttProgressFill').style.width = percent + '%';
+        } else {
+          $('sttProgressStatus').textContent = 'Đang tải video lên máy chủ...';
+        }
+      });
+      xhr.onprogress = () => readEvents(false);
+      xhr.onload = () => {
+        readEvents(true);
+        sttXhr = null;
+        if (serverError) return reject(new Error(serverError));
+        if (finalResult) return resolve(finalResult);
+        if (xhr.status >= 200 && xhr.status < 300) {
+          return reject(new Error('Máy chủ chưa trả về kết quả phụ đề hợp lệ.'));
+        }
+        let message = 'Không thể xử lý video. Vui lòng thử lại.';
+        try { message = JSON.parse(xhr.responseText).error || message; } catch (_) {}
+        reject(new Error(message));
+      };
+      xhr.onerror = () => { sttXhr = null; reject(new Error('Mất kết nối khi tải video hoặc nhận kết quả.')); };
+      xhr.ontimeout = () => { sttXhr = null; reject(new Error('Yêu cầu xử lý video đã quá thời gian chờ. Hãy thử video ngắn hơn.')); };
+      xhr.onabort = () => { sttXhr = null; reject(new DOMException('Đã hủy tạo phụ đề.', 'AbortError')); };
+      xhr.send(formData);
+    });
+  }
+
+  function setSttBusy(busy) {
+    $('sttStartBtn').disabled = busy || !sttVideoFile;
+    $('sttCancelBtn').classList.toggle('is-hidden', !busy);
+    $('sttClearVideo').disabled = busy;
+    $('sttDropZone').style.pointerEvents = busy ? 'none' : '';
+    $('sttVideoInput').disabled = busy;
+    $('sttLanguage').disabled = busy;
+    $('sttApiKey').disabled = busy;
+  }
+
+  async function startSttTranscription() {
+    if (!sttVideoFile) {
+      toast('Hãy chọn video trước khi tạo phụ đề.');
+      return;
+    }
+    const apiKey = $('sttApiKey').value.trim();
+    if (!apiKey) {
+      toast('Hãy nhập OpenAI API key để nhận diện giọng nói.');
+      $('sttApiKey').focus();
+      return;
+    }
+    try {
+      if ($('sttRememberKey').checked) localStorage.setItem(savedKeyStorageName('openai'), apiKey);
+      else localStorage.removeItem(savedKeyStorageName('openai'));
+    } catch (_) {
+      toast('Không thể cập nhật tùy chọn lưu API key trong trình duyệt.');
+    }
+
+    sttCaptions = [];
+    window.sttWordCount = 0;
+    $('sttCaptionList').innerHTML = '<div class="stt-caption-empty">AI đang xử lý video. Danh sách phụ đề sẽ xuất hiện sau khi hoàn tất.</div>';
+    $('sttDownloadBtn').disabled = true;
+    $('sttResetBtn').disabled = true;
+    $('sttWordCount').textContent = 'Đang xử lý...';
+    $('sttCaptionMeta').textContent = 'Đang nhận diện giọng nói';
+    resetSttSteps();
+    $('sttProgress').classList.remove('is-hidden');
+    updateSttProgress('uploading', 0, 'Đang chuẩn bị tải video...');
+    setSttBusy(true);
+
+    const form = new FormData();
+    form.append('video', sttVideoFile, sttVideoFile.name);
+    form.append('apiKey', apiKey);
+    form.append('language', $('sttLanguage').value);
+
+    try {
+      const result = await requestSttTranscription(form);
+      sttCaptions = Array.isArray(result.cues) ? result.cues : [];
+      window.sttWordCount = Number(result.wordCount) || 0;
+      if (!sttCaptions.length) throw new Error('AI không trả về câu phụ đề nào.');
+      renderSttCaptions();
+      updateSttProgress('done', 100, 'Đã tạo xong phụ đề. Bạn có thể sửa câu và tải file SRT.');
+      $('sttCaptionMeta').textContent = sttCaptions.length + ' câu · Ngôn ngữ: ' + (result.language || 'tự động');
+      toast('Đã tạo ' + sttCaptions.length + ' câu phụ đề. Hãy rà soát trước khi tải SRT.');
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        toast(error.message || 'Đã hủy xử lý video.');
+      } else {
+        toast(error.message || 'Không thể tạo phụ đề lúc này.');
+        $('sttProgressStatus').textContent = 'Có lỗi khi xử lý video.';
+        $('sttCaptionMeta').textContent = 'Chưa có kết quả';
+      }
+    } finally {
+      setSttBusy(false);
+      sttXhr = null;
+    }
+  }
+  $('sttStartBtn').addEventListener('click', startSttTranscription);
+  $('sttCancelBtn').addEventListener('click', () => {
+    if (sttXhr) sttXhr.abort();
+  });
+
+  function makeSttSrt(captions) {
+    return captions.map((cue, index) => {
+      const text = String(cue.text || '').replace(/\r\n?/g, '\n').trim();
+      return (index + 1) + '\n' + formatSttClock(cue.start) + ' --> ' + formatSttClock(cue.end) + '\n' + text;
+    }).join('\n\n') + '\n';
+  }
+
+  $('sttDownloadBtn').addEventListener('click', () => {
+    const valid = sttCaptions.filter((cue) => String(cue.text || '').trim());
+    if (!valid.length) {
+      toast('Chưa có nội dung phụ đề để xuất.');
+      return;
+    }
+    const blob = new Blob(['\uFEFF' + makeSttSrt(valid)], { type: 'application/x-subrip;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    const base = (sttVideoFile?.name || 'video').replace(/\.[^.]+$/, '');
+    anchor.href = url;
+    anchor.download = base + '_auto.srt';
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast('Đã tải phụ đề SRT tự động.');
+  });
+
+  $('sttResetBtn').addEventListener('click', () => {
+    sttCaptions = [];
+    window.sttWordCount = 0;
+    $('sttCaptionList').innerHTML = '<div class="stt-caption-empty">Đã xóa kết quả. Bạn có thể tạo phụ đề lại từ video hiện tại.</div>';
+    $('sttPreviewCaption').textContent = '';
+    $('sttPreviewCaption').classList.remove('visible');
+    $('sttWordCount').textContent = 'Đã xóa kết quả';
+    $('sttCaptionMeta').textContent = 'Chưa có câu nào';
+    $('sttDownloadBtn').disabled = true;
+    $('sttResetBtn').disabled = true;
+  });
+
   refreshSession();
   initializeGoogleSignIn();
   $('targetLang').addEventListener('change', () => {
