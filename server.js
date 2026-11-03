@@ -145,7 +145,7 @@ const videoUpload = multer({
     destination: os.tmpdir(),
     filename: (_req, file, callback) => callback(null, 'sublingo-' + crypto.randomBytes(16).toString('hex') + path.extname(file.originalname).toLowerCase())
   }),
-  limits: { fileSize: MAX_VIDEO_BYTES, files: 1, fields: 3, fieldSize: 1000 },
+  limits: { fileSize: MAX_VIDEO_BYTES, files: 1, fields: 5, fieldSize: 5000 },
   fileFilter: (_req, file, callback) => {
     const extension = path.extname(file.originalname).toLowerCase();
     if (!VIDEO_EXTENSIONS.has(extension)) return callback(new Error('Định dạng video chưa được hỗ trợ. Hãy dùng MP4, MOV, MKV, WebM hoặc AVI.'));
@@ -466,7 +466,9 @@ app.post('/api/translate', requireSameOrigin, noStore, optionalAuthenticate, tra
 
 const transcribeSchema = z.object({
   apiKey: z.string().min(12).max(500),
-  language: z.enum(['auto', 'vi', 'en', 'zh', 'ja', 'ko', 'th', 'fr', 'es', 'de'])
+  language: z.enum(['auto', 'vi', 'en', 'zh', 'ja', 'ko', 'th', 'fr', 'es', 'de']),
+  corrections: z.string().max(3000).default(''),
+  cleanDisfluencies: z.preprocess((value) => value === 'true' || value === true, z.boolean()).default(true)
 }).strict();
 
 function runFfmpeg(args, signal) {
@@ -493,6 +495,114 @@ function runFfmpeg(args, signal) {
   });
 }
 
+
+function parseSegmentCsv(csvText) {
+  const offsets = new Map();
+  for (const line of String(csvText || '').split(/\r?\n/)) {
+    if (!line.trim()) continue;
+    const parts = line.split(',');
+    if (parts.length < 3) continue;
+    const fileName = String(parts[0] || '').trim().replace(/^"|"$/g, '').split(/[\\/]/).pop();
+    const start = Number(parts[1]);
+    if (fileName && Number.isFinite(start)) offsets.set(fileName, start);
+  }
+  return offsets;
+}
+function detectLeadingSilenceSeconds(inputPath, signal) {
+  return new Promise((resolve, reject) => {
+    if (signal.aborted) return reject(new DOMException('Transcription cancelled', 'AbortError'));
+    const child = spawn(ffmpegPath, ['-hide_banner', '-loglevel', 'info', '-nostats', '-i', inputPath, '-t', '300', '-map', '0:a:0', '-af', 'silencedetect=noise=-42dB:d=0.5', '-f', 'null', '-'], { stdio: ['ignore', 'ignore', 'pipe'] });
+    let stderr = '';
+    let settled = false;
+    const finish = (value, error) => {
+      if (settled) return;
+      settled = true;
+      signal.removeEventListener('abort', onAbort);
+      if (error) reject(error); else resolve(value);
+    };
+    const onAbort = () => { child.kill('SIGTERM'); finish(0, new DOMException('Transcription cancelled', 'AbortError')); };
+    signal.addEventListener('abort', onAbort, { once: true });
+    child.stderr.on('data', (chunk) => { if (stderr.length < 30000) stderr += chunk.toString(); });
+    child.once('error', () => finish(0));
+    child.once('close', () => {
+      if (signal.aborted) return finish(0, new DOMException('Transcription cancelled', 'AbortError'));
+      const firstStart = stderr.match(/silence_start:\s*([\d.]+)/);
+      if (!firstStart || Number(firstStart[1]) > 0.05) return finish(0);
+      const remainder = stderr.slice(firstStart.index + firstStart[0].length);
+      const firstEnd = remainder.match(/silence_end:\s*([\d.]+)/);
+      const silenceEnd = Number(firstEnd?.[1]);
+      if (!Number.isFinite(silenceEnd) || silenceEnd <= 0.65) return finish(0);
+      finish(Math.max(0, silenceEnd - 0.08));
+    });
+  });
+}
+function removeSpeechDisfluencies(words) {
+  const cleaned = [];
+  const fillerPattern = /^(?:uh+|um+|umm+|hmm+|mm+|ừm+|ờm+)$/iu;
+  const stripPunctuation = (value) => String(value || '').replace(/^[\p{P}\p{S}]+|[\p{P}\p{S}]+$/gu, '').toLocaleLowerCase();
+  for (let index = 0; index < words.length; index += 1) {
+    const item = words[index];
+    const token = stripPunctuation(item.word);
+    if (!token || fillerPattern.test(token)) continue;
+
+    if (token === 'thì' && words[index + 1] && words[index + 2] &&
+        stripPunctuation(words[index + 1].word) === 'là' &&
+        stripPunctuation(words[index + 2].word) === 'mà') {
+      const phraseEnd = Number(words[index + 2].end);
+      const before = words[index - 1];
+      const after = words[index + 3];
+      const gapBefore = before ? Number(item.start) - Number(before.end) : Infinity;
+      const gapAfter = after ? Number(after.start) - phraseEnd : Infinity;
+      const pauseBefore = !before || gapBefore >= 0.22 || /[.!?。！？]$/.test(String(before.word || ''));
+      const pauseAfter = !after || gapAfter >= 0.22 || /[.!?。！？]$/.test(String(words[index + 2].word || ''));
+      if (phraseEnd - Number(item.start) <= 1.6 && pauseBefore && pauseAfter) {
+        index += 2;
+        continue;
+      }
+    }
+
+    const before = words[index - 1];
+    const after = words[index + 1];
+    if (token === 'à' && before && after &&
+        Number(item.end) - Number(item.start) <= 0.35 &&
+        Number(item.start) - Number(before.end) >= 0.22 &&
+        Number(after.start) - Number(item.end) >= 0.22) continue;
+
+    const previous = cleaned[cleaned.length - 1];
+    if (previous) {
+      const previousToken = stripPunctuation(previous.word);
+      const gap = Number(item.start) - Number(previous.end);
+      const previousDuration = Number(previous.end) - Number(previous.start);
+      const duration = Number(item.end) - Number(item.start);
+      if (token === previousToken && token.length <= 3 && gap >= -0.05 && gap <= 0.16 &&
+          previousDuration <= 0.55 && duration <= 0.55) continue;
+    }
+    cleaned.push(item);
+  }
+  return cleaned;
+}
+
+function applySubtitleCorrections(captions, rawRules) {
+  const rules = String(rawRules || '').split(/\r?\n/).map((line) => {
+    const splitAt = line.indexOf('=>');
+    if (splitAt < 0) return null;
+    const from = line.slice(0, splitAt).trim();
+    const to = line.slice(splitAt + 2).trim();
+    return from && to ? { from, to } : null;
+  }).filter(Boolean).slice(0, 50);
+  if (!rules.length) return captions;
+  const special = new Set(['.', '*', '+', '?', '^', '$', '{', '}', '(', ')', '|', '[', ']', '\\']);
+  return captions.map((cue) => {
+    let text = cue.text;
+    for (const rule of rules) {
+      const escaped = [...rule.from].map((character) => special.has(character) ? '\\' + character : character).join('');
+      const expression = new RegExp('(^|[^\\p{L}\\p{N}_])(' + escaped + ')(?=$|[^\\p{L}\\p{N}_])', 'giu');
+      text = text.replace(expression, (_match, prefix) => prefix + rule.to);
+    }
+    return { ...cue, text };
+  });
+}
+
 function groupTimedWords(words, language = '') {
   const captions = [];
   let current = [];
@@ -516,7 +626,7 @@ function groupTimedWords(words, language = '') {
       const candidate = textOf(current.concat({ text }));
       const gap = start - previous.end;
       const previousEndsSentence = /[.!?。！？]["'”’)\]]*$/u.test(previous.text);
-      if (previousEndsSentence || gap > 0.72 || candidate.length > 44 || end - current[0].start > 5.2) flush();
+      if (previousEndsSentence || gap > 0.72 || candidate.length > 44 || current.length >= 9 || end - current[0].start > 5.2) flush();
     }
     current.push({ text, start, end });
   }
@@ -619,6 +729,7 @@ app.post('/api/transcribe', requireSameOrigin, noStore, transcribeLimiter, handl
     res.write(JSON.stringify(event) + '\n');
     return true;
   };
+  let heartbeat = null;
   try {
     if (!req.file) return res.status(400).json({ error: 'Hãy chọn video trước khi tạo phụ đề.' });
     const parsed = transcribeSchema.safeParse(req.body);
@@ -632,18 +743,26 @@ app.post('/api/transcribe', requireSameOrigin, noStore, transcribeLimiter, handl
       .set('X-Accel-Buffering', 'no')
       .flushHeaders();
 
-    sendEvent({ type: 'progress', stage: 'extracting', percent: 24, message: 'Đang tách và làm sạch âm thanh...' });
+    heartbeat = setInterval(() => sendEvent({ type: 'heartbeat' }), 15000);
+    heartbeat.unref?.();
+    sendEvent({ type: 'progress', stage: 'extracting', percent: 24, message: 'Đang kiểm tra khoảng lặng đầu video...' });
+    const leadingSilenceSeconds = await detectLeadingSilenceSeconds(uploadedPath, clientController.signal);
+    const trimArgs = leadingSilenceSeconds > 0 ? ['-ss', String(leadingSilenceSeconds)] : [];
+    const segmentListPath = path.join(workDir, 'segments.csv');
     const pattern = path.join(workDir, 'audio-%03d.mp3');
     const baseArgs = [
       '-hide_banner', '-loglevel', 'error', '-y', '-i', uploadedPath,
-      '-map', '0:a:0', '-vn', '-ac', '1', '-ar', '16000',
+      ...trimArgs, '-map', '0:a:0', '-vn', '-ac', '1', '-ar', '16000',
       '-c:a', 'libmp3lame', '-b:a', '48k',
       '-f', 'segment', '-segment_time', String(AUDIO_CHUNK_SECONDS),
-      '-reset_timestamps', '1', pattern
+      '-reset_timestamps', '1', '-segment_list', segmentListPath, '-segment_list_type', 'csv', pattern
     ];
+    sendEvent({ type: 'progress', stage: 'extracting', percent: 30, message: leadingSilenceSeconds > 0 ? 'Đã bỏ qua khoảng lặng đầu video (' + leadingSilenceSeconds.toFixed(1) + ' giây). Đang tách âm thanh...' : 'Đang tách và làm sạch âm thanh...' });
     try {
+      const audioFilterIndex = baseArgs.indexOf('-ac');
       await runFfmpeg([
-        ...baseArgs.slice(0, 9), '-af', 'highpass=f=70,lowpass=f=7600,afftdn=nf=-25', ...baseArgs.slice(9)
+        ...baseArgs.slice(0, audioFilterIndex), '-af', 'highpass=f=70,lowpass=f=7600,afftdn=nf=-25',
+        ...baseArgs.slice(audioFilterIndex)
       ], clientController.signal);
     } catch (error) {
       if (clientController.signal.aborted) throw error;
@@ -653,6 +772,8 @@ app.post('/api/transcribe', requireSameOrigin, noStore, transcribeLimiter, handl
 
     const chunkFiles = (await readdir(workDir)).filter((name) => /^audio-\d+\.mp3$/i.test(name)).sort();
     if (!chunkFiles.length) throw new Error('Video không có track âm thanh hoặc không thể đọc âm thanh.');
+    const segmentOffsets = parseSegmentCsv(await readFile(segmentListPath, 'utf8').catch(() => ''));
+    const firstSegmentStart = segmentOffsets.get(chunkFiles[0]) ?? 0;
     sendEvent({ type: 'progress', stage: 'recognizing', percent: 42, message: 'Đã tách âm thanh. AI đang nhận diện ' + chunkFiles.length + ' đoạn...' });
 
     const allWords = [];
@@ -674,7 +795,8 @@ app.post('/api/transcribe', requireSameOrigin, noStore, transcribeLimiter, handl
         })
       );
       if (!detectedLanguage && typeof result.language === 'string') detectedLanguage = result.language;
-      const offset = index * AUDIO_CHUNK_SECONDS;
+      const segmentStart = segmentOffsets.get(chunkFiles[index]);
+      const offset = leadingSilenceSeconds + (Number.isFinite(segmentStart) ? Math.max(0, segmentStart - firstSegmentStart) : index * AUDIO_CHUNK_SECONDS);
       for (const word of result.words) {
         allWords.push({
           word: word.word,
@@ -692,8 +814,10 @@ app.post('/api/transcribe', requireSameOrigin, noStore, transcribeLimiter, handl
 
     sendEvent({ type: 'progress', stage: 'normalizing', percent: 92, message: 'Đang chuẩn hóa chữ, dấu câu và khoảng trắng...' });
     const normalizedWords = allWords.map((item) => ({ ...item, word: String(item.word || '').replace(/\s+/g, ' ').trim() })).filter((item) => item.word);
-    sendEvent({ type: 'progress', stage: 'aligning', percent: 96, message: 'Đang căn chỉnh thời gian cho từng từ và ghép thành câu phụ đề...' });
-    const captions = groupTimedWords(normalizedWords, detectedLanguage || parsed.data.language);
+    const transcriptWords = parsed.data.cleanDisfluencies ? removeSpeechDisfluencies(normalizedWords) : normalizedWords;
+    sendEvent({ type: 'progress', stage: 'aligning', percent: 96, message: 'Đang căn chỉnh thời gian và làm sạch nội dung phụ đề...' });
+    let captions = groupTimedWords(transcriptWords, detectedLanguage || parsed.data.language);
+    captions = applySubtitleCorrections(captions, parsed.data.corrections);
     if (!captions.length) throw new Error('Không tạo được câu phụ đề từ âm thanh. Hãy thử lại với video khác.');
     const duration = captions[captions.length - 1].end;
     sendEvent({
@@ -701,7 +825,7 @@ app.post('/api/transcribe', requireSameOrigin, noStore, transcribeLimiter, handl
       result: {
         language: detectedLanguage || parsed.data.language,
         duration,
-        wordCount: allWords.length,
+        wordCount: transcriptWords.length,
         cues: captions
       }
     });
@@ -717,6 +841,7 @@ app.post('/api/transcribe', requireSameOrigin, noStore, transcribeLimiter, handl
     }
     console.error('Speech-to-text request failed:', status, error?.message || 'unknown error');
   } finally {
+    if (heartbeat) clearInterval(heartbeat);
     if (uploadedPath) await unlink(uploadedPath).catch(() => {});
     if (workDir) await rm(workDir, { recursive: true, force: true }).catch(() => {});
   }

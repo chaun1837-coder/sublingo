@@ -263,8 +263,8 @@ test('index HTML is not cached so fixes appear without stale frontend code', () 
 });
 
 test('package and visible UI expose the same semantic version', () => {
-  assert.equal(pkg.version, '1.2.2');
-  assert.match(html, /SRT TRANSLATOR · v1\.2\.2/);
+  assert.equal(pkg.version, '1.2.3');
+  assert.match(html, /SRT TRANSLATOR · v1\.2\.3/);
   assert.match(server, /APP_VERSION/);
 });
 
@@ -364,4 +364,57 @@ test('Page 2 progress bar matches Page 1 sizing and exposes accessible live prog
   assert.match(html, /aria-label="Tiến độ tạo phụ đề"/);
   assert.match(html, /sttProgressTrack'\)\.setAttribute\('aria-valuenow'/);
   assert.match(html, /sttProgressFill'\)\.style\.width = safePercent \+ '%'/);
+});
+
+
+test('Page 2 bounds long preview captions and limits generated caption length', () => {
+  assert.ok(html.includes('max-height:58%; overflow-y:auto'));
+  assert.ok(server.includes('current.length >= 9'));
+  assert.ok(html.includes('overflow-wrap:anywhere'));
+});
+
+test('Page 2 keeps the long-running transcription stream alive', () => {
+  assert.ok(server.includes("setInterval(() => sendEvent({ type: 'heartbeat' }), 15000)"));
+  assert.ok(server.includes('if (heartbeat) clearInterval(heartbeat)'));
+  assert.ok(html.includes('xhr.timeout = 15 * 60 * 1000'));
+});
+
+test('Page 2 aligns chunk boundaries using FFmpeg segment CSV and removes detectable leading silence', () => {
+  assert.ok(server.includes("silencedetect=noise=-42dB:d=0.5"));
+  assert.ok(server.includes("'-segment_list_type', 'csv'"));
+  assert.ok(server.includes('segmentOffsets.get(chunkFiles[index])'));
+  assert.ok(server.includes('leadingSilenceSeconds + (Number.isFinite(segmentStart)'));
+});
+
+test('Page 2 supports user-defined exact transcription corrections', () => {
+  assert.ok(server.includes('function applySubtitleCorrections'));
+  assert.ok(server.includes("corrections: z.string().max(3000).default('')"));
+  assert.ok(html.includes('id="sttCorrections"'));
+  assert.ok(html.includes('em dít =&gt; edit'));
+});
+
+test('Page 2 conservatively removes filler sounds and tightly repeated short stutters', () => {
+  assert.ok(server.includes('function removeSpeechDisfluencies'));
+  assert.ok(server.includes('ừm+|ờm+'));
+  assert.ok(html.includes('id="sttCleanDisfluencies" type="checkbox" checked'));
+});
+
+test('Page 2 time offset is consistently applied to preview, cue seeking and SRT export', () => {
+  assert.ok(html.includes('id="sttTimeOffset"'));
+  assert.ok(html.includes("cue.start + getSttTimeOffset()"));
+  assert.ok(html.includes('makeSttSrt(valid, getSttTimeOffset())'));
+  assert.ok(html.includes('(video.currentTime || 0) - getSttTimeOffset()'));
+});
+
+
+test('Filler cleanup removes isolated “thì là mà” but keeps ordinary uses of those words', () => {
+  assert.ok(server.includes("stripPunctuation(words[index + 1].word) === 'là'"));
+  assert.ok(server.includes("stripPunctuation(words[index + 2].word) === 'mà'"));
+  assert.ok(server.includes('gapBefore >= 0.22'));
+  assert.ok(server.includes('gapAfter >= 0.22'));
+});
+
+test('Manual time adjustment supports long intros up to ten minutes', () => {
+  assert.ok(html.includes('min="-600" max="600"'));
+  assert.ok(html.includes('Math.max(-600, Math.min(600, value))'));
 });
