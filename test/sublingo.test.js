@@ -310,7 +310,7 @@ test('speech-to-text uploads are bounded and use FFmpeg plus secure multipart up
 test('speech-to-text uses Gemini word timestamps and removes temporary files', () => {
   assert.ok(server.includes("model: 'gemini-3.5-transcribe'"));
   assert.ok(server.includes("timestamp_granularities: ['word']"));
-  assert.ok(server.includes("type: 'word_info'"));
+  assert.ok(server.includes("annotation?.type !== 'word_info'"));
   assert.ok(server.includes("https://generativelanguage.googleapis.com/v1beta/interactions"));
   assert.ok(server.includes("https://generativelanguage.googleapis.com/upload/v1beta/files"));
   assert.ok(server.includes('async function deleteGeminiFile'));
@@ -330,7 +330,7 @@ test('speech-to-text frontend shares Gemini key from Page 1 and supports export'
   assert.ok(html.includes("loadSavedKey('gemini')"));
   assert.ok(html.includes("savedKeyStorageName('gemini')"));
   assert.ok(html.includes('Google Gemini API key'));
-  assert.ok(html.includes('function makeSttSrt(captions)'));
+  assert.ok(html.includes('function makeSttSrt(captions, offset = 0)'));
   assert.ok(html.includes("anchor.download = base + '_auto.srt'"));
   const pageTwoStart = html.indexOf('id="pageTwoContent"');
   const pageTwoEnd = html.indexOf('</main>', pageTwoStart);
@@ -351,7 +351,7 @@ test('Gemini Transcribe rate limits use automatic retries but daily quota is not
 test('Gemini Transcribe extracts word_info annotations and uses 18-minute chunks', () => {
   assert.match(server, /const AUDIO_CHUNK_SECONDS = 1080/);
   assert.match(server, /function geminiOffsetSeconds/);
-  assert.match(server, /annotation\.type !== 'word_info'/);
+  assert.match(server, /annotation\?\.type !== 'word_info'/);
   assert.match(server, /annotation\.start_offset/);
   assert.match(server, /annotation\.end_offset/);
   assert.match(server, /store: false/);
