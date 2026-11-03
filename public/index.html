@@ -92,6 +92,11 @@ textarea.field { resize: vertical; line-height: 1.55; }
 .reveal { position: absolute; right: 7px; top: 6px; border: 0; color: light-dark(#708096, #A1B1C5); background: transparent; padding: 6px; font-size: 11px; font-weight: 700; }
 .helper { color: light-dark(#8A97A8, #8999AE); font-size: 10px; line-height: 1.5; margin-top: 6px; }
 .divider { height: 1px; background: light-dark(#E8EDF3, #2A394D); margin: 18px 0; }
+.page-tabs { display: flex; align-items: center; gap: 10px; margin: 0 0 20px; padding: 5px; width: fit-content; max-width: 100%; border: 1px solid light-dark(#DDE5ED, #3B4A60); border-radius: 13px; background: light-dark(#F5F8FB, #131F30); }
+.page-tab { min-width: 150px; border: 1px solid transparent; border-radius: 9px; padding: 11px 20px; background: transparent; color: light-dark(#586A80, #B6C2D1); font-size: 13px; font-weight: 800; cursor: pointer; }
+.page-tab.active { border-color: #65AFA4; background: light-dark(#EAF6F3, #1B3935); color: light-dark(#256B61, #A6DED5); box-shadow: inset 0 0 0 1px #65AFA4; }
+.page-tab:focus-visible { outline: 3px solid #68B8AD; outline-offset: 2px; }
+@media (max-width: 480px) { .page-tabs { display: flex; width: 100%; } .page-tab { min-width: 0; flex: 1; padding-inline: 12px; } }
 .provider-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
 .provider { border: 1px solid light-dark(#DDE5ED, #3B4A60); background: light-dark(#FAFBFD, #131F30); color: light-dark(#586A80, #B6C2D1); border-radius: 9px; padding: 10px 8px; font-size: 11px; font-weight: 800; }
 .provider.active { border-color: #65AFA4; background: light-dark(#EAF6F3, #1B3935); color: light-dark(#256B61, #A6DED5); box-shadow: inset 0 0 0 1px #65AFA4; }
@@ -150,7 +155,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
   <header class="topbar">
     <div class="brand">
       <div class="logo-mark" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 5.5C4 4.67 4.67 4 5.5 4h13c.83 0 1.5.67 1.5 1.5v9c0 .83-.67 1.5-1.5 1.5H11l-4.5 4v-4H5.5C4.67 16 4 15.33 4 14.5v-9Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 8.5h8M8 11.5h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
-      <div><div class="brand-name">SubLingo</div><div class="brand-sub">SUBTITLE WORKSPACE · SRT TRANSLATOR · v1.1.4</div></div>
+      <div><div class="brand-name">SubLingo</div><div class="brand-sub">SUBTITLE WORKSPACE · SRT TRANSLATOR · v1.1.5</div></div>
     </div>
     <div class="top-actions">
       <div class="google-login-wrap" id="googleSignInButton"></div>
@@ -164,6 +169,11 @@ textarea.field { resize: vertical; line-height: 1.55; }
       <div class="status-pill"><span class="status-dot"></span> Bảo toàn cấu trúc SRT</div>
     </section>
 
+    <nav class="page-tabs" aria-label="Chuyển trang">
+      <button class="page-tab active" id="pageOneTab" type="button" aria-current="page" aria-controls="pageOneContent">Trang 1</button>
+      <button class="page-tab" id="pageTwoTab" type="button" aria-controls="pageTwoContent">Trang 2</button>
+    </nav>
+    <section id="pageOneContent">
     <section class="panel" style="margin-bottom:20px">
       <div class="panel-head"><div class="panel-title"><span class="step">↗</span> Tải video đa nền tảng</div></div>
       <div class="panel-body" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
@@ -250,6 +260,8 @@ textarea.field { resize: vertical; line-height: 1.55; }
       </section>
     </section>
     <div class="notice"><span>ⓘ</span><div><b>Cơ chế bảo vệ file:</b> Trình đọc chỉ cho phép chỉnh sửa vùng lời thoại. Số thứ tự, dòng thời gian, phần metadata và dấu phân cách được giữ lại từ file gốc khi xuất. Bản triển khai gửi từng nhóm lời thoại tới backend để gọi AI; backend không lưu API key hay file phụ đề. Số thứ tự, timestamp và phần metadata luôn được giữ ở trình duyệt.</div></div>
+    </section>
+    <section id="pageTwoContent" hidden></section>
   </main>
   <div class="decor" aria-hidden="true"></div>
 </div>
@@ -261,6 +273,22 @@ textarea.field { resize: vertical; line-height: 1.55; }
 (() => {
   const $ = (id) => document.getElementById(id);
   let provider = 'gemini';
+  function showPage(pageNumber) {
+    const isPageOne = pageNumber === 1;
+    $('pageOneContent').hidden = !isPageOne;
+    $('pageTwoContent').hidden = isPageOne;
+    $('pageOneTab').classList.toggle('active', isPageOne);
+    $('pageTwoTab').classList.toggle('active', !isPageOne);
+    if (isPageOne) {
+      $('pageOneTab').setAttribute('aria-current', 'page');
+      $('pageTwoTab').removeAttribute('aria-current');
+    } else {
+      $('pageTwoTab').setAttribute('aria-current', 'page');
+      $('pageOneTab').removeAttribute('aria-current');
+    }
+  }
+  $('pageOneTab').addEventListener('click', () => showPage(1));
+  $('pageTwoTab').addEventListener('click', () => showPage(2));
   let fileName = '';
   let originalText = '';
   let chunks = [];

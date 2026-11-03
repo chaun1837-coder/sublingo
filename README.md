@@ -1,6 +1,6 @@
-# SubLingo 1.1.4 — Dịch phụ đề SRT
+# SubLingo 1.1.5 — Dịch phụ đề SRT
 
-**Phiên bản hiện tại:** 1.1.4 — *User-Selectable Gemini Thinking Levels*.
+**Phiên bản hiện tại:** 1.1.5 — *Two-Page Navigation*.
 
 SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT bằng Google Gemini hoặc OpenAI.
 
@@ -10,6 +10,7 @@ SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT bằn
 - Đăng xuất xóa hai API key đã lưu trong trình duyệt, dữ liệu phụ đề tạm và hủy lượt dịch đang chạy.
 - Gửi lời thoại theo từng nhóm tới Google Gemini hoặc OpenAI.
 - Người dùng tự chọn mức suy luận Gemini: MINIMAL, LOW, MEDIUM hoặc HIGH; lựa chọn được lưu trên trình duyệt. Mặc định là MINIMAL.
+- Thêm điều hướng hai trang: toàn bộ tính năng hiện tại nằm ở Trang 1; Trang 2 để trống theo yêu cầu.
 - Giữ nguyên số thứ tự, timestamp, metadata, dấu phân cách và kiểu xuống dòng từ file SRT gốc.
 - Có thể chọn lưu API key trên thiết bị bằng localStorage. Tùy chọn này **không mã hóa key**; chỉ nên dùng trên thiết bị cá nhân.
 - Giới hạn file ở 10 MB và 5.000 cue để tránh treo trình duyệt; mỗi cue tối đa 5.000 ký tự.
@@ -77,6 +78,10 @@ npm test
 GitHub Actions tự chạy bộ test khi có push hoặc pull request vào nhánh main.
 
 ## Nhật ký phiên bản
+
+### 1.1.5
+- Thêm hai nút chuyển Trang 1 / Trang 2 nằm ngang giữa phần giới thiệu và khối tải video.
+- Giữ toàn bộ tính năng hiện có trên Trang 1; Trang 2 để trống hoàn toàn.
 
 ### 1.1.4
 - Thêm tùy chọn suy luận MINIMAL, LOW, MEDIUM, HIGH cho Gemini 3.5 Flash-Lite.
