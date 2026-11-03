@@ -164,6 +164,7 @@ test('backend preserves upstream status codes for retry decisions', () => {
 
 test('two-page navigation keeps all existing features on page one and page two blank', () => {
   assert.match(html, /id="pageOneTab"/);
+  assert.match(html, /id="pageOneTab"[^>]*>Dịch phụ đề SRT<\/button>/);
   assert.match(html, /id="pageTwoTab"/);
   assert.match(html, /id="pageOneContent"/);
   assert.match(html, /id="pageTwoContent" hidden><\/section>/);
@@ -258,7 +259,7 @@ test('index HTML is not cached so fixes appear without stale frontend code', () 
 });
 
 test('package and visible UI expose the same semantic version', () => {
-  assert.equal(pkg.version, '1.1.5');
+  assert.equal(pkg.version, '1.1.6');
   assert.match(html, /SRT TRANSLATOR · v1\.1\.5/);
   assert.match(server, /APP_VERSION/);
 });
