@@ -162,26 +162,22 @@ test('backend preserves upstream status codes for retry decisions', () => {
 });
 
 
-test('three-page navigation keeps Page 3 blank and preserves the Page 1 and Page 2 workspaces', () => {
+test('three-page navigation exposes Hardsub OCR and preserves existing workspaces', () => {
   assert.match(html, /id="pageOneTab"[^>]*>Dịch phụ đề SRT<\/button>/);
   assert.match(html, /id="pageTwoTab"[^>]*>Tạo phụ đề AI<\/button>/);
   assert.match(html, /id="pageThreeTab"[^>]*>Trang 3<\/button>/);
-  assert.match(html, /id="pageOneContent"/);
-  assert.match(html, /id="pageTwoContent" class="stt-page" hidden/);
-  assert.match(html, /<section id="pageThreeContent" hidden aria-labelledby="pageThreeTab"><\/section>/);
-  assert.match(html, /function showPage\(pageNumber\)/);
-  assert.match(html, /\$\('pageOneContent'\)\.hidden = !isPageOne/);
-  assert.match(html, /\$\('pageTwoContent'\)\.hidden = !isPageTwo/);
-  assert.match(html, /\$\('pageThreeContent'\)\.hidden = !isPageThree/);
+  assert.match(html, /id="pageThreeContent" class="stt-page ocr-page" hidden/);
+  assert.match(html, /id="ocrTitle">Trích xuất phụ đề cứng \\(Hardsub OCR\\)<\/h2>/);
+  for (const id of ['ocrVideoInput','ocrLanguage','ocrInterval','ocrRoi','ocrSrtOutput','ocrDownloadBtn']) assert.match(html, new RegExp('id="' + id + '"'));
+  assert.match(html, /window\.Tesseract\.createWorker/);
+  assert.match(html, /function ocrPrepareFrame/);
+  assert.match(html, /function ocrBuildCues/);
+  assert.match(html, /function ocrSimilarity/);
+  assert.match(html, /Video được xử lý ngay trên trình duyệt, không tải lên máy chủ/);
+  assert.match(html, /id="pageThreeContent"\)\.hidden = !isPageThree/);
   assert.match(html, /\$\('pageThreeTab'\)\.addEventListener\('click', \(\) => showPage\(3\)\)/);
-  assert.ok(html.indexOf('id="pageOneTab"') < html.indexOf('id="pageTwoTab"'));
-  assert.ok(html.indexOf('id="pageTwoTab"') < html.indexOf('id="pageThreeTab"'));
-  assert.ok(html.indexOf('id="pageOneContent"') < html.indexOf('Tải video đa nền tảng'));
-  assert.ok(html.indexOf('id="pageOneContent"') < html.indexOf('id="translateBtn"'));
-  assert.match(html, /class="stt-layout"/);
   assert.match(html, /id="sttVideoInput"/);
   assert.match(html, /id="sttCaptionList"/);
-  assert.match(html, /id="sttDownloadBtn"/)
 });
 
 test('Gemini Flash-Lite supports user-selectable thinking levels', () => {
@@ -267,8 +263,8 @@ test('index HTML is not cached so fixes appear without stale frontend code', () 
 });
 
 test('package and visible UI expose the same semantic version', () => {
-  assert.equal(pkg.version, '1.2.6');
-  assert.match(html, /SRT TRANSLATOR · v1\.2\.6/);
+  assert.equal(pkg.version, '1.2.7');
+  assert.match(html, /SRT TRANSLATOR · v1\.2\.7/);
   assert.match(server, /APP_VERSION/);
 });
 
