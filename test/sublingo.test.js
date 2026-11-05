@@ -311,7 +311,7 @@ test('index HTML is not cached so fixes appear without stale frontend code', () 
 });
 
 test('package and visible UI expose the same semantic version', () => {
-  assert.equal(pkg.version, '1.2.16');
+  assert.equal(pkg.version, '1.2.17');
   assert.match(html, /SRT TRANSLATOR · v1\.2\.16/);
   assert.match(server, /APP_VERSION/);
 });
@@ -414,6 +414,18 @@ test('Page 2 progress bar matches Page 1 sizing and exposes accessible live prog
   assert.match(html, /sttProgressFill'\)\.style\.width = safePercent \+ '%'/);
 });
 
+
+test('Page 3 OCR progress matches Page 1 and reports scanned frames accessibly', () => {
+  for (const id of ['ocrProgressTrack','ocrProgressFill','ocrProgressSummary','ocrProgressCount','ocrProgressPercent']) {
+    assert.ok(html.includes('id="' + id + '"'));
+  }
+  assert.match(html, /class="progress-track" id="ocrProgressTrack" role="progressbar"/);
+  assert.match(html, /class="progress-summary" id="ocrProgressSummary"/);
+  assert.match(html, /function ocrSetProgress\(processed, total, message\)/);
+  assert.match(html, /ocrSetProgress\(processed, totalFrames,/);
+  assert.match(html, /khung hình đã quét/);
+  assert.doesNotMatch(html, /ocrProgressBar/);
+});
 
 test('Page 2 bounds long preview captions and limits generated caption length', () => {
   assert.ok(html.includes('max-height:58%; overflow-y:auto'));
