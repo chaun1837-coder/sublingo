@@ -1,6 +1,6 @@
-# SubLingo 1.2.25 — Gia cố xử lý kết quả và trải nghiệm Trang 3
+# SubLingo 1.2.27 — Trợ lý nội dung đa nền tảng
 
-**Phiên bản hiện tại:** 1.2.25 — *Gia cố xử lý JSON, API key, hashtag và vùng kết quả Trang 3*.
+**Phiên bản hiện tại:** 1.2.27 — *Hoàn thiện trợ lý nội dung đa nền tảng, thanh tiến trình AI và đồng bộ tên phiên bản*.
 
 SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT, tạo phụ đề tự động và tối ưu nội dung mạng xã hội bằng Gemini và OpenAI.
 
@@ -10,7 +10,10 @@ SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT, tạ
 - Đăng xuất xóa hai API key đã lưu trong trình duyệt, dữ liệu phụ đề tạm và hủy lượt dịch đang chạy.
 - Gửi lời thoại theo từng nhóm tới Google Gemini hoặc OpenAI.
 - Người dùng tự chọn mức suy luận Gemini: MINIMAL, LOW, MEDIUM hoặc HIGH; lựa chọn được lưu trên trình duyệt. Mặc định là MINIMAL.
-- Trang 2 tạo phụ đề tự động từ video bằng Google Gemini 3.5 Transcribe, có xem trước video, sửa lời thoại, tùy chỉnh kiểu chữ xem trước và xuất SRT.\n- Trang 3 dùng Gemini 3.8 Flash tạo tiêu đề YouTube Shorts, mô tả, hashtag, hook TikTok và caption Facebook Reels; mặc định AI tự nhận diện thể loại từ lời thoại hoặc người dùng chọn thể loại định hướng; nhóm tình cảm bao gồm phim ngôn tình; xử lý linh hoạt JSON có code fence, đồng bộ API key giữa Trang 2–3, chuẩn hóa hashtag và cuộn riêng vùng kết quả, có thể chọn preset phong cách riêng, tùy chỉnh số từ tiêu đề từ 2–20 từ (mặc định 3–7), kiểm tra giới hạn 100 ký tự của YouTube và không cắt cụt tiêu đề bằng cách cắt chuỗi.\n- Bộ quét từ khóa chỉ cảnh báo tham khảo, không bảo đảm tránh shadowban.
+- Trang 2 tạo phụ đề tự động từ video bằng Google Gemini 3.5 Transcribe, có xem trước video, sửa lời thoại, tùy chỉnh kiểu chữ xem trước và xuất SRT.
+- Trang 3 **Tối ưu nội dung** là trợ lý nội dung đa nền tảng: dùng Gemini tạo tiêu đề và mô tả YouTube Shorts, hook/caption TikTok, caption Facebook Reels và hashtag; AI tự nhận diện hoặc cho chọn thể loại, điều chỉnh phong cách, độ dài tiêu đề và mức sáng tạo; đồng bộ lời thoại từ Trang 1/2, nhận tiêu đề tham khảo, chuẩn hóa hashtag, cảnh báo từ khóa nhạy cảm và hỗ trợ sao chép kết quả.
+- Trang 3 lưu tạm tối đa 4 bộ kết quả theo nội dung/cấu hình, rút gọn lời thoại dài bằng cách lấy mẫu đầu–giữa–cuối (giới hạn phân tích 9.000 ký tự), hiển thị skeleton khi chờ AI và thanh tiến trình khi đang tạo nội dung.
+- Bộ quét từ khóa chỉ mang tính cảnh báo tham khảo, không bảo đảm tránh shadowban.
 - Giữ nguyên số thứ tự, timestamp, metadata, dấu phân cách và kiểu xuống dòng từ file SRT gốc.
 - Có thể chọn lưu API key trên thiết bị bằng localStorage. Tùy chọn này **không mã hóa key**; chỉ nên dùng trên thiết bị cá nhân.
 - Giới hạn file ở 10 MB và 5.000 cue để tránh treo trình duyệt; mỗi cue tối đa 5.000 ký tự.
@@ -61,7 +64,7 @@ Kiểm tra backend:
 curl http://localhost:10000/api/health
 ~~~
 
-Endpoint trả về trạng thái cùng phiên bản hiện tại, ví dụ {"ok":true,"service":"sublingo-api","version":"1.2.20"}.
+Endpoint trả về trạng thái cùng phiên bản hiện tại, ví dụ {"ok":true,"service":"sublingo-api","version":"1.2.27"}.
 
 ## Đưa lên Render
 
@@ -70,7 +73,7 @@ Endpoint trả về trạng thái cùng phiên bản hiện tại, ví dụ {"ok
 3. Trong Google Cloud Console, thêm `https://sublingo-srt-translator.onrender.com` vào **Authorized JavaScript origins** của OAuth Client ID. Ứng dụng dùng Google Identity Services popup nên không cần redirect URI.
 4. Lưu cấu hình và chờ Render khởi động lại service. Khi chưa có `GOOGLE_CLIENT_ID`, nút đăng nhập sẽ hiển thị trạng thái đang chờ cấu hình; đây không phải lỗi tài khoản Google.
 5. Ứng dụng hiện hỗ trợ **đăng nhập bằng Google**, chưa có đăng ký email/mật khẩu riêng. Phiên đăng nhập được lưu bằng cookie HttpOnly trong 7 ngày; ứng dụng chưa lưu hồ sơ người dùng hoặc lịch sử dịch vào database.
-4. Sau khi deploy, kiểm tra /api/health và xác nhận trường version là 1.2.20. Bản cài đặt cần tải thêm binary FFmpeg từ package ffmpeg-static.
+4. Sau khi deploy, kiểm tra /api/health và xác nhận trường version là 1.2.27. Bản cài đặt cần tải thêm binary FFmpeg từ package ffmpeg-static.
 
 ## Cấu hình API key
 
@@ -96,6 +99,20 @@ npm test
 GitHub Actions tự chạy bộ test khi có push hoặc pull request vào nhánh main.
 
 ## Nhật ký phiên bản
+
+### 1.2.27 — 2026-11-05
+- Thêm thanh tiến trình AI cho Trang 3, kèm trạng thái xử lý; dùng dạng tiến trình không xác định phần trăm thay vì hiển thị số % giả.
+- Đổi tên tab thành **Tối ưu nội dung** và tiêu đề trang thành **Trợ lý nội dung đa nền tảng**, phản ánh đúng chức năng tạo nội dung cho YouTube Shorts, TikTok và Facebook Reels.
+- Đồng bộ số phiên bản 1.2.27 giữa package, backend, giao diện và tài liệu README.
+
+### 1.2.26 — 2026-11-05
+- Lưu tạm tối đa 4 bộ kết quả theo lời thoại và cấu hình; chuyển tab hoặc khôi phục cấu hình đã chạy không cần gọi AI lại.
+- Rút gọn lời thoại dài bằng cách lấy mẫu phần đầu, giữa và cuối, giới hạn nội dung phân tích ở 9.000 ký tự ở frontend và backend.
+- Bổ sung skeleton shimmer trong lúc chờ AI và tôn trọng cài đặt giảm hiệu ứng chuyển động.
+
+### 1.2.20
+- Thêm trợ lý tối ưu nội dung mạng xã hội bằng Gemini 3.8 Flash ở Trang 3.
+- Bổ sung đồng bộ transcript, tiêu đề tham khảo, phong cách Anime, Temperature, ba nền tảng, sao chép nhanh và cảnh báo từ khóa.
 
 ### 1.2.19
 - Thêm lại nút Trang 3 trên thanh điều hướng.
@@ -174,4 +191,3 @@ GitHub Actions tự chạy bộ test khi có push hoặc pull request vào nhán
 - Giới hạn dung lượng file, số cue và ngăn lỗi đọc file theo thứ tự sai.
 - Cập nhật model OpenAI; tắt lưu Responses phía OpenAI; tránh cache HTML cũ.
 - Bổ sung test và CI.
-\n\n### 1.2.20\n- Thêm trợ lý tối ưu nội dung mạng xã hội bằng Gemini 3.8 Flash ở Trang 3.\n- Bổ sung đồng bộ transcript, tiêu đề tham khảo, phong cách Anime, Temperature, ba nền tảng, sao chép nhanh và cảnh báo từ khóa.\n

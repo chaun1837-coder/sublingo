@@ -6,6 +6,7 @@ import { Script } from 'node:vm';
 const html = await readFile(new URL('../public/index.html', import.meta.url), 'utf8');
 const server = await readFile(new URL('../server.js', import.meta.url), 'utf8');
 const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
+const readme = await readFile(new URL('../README.md', import.meta.url), 'utf8');
 
 function getParser() {
   const start = html.indexOf('  function normalizeSrtTimestamp(');
@@ -260,10 +261,17 @@ test('index HTML is not cached so fixes appear without stale frontend code', () 
   assert.match(server, /res\.set\('Cache-Control', 'no-store'\)/);
 });
 
-test('package and visible UI expose the same semantic version', () => {
-  assert.equal(pkg.version, '1.2.26');
-  assert.match(html, /SRT TRANSLATOR · v1\.2\.26/);
+test('package, backend, README and visible UI expose the same semantic version and release notes', () => {
+  assert.equal(pkg.version, '1.2.27');
+  assert.match(html, /SRT TRANSLATOR · v1\.2\.27/);
   assert.match(server, /APP_VERSION/);
+  assert.match(server, /APP_VERSION = process\.env\.npm_package_version \|\| '1\.2\.27'/);
+  assert.match(readme, /^# SubLingo 1\.2\.27/m);
+  assert.match(readme, /\*\*Phiên bản hiện tại:\*\* 1\.2\.27/);
+  assert.match(readme, /### 1\.2\.27 — 2026-11-05/);
+  assert.match(readme, /### 1\.2\.26 — 2026-11-05/);
+  assert.match(readme, /thanh tiến trình AI cho Trang 3/);
+  assert.match(readme, /giới hạn phân tích 9\.000 ký tự/);
 });
 
 test('Google session and translation API responses are never cached', () => {
