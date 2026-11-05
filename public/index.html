@@ -229,9 +229,9 @@ textarea.field { resize: vertical; line-height: 1.55; }
 @media (max-width: 760px) { .workspace { grid-template-columns: 1fr; } .hero { align-items: flex-start; flex-direction: column; } .topbar { padding-inline: 16px; } .brand-sub { display: none; } .top-actions .btn { padding: 9px 10px; font-size: 11px; } .page { padding-top: 24px; } }
 @media (max-width: 480px) { .cue-card { grid-template-columns: 30px minmax(0, 1fr); gap: 7px; } .cue-content.translation-col { grid-column: 2; } .field-row { grid-template-columns: 1fr; } .bottom-actions { width: 100%; } .bottom-actions .btn { flex: 1; } }
 
-.ocr-grid{display:grid;grid-template-columns:minmax(280px,.85fr) minmax(320px,1.15fr);gap:18px;align-items:start}.ocr-page .panel-body{display:flex;flex-direction:column;gap:13px}.ocr-file-meta,.ocr-result-meta{font-size:12px;color:var(--muted);overflow-wrap:anywhere}.ocr-video-wrap{background:#10131b;border-radius:12px;overflow:hidden;min-height:80px}.ocr-video-wrap video{display:block;width:100%;max-height:280px}.ocr-actions{display:flex;gap:9px;flex-wrap:wrap}.ocr-progress{font-size:12px;color:var(--muted);min-height:18px}.ocr-page progress{width:100%;height:9px;accent-color:var(--accent)}.ocr-help{font-size:11px;line-height:1.55;color:var(--muted)}.ocr-output{width:100%;min-height:420px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;line-height:1.55;white-space:pre;tab-size:2}.ocr-page input[type=range]{padding:0;accent-color:var(--accent)}
+.ocr-grid{display:grid;grid-template-columns:minmax(280px,.85fr) minmax(320px,1.15fr);gap:18px;align-items:start}.ocr-page .panel-body{display:flex;flex-direction:column;gap:13px}.ocr-file-meta,.ocr-result-meta{font-size:12px;color:var(--muted);overflow-wrap:anywhere}.ocr-video-wrap{position:relative;display:flex;align-items:center;justify-content:center;background:#10131b;border-radius:12px;overflow:hidden;min-height:80px}.ocr-video-wrap video{display:block;width:100%;max-height:280px}.ocr-crop-overlay{position:absolute;z-index:3;pointer-events:none;outline:1px solid rgba(117,211,255,.45)}.ocr-crop-box{position:absolute;box-sizing:border-box;border:2px solid #20A7FF;background:rgba(32,167,255,.17);box-shadow:0 0 0 9999px rgba(0,8,20,.18),0 0 15px rgba(32,167,255,.55);cursor:move;touch-action:none;pointer-events:auto;min-width:4%;min-height:4%}.ocr-crop-box:focus-visible{outline:3px solid #B6E8FF;outline-offset:2px}.ocr-crop-tag{position:absolute;left:5px;top:5px;padding:3px 6px;border-radius:5px;background:#0787D9;color:white;font-size:9px;font-weight:900;letter-spacing:.04em;line-height:1.3;pointer-events:none;user-select:none}.ocr-crop-handle{position:absolute;width:14px;height:14px;border:2px solid #EAF8FF;border-radius:50%;background:#12A4FF;box-shadow:0 0 0 1px #087BC4,0 0 9px rgba(32,167,255,.8);touch-action:none}.ocr-crop-handle[data-crop-handle="nw"]{left:-8px;top:-8px;cursor:nwse-resize}.ocr-crop-handle[data-crop-handle="n"]{left:50%;top:-8px;transform:translateX(-50%);cursor:ns-resize}.ocr-crop-handle[data-crop-handle="ne"]{right:-8px;top:-8px;cursor:nesw-resize}.ocr-crop-handle[data-crop-handle="e"]{right:-8px;top:50%;transform:translateY(-50%);cursor:ew-resize}.ocr-crop-handle[data-crop-handle="se"]{right:-8px;bottom:-8px;cursor:nwse-resize}.ocr-crop-handle[data-crop-handle="s"]{left:50%;bottom:-8px;transform:translateX(-50%);cursor:ns-resize}.ocr-crop-handle[data-crop-handle="sw"]{left:-8px;bottom:-8px;cursor:nesw-resize}.ocr-crop-handle[data-crop-handle="w"]{left:-8px;top:50%;transform:translateY(-50%);cursor:ew-resize}.ocr-coordinate-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.ocr-coordinate-grid label{display:flex;flex-direction:column;gap:5px;color:var(--muted);font-size:10px;font-weight:800}.ocr-coordinate-grid input{width:100%;min-width:0;min-height:36px;padding:7px 8px;border:1px solid light-dark(#DCE4ED,#39485D);border-radius:8px;background:light-dark(#FBFCFE,#111B2B);color:light-dark(#203149,#E9EFF7);font-size:12px;font-variant-numeric:tabular-nums}.ocr-actions{display:flex;gap:9px;flex-wrap:wrap}.ocr-progress{font-size:12px;color:var(--muted);min-height:18px}.ocr-page progress{width:100%;height:9px;accent-color:var(--accent)}.ocr-help{font-size:11px;line-height:1.55;color:var(--muted)}.ocr-output{width:100%;min-height:420px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;line-height:1.55;white-space:pre;tab-size:2}.ocr-page input[type=range]{padding:0;accent-color:var(--accent)}
 .ocr-check{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px}
-.ocr-check input{width:15px;height:15px;accent-color:var(--accent)}@media(max-width:850px){.ocr-grid{grid-template-columns:1fr}.ocr-output{min-height:320px}}
+.ocr-check input{width:15px;height:15px;accent-color:var(--accent)}@media(max-width:850px){.ocr-grid{grid-template-columns:1fr}.ocr-output{min-height:320px}}@media(max-width:520px){.ocr-coordinate-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 </head>
 <body>
@@ -239,7 +239,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
   <header class="topbar">
     <div class="brand">
       <div class="logo-mark" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 5.5C4 4.67 4.67 4 5.5 4h13c.83 0 1.5.67 1.5 1.5v9c0 .83-.67 1.5-1.5 1.5H11l-4.5 4v-4H5.5C4.67 16 4 15.33 4 14.5v-9Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 8.5h8M8 11.5h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
-      <div><div class="brand-name">SubLingo</div><div class="brand-sub">SUBTITLE WORKSPACE · SRT TRANSLATOR · v1.2.10</div></div>
+      <div><div class="brand-name">SubLingo</div><div class="brand-sub">SUBTITLE WORKSPACE · SRT TRANSLATOR · v1.2.12</div></div>
     </div>
     <div class="top-actions">
       <div class="google-login-wrap" id="googleSignInButton"></div>
@@ -484,10 +484,11 @@ textarea.field { resize: vertical; line-height: 1.55; }
       <div class="ocr-grid">
         <section class="panel"><div class="panel-head"><div class="panel-title"><span class="step">01</span> Video & cấu hình OCR</div></div><div class="panel-body">
           <label class="stt-drop" id="ocrDropZone" for="ocrVideoInput"><input id="ocrVideoInput" type="file" accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov,.m4v" hidden><span class="stt-drop-icon">↑</span><strong>Chọn video có phụ đề cứng</strong><span>MP4, WebM, MOV, M4V · khuyến nghị dưới 150 MB</span></label>
-          <div class="ocr-file-meta" id="ocrFileMeta">Chưa chọn video</div><div class="ocr-video-wrap"><video id="ocrVideo" controls playsinline preload="metadata"></video></div>
+          <div class="ocr-file-meta" id="ocrFileMeta">Chưa chọn video</div><div class="ocr-video-wrap" id="ocrVideoStage"><video id="ocrVideo" controls playsinline preload="metadata"></video><div class="ocr-crop-overlay" id="ocrCropOverlay" hidden aria-label="Khung chọn vùng OCR"><div class="ocr-crop-box" id="ocrCropBox" role="group" tabindex="0" aria-label="Kéo để di chuyển vùng OCR; kéo các nút tròn để đổi kích thước"><span class="ocr-crop-tag">VÙNG OCR</span><span class="ocr-crop-handle" data-crop-handle="nw"></span><span class="ocr-crop-handle" data-crop-handle="n"></span><span class="ocr-crop-handle" data-crop-handle="ne"></span><span class="ocr-crop-handle" data-crop-handle="e"></span><span class="ocr-crop-handle" data-crop-handle="se"></span><span class="ocr-crop-handle" data-crop-handle="s"></span><span class="ocr-crop-handle" data-crop-handle="sw"></span><span class="ocr-crop-handle" data-crop-handle="w"></span></div></div></div>
+<div class="stt-field-group"><label class="form-label">Vùng OCR trên video · X, Y, W, H (%)</label><div class="ocr-coordinate-grid"><label for="ocrCropX">X · Trái<input id="ocrCropX" type="number" min="0" max="96" step="0.5" value="0" disabled></label><label for="ocrCropY">Y · Trên<input id="ocrCropY" type="number" min="0" max="96" step="0.5" value="75" disabled></label><label for="ocrCropW">W · Rộng<input id="ocrCropW" type="number" min="4" max="100" step="0.5" value="100" disabled></label><label for="ocrCropH">H · Cao<input id="ocrCropH" type="number" min="4" max="100" step="0.5" value="25" disabled></label></div><small class="ocr-help">Mặc định tự chọn 25% phía dưới. Kéo bên trong khung để di chuyển; kéo 8 nút tròn ở góc/cạnh để thay đổi vùng. X, Y, W, H tính theo phần trăm kích thước video.</small></div>
           <div class="stt-field-group"><label class="form-label" for="ocrLanguage">Ngôn ngữ phụ đề trong video</label><select class="field" id="ocrLanguage"><option value="vie">Tiếng Việt</option><option value="eng">Tiếng Anh</option><option value="vie+eng">Tiếng Việt + Anh</option><option value="chi_sim">Tiếng Trung giản thể</option><option value="chi_tra">Tiếng Trung phồn thể</option><option value="jpn">Tiếng Nhật</option><option value="kor">Tiếng Hàn</option><option value="tha">Tiếng Thái</option><option value="fra">Tiếng Pháp</option><option value="spa">Tiếng Tây Ban Nha</option><option value="deu">Tiếng Đức</option></select></div>
           <div class="stt-field-group"><label class="form-label" for="ocrInterval">Khoảng cách quét khung hình</label><select class="field" id="ocrInterval"><option value="0.25">0,25 giây · chính xác hơn, xử lý lâu hơn</option><option value="0.5" selected>0,5 giây · khuyến nghị</option><option value="1">1 giây · nhanh hơn</option></select></div>
-          <div class="stt-field-group"><label class="form-label" for="ocrRoi">Vùng tìm phụ đề: <strong id="ocrRoiValue">25%</strong> phía dưới</label><input class="field" id="ocrRoi" type="range" min="15" max="40" step="5" value="25"><small class="ocr-help">Có thể tăng vùng nếu video đặt phụ đề cao hơn bình thường.</small></div>
+          <div class="stt-field-group"></div>
           <div class="stt-field-group"><label class="form-label" for="ocrCorrections">Quy tắc sửa lỗi OCR (không bắt buộc)</label><textarea class="field" id="ocrCorrections" rows="3" maxlength="3000" placeholder="em dít =&gt; edit&#10;teh =&gt; the"></textarea><small class="ocr-help">Mỗi dòng một quy tắc: chữ OCR sai =&gt; chữ đúng. Quy tắc được tự áp dụng khi tạo SRT; chỉ thay cụm khớp trọn từ/cụm từ, tối đa 50 quy tắc. Không tự đổi các ký tự dễ nhầm như 0/O hoặc 1/l.</small></div>
           <label class="ocr-check"><input id="ocrBinarize" type="checkbox" checked> Nhị phân hóa trắng/đen và tăng tương phản</label>
           <small class="ocr-help">Bỏ chọn nếu chữ có màu, nền phức tạp hoặc ảnh nhị phân làm mất nét chữ.</small>
@@ -1186,15 +1187,54 @@ textarea.field { resize: vertical; line-height: 1.55; }
     }
     return threshold;
   }
-  function ocrPrepareFrame(video, canvas, roi, binarize = true) {
-    const width = video.videoWidth;
-    const height = video.videoHeight;
-    const cropHeight = Math.max(1, Math.round(height * roi / 100));
-    const scale = Math.min(2.2, 1600 / width);
-    canvas.width = Math.max(1, Math.round(width * scale));
-    canvas.height = Math.max(1, Math.round(cropHeight * scale));
+  let ocrCrop = { x: 0, y: 75, w: 100, h: 25 };
+
+  function ocrClampCrop(rect) {
+    const toNumber = (value, fallback) => Number.isFinite(Number(value)) ? Number(value) : fallback;
+    const round = (value) => Math.round(value * 10) / 10;
+    const w = round(Math.max(4, Math.min(100, toNumber(rect.w, 100))));
+    const h = round(Math.max(4, Math.min(100, toNumber(rect.h, 25))));
+    const x = round(Math.max(0, Math.min(100 - w, toNumber(rect.x, 0))));
+    const y = round(Math.max(0, Math.min(100 - h, toNumber(rect.y, 75))));
+    return { x, y, w, h };
+  }
+
+  function ocrAdjustCropFromPointer(startCrop, handle, deltaX, deltaY) {
+    const start = ocrClampCrop(startCrop);
+    if (handle === 'move') {
+      return ocrClampCrop({
+        ...start,
+        x: Math.max(0, Math.min(100 - start.w, start.x + deltaX)),
+        y: Math.max(0, Math.min(100 - start.h, start.y + deltaY))
+      });
+    }
+    let left = start.x;
+    let top = start.y;
+    let right = start.x + start.w;
+    let bottom = start.y + start.h;
+    if (handle.includes('w')) left = Math.max(0, Math.min(right - 4, left + deltaX));
+    if (handle.includes('e')) right = Math.max(left + 4, Math.min(100, right + deltaX));
+    if (handle.includes('n')) top = Math.max(0, Math.min(bottom - 4, top + deltaY));
+    if (handle.includes('s')) bottom = Math.max(top + 4, Math.min(100, bottom + deltaY));
+    return ocrClampCrop({ x: left, y: top, w: right - left, h: bottom - top });
+  }
+
+  function ocrCropToSourceRect(crop, videoWidth, videoHeight) {
+    const normalized = ocrClampCrop(crop);
+    const x = Math.max(0, Math.min(videoWidth - 1, Math.round(videoWidth * normalized.x / 100)));
+    const y = Math.max(0, Math.min(videoHeight - 1, Math.round(videoHeight * normalized.y / 100)));
+    const width = Math.max(1, Math.min(videoWidth - x, Math.round(videoWidth * normalized.w / 100)));
+    const height = Math.max(1, Math.min(videoHeight - y, Math.round(videoHeight * normalized.h / 100)));
+    return { x, y, width, height };
+  }
+
+  function ocrPrepareFrame(video, canvas, crop, binarize = true) {
+    const source = ocrCropToSourceRect(crop, video.videoWidth, video.videoHeight);
+    const scale = Math.min(2.2, 1600 / source.width, 1000 / source.height);
+    canvas.width = Math.max(1, Math.round(source.width * scale));
+    canvas.height = Math.max(1, Math.round(source.height * scale));
     const context = canvas.getContext('2d', { willReadFrequently: true });
-    context.drawImage(video, 0, height - cropHeight, width, cropHeight, 0, 0, canvas.width, canvas.height);
+    context.drawImage(video, source.x, source.y, source.width, source.height, 0, 0, canvas.width, canvas.height);
     const image = context.getImageData(0, 0, canvas.width, canvas.height);
     const threshold = binarize ? ocrOtsuThreshold(image) : 0;
     for (let i = 0; i < image.data.length; i += 4) {
@@ -1345,13 +1385,94 @@ textarea.field { resize: vertical; line-height: 1.55; }
     $('ocrVideoInput').disabled = busy;
     $('ocrLanguage').disabled = busy;
     $('ocrInterval').disabled = busy;
-    $('ocrRoi').disabled = busy;
     $('ocrBinarize').disabled = busy;
     $('ocrCorrections').disabled = busy;
+    ['X', 'Y', 'W', 'H'].forEach((axis) => {
+      $('ocrCrop' + axis).disabled = busy || !$('ocrVideo').videoWidth;
+    });
+    $('ocrCropBox').style.pointerEvents = busy ? 'none' : 'auto';
   }
-  $('ocrRoi').addEventListener('input', () => {
-    $('ocrRoiValue').textContent = $('ocrRoi').value + '%';
+
+  function ocrSyncCropOverlay() {
+    const video = $('ocrVideo');
+    const stage = $('ocrVideoStage');
+    const overlay = $('ocrCropOverlay');
+    if (!video.videoWidth || !video.videoHeight) {
+      overlay.hidden = true;
+      return;
+    }
+    const videoRect = video.getBoundingClientRect();
+    const stageRect = stage.getBoundingClientRect();
+    if (!videoRect.width || !videoRect.height) return;
+    overlay.style.left = (videoRect.left - stageRect.left) + 'px';
+    overlay.style.top = (videoRect.top - stageRect.top) + 'px';
+    overlay.style.width = videoRect.width + 'px';
+    overlay.style.height = videoRect.height + 'px';
+    overlay.hidden = false;
+    ocrSetCrop(ocrCrop);
+  }
+
+  function ocrSetCrop(nextCrop) {
+    ocrCrop = ocrClampCrop(nextCrop);
+    for (const axis of ['X', 'Y', 'W', 'H']) {
+      const key = axis.toLowerCase();
+      const field = $('ocrCrop' + axis);
+      field.value = String(ocrCrop[key]);
+      field.max = String(axis === 'X' ? 100 - ocrCrop.w : axis === 'Y' ? 100 - ocrCrop.h : 100);
+    }
+    const box = $('ocrCropBox');
+    box.style.left = ocrCrop.x + '%';
+    box.style.top = ocrCrop.y + '%';
+    box.style.width = ocrCrop.w + '%';
+    box.style.height = ocrCrop.h + '%';
+    box.setAttribute('aria-label', 'Vùng OCR: X ' + ocrCrop.x + '%, Y ' + ocrCrop.y +
+      '%, rộng ' + ocrCrop.w + '%, cao ' + ocrCrop.h + '%. Kéo để di chuyển hoặc dùng các nút tròn để đổi kích thước.');
+  }
+
+  function ocrUpdateCropFromField(field) {
+    if (field.value === '') return;
+    const axis = field.id.slice(-1).toLowerCase();
+    ocrSetCrop({ ...ocrCrop, [axis]: Number(field.value) });
+  }
+
+  ['X', 'Y', 'W', 'H'].forEach((axis) => {
+    $('ocrCrop' + axis).addEventListener('input', (event) => ocrUpdateCropFromField(event.currentTarget));
   });
+
+  let ocrCropPointer = null;
+  const ocrCropBox = $('ocrCropBox');
+  ocrCropBox.addEventListener('pointerdown', (event) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    const handleElement = event.target.closest('[data-crop-handle]');
+    const handle = handleElement ? handleElement.dataset.cropHandle : 'move';
+    event.preventDefault();
+    ocrCropPointer = { pointerId: event.pointerId, handle, startX: event.clientX, startY: event.clientY, crop: { ...ocrCrop } };
+    ocrCropBox.setPointerCapture(event.pointerId);
+  });
+  ocrCropBox.addEventListener('pointermove', (event) => {
+    if (!ocrCropPointer || ocrCropPointer.pointerId !== event.pointerId) return;
+    const rect = $('ocrVideo').getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const deltaX = (event.clientX - ocrCropPointer.startX) / rect.width * 100;
+    const deltaY = (event.clientY - ocrCropPointer.startY) / rect.height * 100;
+    ocrSetCrop(ocrAdjustCropFromPointer(ocrCropPointer.crop, ocrCropPointer.handle, deltaX, deltaY));
+  });
+  const endOcrCropPointer = (event) => {
+    if (!ocrCropPointer || (event && ocrCropPointer.pointerId !== event.pointerId)) return;
+    const pointerId = ocrCropPointer.pointerId;
+    ocrCropPointer = null;
+    if (ocrCropBox.hasPointerCapture(pointerId)) ocrCropBox.releasePointerCapture(pointerId);
+  };
+  ocrCropBox.addEventListener('pointerup', endOcrCropPointer);
+  ocrCropBox.addEventListener('pointercancel', endOcrCropPointer);
+  ocrCropBox.addEventListener('lostpointercapture', () => { ocrCropPointer = null; });
+  ocrSetCrop(ocrCrop);
+  window.addEventListener('resize', ocrSyncCropOverlay);
+  if (typeof ResizeObserver !== 'undefined') {
+    const cropObserver = new ResizeObserver(ocrSyncCropOverlay);
+    cropObserver.observe($('ocrVideo'));
+    cropObserver.observe($('ocrVideoStage'));
+  }
   $('ocrVideoInput').addEventListener('change', () => {
     const file = $('ocrVideoInput').files && $('ocrVideoInput').files[0];
     if (!file) return;
@@ -1363,6 +1484,10 @@ textarea.field { resize: vertical; line-height: 1.55; }
     if (ocrVideoUrl) URL.revokeObjectURL(ocrVideoUrl);
     ocrVideoUrl = URL.createObjectURL(file);
     $('ocrVideo').src = ocrVideoUrl;
+    ocrCropPointer = null;
+    ocrSetCrop({ x: 0, y: 75, w: 100, h: 25 });
+    $('ocrCropOverlay').hidden = true;
+    ['X', 'Y', 'W', 'H'].forEach((axis) => { $('ocrCrop' + axis).disabled = true; });
     $('ocrFileMeta').textContent = file.name + ' · ' + (file.size / 1048576).toFixed(1) + ' MB';
     $('ocrProgress').textContent = 'Đã chọn video. Đang kiểm tra khả năng đọc video…';
     $('ocrProgressBar').value = 0;
@@ -1373,6 +1498,9 @@ textarea.field { resize: vertical; line-height: 1.55; }
     $('ocrApplyCorrectionsBtn').disabled = true;
   });
   $('ocrVideo').addEventListener('loadedmetadata', () => {
+    ocrSetCrop({ x: 0, y: 75, w: 100, h: 25 });
+    ocrSyncCropOverlay();
+    ocrSetBusy(false);
     $('ocrProgress').textContent = 'Video ' + $('ocrVideo').videoWidth + '×' +
       $('ocrVideo').videoHeight + ' · ' + $('ocrVideo').duration.toFixed(1) +
       ' giây. Sẵn sàng quét.';
@@ -1446,7 +1574,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
     let processed = 0;
     const originalTime = video.currentTime;
     const language = $('ocrLanguage').value;
-    const roi = Number($('ocrRoi').value);
+    const crop = { ...ocrCrop };
     const binarize = $('ocrBinarize').checked;
     const canvas = $('ocrCanvas');
 
@@ -1492,7 +1620,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
         const time = Math.min(index * interval, Math.max(0, duration - 0.04));
         await seek(time);
         if (ocrCancelled) break;
-        ocrPrepareFrame(video, canvas, roi, binarize);
+        ocrPrepareFrame(video, canvas, crop, binarize);
         const result = await ocrWorker.recognize(canvas);
         samples.push({ time, text: result.data.text || '', confidence: result.data.confidence || 0 });
         processed += 1;
@@ -1529,6 +1657,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
       try { video.currentTime = originalTime; } catch (_) {}
       ocrSetBusy(false);
       $('ocrStartBtn').disabled = !video.src || !video.videoWidth;
+      ocrSyncCropOverlay();
     }
   });
 

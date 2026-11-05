@@ -169,7 +169,7 @@ test('three-page navigation exposes Hardsub OCR and preserves existing workspace
   assert.ok(html.includes('id="pageThreeTab" type="button" aria-controls="pageThreeContent">Trích xuất OCR</button>'));
   assert.ok(html.includes('id="pageThreeContent" class="stt-page ocr-page" hidden'));
   assert.ok(html.includes('id="ocrTitle">Trích xuất phụ đề cứng (Hardsub OCR)</h2>'));
-  for (const id of ['ocrVideoInput','ocrLanguage','ocrInterval','ocrRoi','ocrSrtOutput','ocrDownloadBtn']) assert.ok(html.includes('id="' + id + '"'));
+  for (const id of ['ocrVideoInput','ocrLanguage','ocrInterval','ocrCropX','ocrCropY','ocrCropW','ocrCropH','ocrSrtOutput','ocrDownloadBtn']) assert.ok(html.includes('id="' + id + '"'));
   assert.ok(html.includes('window.Tesseract.createWorker'));
   assert.ok(html.includes('function ocrPrepareFrame'));
   assert.ok(html.includes('function ocrBuildCues'));
@@ -223,7 +223,7 @@ test('Hardsub OCR uses a selectable binarization mode, a 150 MB browser limit an
   assert.match(html, /id="ocrBinarize" type="checkbox" checked/);
   assert.ok(html.includes("file.size > 150 * 1024 * 1024"));
   assert.ok(html.includes("corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@5'"));
-  assert.ok(html.includes('ocrPrepareFrame(video, canvas, roi, binarize)'));
+  assert.ok(html.includes('ocrPrepareFrame(video, canvas, crop, binarize)'));
   assert.match(html, /Hãy rà soát SRT trước khi tải xuống/);
 });
 
@@ -311,8 +311,8 @@ test('index HTML is not cached so fixes appear without stale frontend code', () 
 });
 
 test('package and visible UI expose the same semantic version', () => {
-  assert.equal(pkg.version, '1.2.11');
-  assert.match(html, /SRT TRANSLATOR · v1\.2\.11/);
+  assert.equal(pkg.version, '1.2.12');
+  assert.match(html, /SRT TRANSLATOR · v1\.2\.12/);
   assert.match(server, /APP_VERSION/);
 });
 
@@ -522,4 +522,33 @@ test('Page 3 exposes the optional correction dictionary and auto-applies it to O
   assert.ok(html.includes('id="ocrCorrections"'));
   assert.ok(html.includes('id="ocrApplyCorrectionsBtn"'));
   assert.ok(html.includes('ocrApplyCorrectionsToCues(cues,'));
+});
+
+
+test('Hardsub OCR cropper defaults to the bottom quarter and supports bounded pointer movement and resizing', () => {
+  const start = html.indexOf('  function ocrClampCrop(');
+  const end = html.indexOf('  function ocrPrepareFrame(', start);
+  assert.ok(start >= 0 && end > start, 'crop helpers must be extractable');
+  const helpers = new Function(html.slice(start, end) + '; return { ocrClampCrop, ocrAdjustCropFromPointer, ocrCropToSourceRect };')();
+  assert.ok(html.includes('let ocrCrop = { x: 0, y: 75, w: 100, h: 25 }'));
+  assert.deepEqual(helpers.ocrClampCrop({ x: -10, y: 90, w: 60, h: 30 }), { x: 0, y: 70, w: 60, h: 30 });
+  assert.deepEqual(helpers.ocrAdjustCropFromPointer({ x: 20, y: 60, w: 40, h: 25 }, 'move', 15, -10),
+    { x: 35, y: 50, w: 40, h: 25 });
+  assert.deepEqual(helpers.ocrAdjustCropFromPointer({ x: 20, y: 60, w: 40, h: 25 }, 'se', 10, 5),
+    { x: 20, y: 60, w: 50, h: 30 });
+  assert.deepEqual(helpers.ocrAdjustCropFromPointer({ x: 20, y: 60, w: 40, h: 25 }, 'nw', -30, -80),
+    { x: 0, y: 0, w: 60, h: 85 });
+  assert.deepEqual(helpers.ocrCropToSourceRect({ x: 25, y: 50, w: 40, h: 30 }, 1920, 1080),
+    { x: 480, y: 540, width: 768, height: 324 });
+});
+
+test('Hardsub OCR cropper exposes eight mouse/touch resize handles and editable X Y W H fields', () => {
+  for (const id of ['ocrCropOverlay','ocrCropBox','ocrCropX','ocrCropY','ocrCropW','ocrCropH']) {
+    assert.ok(html.includes('id="' + id + '"'));
+  }
+  for (const handle of ['nw','n','ne','e','se','s','sw','w']) assert.ok(html.includes('data-crop-handle="' + handle + '"'));
+  assert.ok(html.includes('touch-action:none'));
+  assert.ok(html.includes('pointerdown'));
+  assert.ok(html.includes('pointermove'));
+  assert.ok(html.includes('#20A7FF'));
 });
