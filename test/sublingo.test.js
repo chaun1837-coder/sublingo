@@ -162,16 +162,20 @@ test('backend preserves upstream status codes for retry decisions', () => {
 });
 
 
-test('two-page navigation keeps all existing features on page one and Page 2 contains the speech-to-text workspace', () => {
-  assert.match(html, /id="pageOneTab"/);
+test('three-page navigation keeps Page 3 blank and preserves the Page 1 and Page 2 workspaces', () => {
   assert.match(html, /id="pageOneTab"[^>]*>Dịch phụ đề SRT<\/button>/);
   assert.match(html, /id="pageTwoTab"[^>]*>Tạo phụ đề AI<\/button>/);
+  assert.match(html, /id="pageThreeTab"[^>]*>Trang 3<\/button>/);
   assert.match(html, /id="pageOneContent"/);
   assert.match(html, /id="pageTwoContent" class="stt-page" hidden/);
+  assert.match(html, /<section id="pageThreeContent" hidden aria-labelledby="pageThreeTab"><\/section>/);
   assert.match(html, /function showPage\(pageNumber\)/);
   assert.match(html, /\$\('pageOneContent'\)\.hidden = !isPageOne/);
-  assert.match(html, /\$\('pageTwoContent'\)\.hidden = isPageOne/);
+  assert.match(html, /\$\('pageTwoContent'\)\.hidden = !isPageTwo/);
+  assert.match(html, /\$\('pageThreeContent'\)\.hidden = !isPageThree/);
+  assert.match(html, /\$\('pageThreeTab'\)\.addEventListener\('click', \(\) => showPage\(3\)\)/);
   assert.ok(html.indexOf('id="pageOneTab"') < html.indexOf('id="pageTwoTab"'));
+  assert.ok(html.indexOf('id="pageTwoTab"') < html.indexOf('id="pageThreeTab"'));
   assert.ok(html.indexOf('id="pageOneContent"') < html.indexOf('Tải video đa nền tảng'));
   assert.ok(html.indexOf('id="pageOneContent"') < html.indexOf('id="translateBtn"'));
   assert.match(html, /class="stt-layout"/);
@@ -263,8 +267,8 @@ test('index HTML is not cached so fixes appear without stale frontend code', () 
 });
 
 test('package and visible UI expose the same semantic version', () => {
-  assert.equal(pkg.version, '1.2.5');
-  assert.match(html, /SRT TRANSLATOR · v1\.2\.5/);
+  assert.equal(pkg.version, '1.2.6');
+  assert.match(html, /SRT TRANSLATOR · v1\.2\.6/);
   assert.match(server, /APP_VERSION/);
 });
 
