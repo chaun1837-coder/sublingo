@@ -137,21 +137,22 @@ test('all static element references exist and inline JavaScript parses', () => {
   for (const script of scripts) assert.doesNotThrow(() => new Script(script[1]));
 });
 
-test('three-page navigation keeps Page 3 separate and contains no Hardsub OCR', () => {
+test('three-page navigation keeps Page 3 as an empty placeholder', () => {
   for (const id of ['pageOneTab','pageTwoTab','pageThreeTab','pageOneContent','pageTwoContent','pageThreeContent']) {
     assert.ok(html.includes('id="' + id + '"'));
   }
-  assert.match(html, /<button class="page-tab" id="pageThreeTab" type="button" aria-controls="pageThreeContent">Tối ưu nội dung<\/button>/);
-  assert.match(html, /id="socialTranscript"/);
+  assert.match(html, /<button class="page-tab" id="pageThreeTab" type="button" aria-controls="pageThreeContent">Trang 3<\/button>/);
+  assert.match(html, /<section id="pageThreeContent" hidden aria-label="Trang 3"><\/section>/);
   assert.match(html, /const isPageThree = pageNumber === 3/);
   assert.match(html, /\$\('pageThreeContent'\)\.hidden = !isPageThree/);
-  assert.match(html, /\$\('pageThreeTab'\)\.addEventListener\('click', \(\) => \{ syncSocialTranscript\(\); showPage\(3\); \}\)/);
-  assert.doesNotMatch(html, /Hardsub OCR|tesseract\.js|function ocrPrepareFrame/);
+  assert.match(html, /\$\('pageThreeTab'\)\.addEventListener\('click', \(\) => showPage\(3\)\)/);
+  assert.doesNotMatch(html, /social[A-Z]|social-|social_|Hardsub OCR|tesseract\.js|function ocrPrepareFrame/i);
   assert.match(html, /function showPage\(pageNumber\)/);
   assert.match(html, /showPage\(1\)/);
   assert.match(html, /showPage\(2\)/);
   assert.match(html, /showPage\(3\)/);
 });
+
 
 test('translation progress uses an explicit completion flag, including for unchanged text', () => {
   assert.match(html, /translated: false/);
@@ -454,66 +455,15 @@ test('FFmpeg audio encoding is limited to one worker thread', () => {
 
 
 
-test('Page 3 social optimizer supports customizable title length and video-aware style', () => {
-  assert.match(html, /<h2 id="socialTitle">Trợ lý nội dung đa nền tảng<\/h2>/);
-  assert.match(html, /tạo tiêu đề, mô tả, hashtag và caption phù hợp cho YouTube Shorts, TikTok và Facebook Reels/);
-  for (const id of ['socialSyncBtn','socialGenre','socialReferenceTitles','socialTemperature','socialMinTitleWords','socialMaxTitleWords','socialYoutubeTab','socialTiktokTab','socialFacebookTab']) assert.ok(html.includes('id="' + id + '"'));
-  assert.match(html, /value="auto" selected>✨ Tự động nhận diện/);
-  assert.match(html, /value="auto" selected>✨ Tự động theo nội dung video/);
-  assert.ok(html.includes('value="romance">Tình cảm / lãng mạn / ngôn tình'));
-  assert.ok(server.includes("bao gồm chuyện tình yêu hiện đại, cổ trang, thanh xuân"));
-  assert.doesNotMatch(html, /Link YouTube tham khảo/);
-  assert.match(html, /genre:\$\('socialGenre'\)\.value/);
-  assert.match(server, /genre: z\.enum\(\['auto', 'anime', 'romance', 'action', 'isekai', 'fantasy', 'horror', 'comedy', 'drama', 'other'\]\)/);
-  assert.match(server, /Thể loại video:/);
-  assert.match(html, /value="3">/);
-  assert.match(html, /value="7">/);
-  assert.match(html, /Độ dài tiêu đề \(số từ\)/);
-  assert.doesNotMatch(html, /Độ dài tiêu đề YouTube \(số từ\)/);
-  assert.match(html, /minTitleWords,maxTitleWords/);
-  assert.match(server, /app\.post\('\/api\/social-optimize'/);
-  assert.match(server, /gemini-3\.8-flash:generateContent/);
-  assert.match(server, /temperature: input\.temperature/);
-  assert.match(server, /minTitleWords: z\.number\(\)\.int\(\)\.min\(2\)\.max\(20\)/);
-  assert.match(server, /maxTitleWords: z\.number\(\)\.int\(\)\.min\(2\)\.max\(20\)/);
-  assert.match(server, /input\.minTitleWords \\+ ' đến ' \\+ input\.maxTitleWords/);
-  assert.match(server, /title\.length <= 100/);
-  assert.doesNotMatch(server, /slice\(0,70\)/);
-  assert.ok(server.includes('function parseJsonResponse(text)'));
-  assert.ok(server.includes('function normalizeSocialHashtags(values, limit)'));
-  assert.ok(server.includes('HASHTAG: mỗi hashtag phải bắt đầu bằng #'));
-  assert.ok(server.includes('normalizeSocialHashtags(result.youtube.hashtags, 5)'));
-  assert.ok(html.includes('function syncSocialApiKey()'));
-  assert.ok(html.includes("$('sttApiKey').value.trim()||$('apiKey').value.trim()||$('socialApiKey').value.trim()||loadSavedKey('gemini')"));
-  assert.ok(server.includes("else if (char === '\\\\') escaped = true;"));
-  assert.ok(html.includes('syncSocialTranscript(); syncSocialApiKey(); showPage(3)'));
-  assert.ok(html.includes('max-height:min(65vh,560px);overflow-y:auto'));
+test('Page 3 social optimizer UI and backend endpoint are fully removed', () => {
+  assert.doesNotMatch(html, /social[A-Z]|social-|social_|api\/social-optimize/i);
+  assert.doesNotMatch(server, /socialOptimize|MAX_SOCIAL_ANALYSIS_CHARS|normalizeSocialHashtags|api\/social-optimize/i);
+  assert.match(html, /<section id="pageThreeContent" hidden aria-label="Trang 3"><\/section>/);
 });
 
-
-test('Page 3 caches platform outputs, compacts long transcripts, and shows loading skeletons', () => {
-  assert.ok(html.includes('const SOCIAL_ANALYSIS_CHAR_LIMIT=9000'));
-  assert.ok(html.includes('const SOCIAL_CACHE_LIMIT=4'));
-  assert.ok(html.includes('const socialResultsCache=new Map()'));
-  assert.ok(html.includes('function compactSocialTranscript(value,limit=SOCIAL_ANALYSIS_CHAR_LIMIT)'));
-  assert.ok(html.includes('function renderSocialSkeleton()'));
-  assert.ok(html.includes('socialResultsCache.has(cacheKey)'));
-  assert.ok(html.includes('cacheSocialResult(cacheKey,socialResults)'));
-  assert.ok(html.includes('aria-busy'));
-  assert.ok(html.includes('@keyframes socialSkeletonShimmer'));
-  assert.ok(server.includes('const MAX_SOCIAL_ANALYSIS_CHARS = 9000'));
-  assert.ok(server.includes('function compactSocialTranscript(value)'));
-  assert.ok(server.includes('const analysisContent = compactSocialTranscript(input.content)'));
-  assert.ok(server.includes('analysisContent'));
-});
-
-
-test('Page 3 shows an accessible indeterminate progress bar while AI is generating', () => {
-  assert.ok(html.includes('id="socialProgress"'));
-  assert.ok(html.includes('id="socialProgressStatus"'));
-  assert.ok(html.includes('role="progressbar" aria-label="Tiến độ tạo nội dung AI"'));
-  assert.ok(html.includes('function setSocialProgress(active,message)'));
-  assert.ok(html.includes('setSocialProgress(true,compacted.wasCompacted'));
-  assert.ok(html.includes('finally{setSocialProgress(false)'));
-  assert.ok(html.includes('@keyframes socialProgressMove'));
+test('release version is synchronized across package, backend, UI, and README', () => {
+  assert.equal(pkg.version, '1.2.28');
+  assert.match(server, /APP_VERSION = process\.env\.npm_package_version \|\| '1.2.28'/);
+  assert.match(html, /v1\.2\.28/);
+  assert.match(readme, /Phiên bản hiện tại:\*\* 1\.2\.28/);
 });
