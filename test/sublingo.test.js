@@ -474,6 +474,8 @@ test('Page 3 social optimizer supports customizable title length and video-aware
   assert.ok(server.includes('HASHTAG: mỗi hashtag phải bắt đầu bằng #'));
   assert.ok(server.includes('normalizeSocialHashtags(result.youtube.hashtags, 5)'));
   assert.ok(html.includes('function syncSocialApiKey()'));
+  assert.ok(html.includes("$('sttApiKey').value.trim()||$('apiKey').value.trim()||$('socialApiKey').value.trim()||loadSavedKey('gemini')"));
+  assert.ok(server.includes("else if (char === '\\\\') escaped = true;"));
   assert.ok(html.includes('syncSocialTranscript(); syncSocialApiKey(); showPage(3)'));
   assert.ok(html.includes('max-height:min(65vh,560px);overflow-y:auto'));
 });
