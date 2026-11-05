@@ -136,18 +136,20 @@ test('all static element references exist and inline JavaScript parses', () => {
   for (const script of scripts) assert.doesNotThrow(() => new Script(script[1]));
 });
 
-test('two-page navigation keeps SRT translation and AI transcription without Hardsub OCR', () => {
-  assert.ok(html.includes('id="pageOneTab"'));
-  assert.ok(html.includes('id="pageTwoTab"'));
-  assert.ok(html.includes('id="pageOneContent"'));
-  assert.ok(html.includes('id="pageTwoContent"'));
-  for (const retiredId of ['pageThreeTab','pageThreeContent','ocrVideoInput','ocrSrtOutput','ocrStartBtn']) {
-    assert.ok(!html.includes('id="' + retiredId + '"'));
+test('three-page navigation keeps Page 3 intentionally blank and contains no Hardsub OCR', () => {
+  for (const id of ['pageOneTab','pageTwoTab','pageThreeTab','pageOneContent','pageTwoContent','pageThreeContent']) {
+    assert.ok(html.includes('id="' + id + '"'));
   }
+  assert.match(html, /<button class="page-tab" id="pageThreeTab" type="button" aria-controls="pageThreeContent">Trang 3<\/button>/);
+  assert.match(html, /<section id="pageThreeContent" hidden aria-label="Trang 3"><\/section>/);
+  assert.match(html, /const isPageThree = pageNumber === 3/);
+  assert.match(html, /\$\('pageThreeContent'\)\.hidden = !isPageThree/);
+  assert.match(html, /\$\('pageThreeTab'\)\.addEventListener\('click', \(\) => showPage\(3\)\)/);
   assert.doesNotMatch(html, /Hardsub OCR|tesseract\.js|function ocrPrepareFrame/);
   assert.match(html, /function showPage\(pageNumber\)/);
   assert.match(html, /showPage\(1\)/);
   assert.match(html, /showPage\(2\)/);
+  assert.match(html, /showPage\(3\)/);
 });
 
 test('translation progress uses an explicit completion flag, including for unchanged text', () => {
@@ -259,8 +261,8 @@ test('index HTML is not cached so fixes appear without stale frontend code', () 
 });
 
 test('package and visible UI expose the same semantic version', () => {
-  assert.equal(pkg.version, '1.2.18');
-  assert.match(html, /SRT TRANSLATOR · v1\.2\.16/);
+  assert.equal(pkg.version, '1.2.19');
+  assert.match(html, /SRT TRANSLATOR · v1\.2\.19/);
   assert.match(server, /APP_VERSION/);
 });
 
