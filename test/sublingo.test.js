@@ -449,6 +449,8 @@ test('FFmpeg audio encoding is limited to one worker thread', () => {
 test('Page 3 social optimizer supports customizable title length and video-aware style', () => {
   for (const id of ['socialSyncBtn','socialGenre','socialReferenceTitles','socialTemperature','socialMinTitleWords','socialMaxTitleWords','socialYoutubeTab','socialTiktokTab','socialFacebookTab']) assert.ok(html.includes('id="' + id + '"'));
   assert.match(html, /value="auto" selected>✨ Tự động nhận diện/);
+  assert.match(html, /value="auto" selected>✨ Tự động theo nội dung video/);
+  assert.doesNotMatch(html, /Link YouTube tham khảo/);
   assert.match(html, /genre:\$\('socialGenre'\)\.value/);
   assert.match(server, /genre: z\.enum\(\['auto', 'anime', 'romance', 'action', 'isekai', 'fantasy', 'horror', 'comedy', 'drama', 'other'\]\)/);
   assert.match(server, /Thể loại video:/);
