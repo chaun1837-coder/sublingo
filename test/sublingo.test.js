@@ -311,8 +311,8 @@ test('index HTML is not cached so fixes appear without stale frontend code', () 
 });
 
 test('package and visible UI expose the same semantic version', () => {
-  assert.equal(pkg.version, '1.2.12');
-  assert.match(html, /SRT TRANSLATOR · v1\.2\.12/);
+  assert.equal(pkg.version, '1.2.13');
+  assert.match(html, //SRT TRANSLATOR · v1\\.2\\.13//);
   assert.match(server, /APP_VERSION/);
 });
 
@@ -540,6 +540,16 @@ test('Hardsub OCR cropper defaults to the bottom quarter and supports bounded po
     { x: 0, y: 0, w: 60, h: 85 });
   assert.deepEqual(helpers.ocrCropToSourceRect({ x: 25, y: 50, w: 40, h: 30 }, 1920, 1080),
     { x: 480, y: 540, width: 768, height: 324 });
+});
+
+
+test('Page 3 can expand the video preview across the workspace for accurate OCR crop selection', () => {
+  assert.ok(html.includes('id="ocrGrid" class="ocr-grid"'));
+  assert.ok(html.includes('id="ocrZoomBtn"'));
+  assert.match(html, /\.ocr-grid\.ocr-video-expanded\{grid-template-columns:minmax\(0,1fr\)\}/);
+  assert.match(html, /classList\.toggle\('ocr-video-expanded', expanded\)/);
+  assert.match(html, /requestAnimationFrame\(ocrSyncCropOverlay\)/);
+  assert.match(html, /max-height:min\(70vh,760px\)/);
 });
 
 test('Hardsub OCR cropper exposes eight mouse/touch resize handles and editable X Y W H fields', () => {
