@@ -166,6 +166,7 @@ test('three-page navigation exposes Hardsub OCR and preserves existing workspace
   assert.ok(html.includes('id="pageOneTab"'));
   assert.ok(html.includes('id="pageTwoTab"'));
   assert.ok(html.includes('id="pageThreeTab"'));
+  assert.ok(html.includes('id="pageThreeTab" type="button" aria-controls="pageThreeContent">Trích xuất OCR</button>'));
   assert.ok(html.includes('id="pageThreeContent" class="stt-page ocr-page" hidden'));
   assert.ok(html.includes('id="ocrTitle">Trích xuất phụ đề cứng (Hardsub OCR)</h2>'));
   for (const id of ['ocrVideoInput','ocrLanguage','ocrInterval','ocrRoi','ocrSrtOutput','ocrDownloadBtn']) assert.ok(html.includes('id="' + id + '"'));
@@ -178,6 +179,54 @@ test('three-page navigation exposes Hardsub OCR and preserves existing workspace
   assert.ok(html.includes('id="sttVideoInput"'));
   assert.ok(html.includes('id="sttCaptionList"'));
 });
+
+
+test('Hardsub OCR merges a single missed frame, filters one-frame noise and preserves multiline SRT', () => {
+  const start = html.indexOf('  function ocrNormalize(');
+  const end = html.indexOf('  function ocrSetBusy(', start);
+  assert.ok(start >= 0 && end > start, 'OCR helper functions should be extractable');
+  const helpers = new Function(html.slice(start, end) + '; return { ocrNormalize, ocrSimilarity, ocrBuildCues, ocrToSrt };')();
+  assert.equal(helpers.ocrNormalize('Xin chào!'), helpers.ocrNormalize('Xin chào'));
+  assert.equal(helpers.ocrSimilarity('Xin chào', 'Xin chào!'), 1);
+
+  const cues = helpers.ocrBuildCues([
+    { time: 0, text: 'Xin chào\nmọi người', confidence: 95 },
+    { time: 0.5, text: 'Xin chào\nmọi người', confidence: 94 },
+    { time: 1, text: '', confidence: 0 },
+    { time: 1.5, text: 'Xin chào\nmọi người', confidence: 93 },
+    { time: 2, text: 'Câu tiếp theo', confidence: 96 },
+    { time: 2.5, text: 'Câu tiếp theo', confidence: 95 },
+    { time: 3, text: '', confidence: 0 }
+  ], 0.5, 4);
+
+  assert.equal(cues.length, 2);
+  assert.equal(cues[0].start, 0);
+  assert.equal(cues[0].end, 2);
+  assert.equal(cues[0].text, 'Xin chào\nmọi người');
+  assert.equal(cues[1].start, 2);
+  assert.equal(cues[1].end, 3);
+
+  const srt = helpers.ocrToSrt(cues);
+  assert.match(srt, /00:00:00,000 --> 00:00:02,000/);
+  assert.ok(srt.includes('Xin chào\nmọi người'));
+  assert.ok(srt.endsWith('\n'));
+  assert.equal(helpers.ocrBuildCues([
+    { time: 0, text: 'Nhiễu một khung hình', confidence: 70 },
+    { time: 0.25, text: '', confidence: 0 }
+  ], 0.5, 1).length, 0);
+  assert.equal(helpers.ocrBuildCues([
+    { time: 0, text: 'Câu ngắn nhưng rõ', confidence: 95 }
+  ], 0.25, 0.5).length, 1);
+});
+
+test('Hardsub OCR uses a selectable binarization mode, a 150 MB browser limit and the full Tesseract core directory', () => {
+  assert.match(html, /id="ocrBinarize" type="checkbox" checked/);
+  assert.match(html, /file\\.size > 150 \\* 1024 \\* 1024/);
+  assert.match(html, /corePath:'https:\\/\\/cdn\\.jsdelivr\\.net\\/npm\\/tesseract\\.js-core@5'/);
+  assert.match(html, /ocrPrepareFrame\\(video,canvas,roi,binarize\\)/);
+  assert.match(html, /Hãy rà soát SRT trước khi tải xuống/);
+});
+
 
 test('Gemini Flash-Lite supports user-selectable thinking levels', () => {
   assert.match(html, /id="thinkingLevel"/);
@@ -262,8 +311,8 @@ test('index HTML is not cached so fixes appear without stale frontend code', () 
 });
 
 test('package and visible UI expose the same semantic version', () => {
-  assert.equal(pkg.version, '1.2.8');
-  assert.match(html, /SRT TRANSLATOR · v1\.2\.8/);
+  assert.equal(pkg.version, '1.2.9');
+  assert.match(html, /SRT TRANSLATOR · v1\.2\.9/);
   assert.match(server, /APP_VERSION/);
 });
 

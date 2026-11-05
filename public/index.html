@@ -229,7 +229,9 @@ textarea.field { resize: vertical; line-height: 1.55; }
 @media (max-width: 760px) { .workspace { grid-template-columns: 1fr; } .hero { align-items: flex-start; flex-direction: column; } .topbar { padding-inline: 16px; } .brand-sub { display: none; } .top-actions .btn { padding: 9px 10px; font-size: 11px; } .page { padding-top: 24px; } }
 @media (max-width: 480px) { .cue-card { grid-template-columns: 30px minmax(0, 1fr); gap: 7px; } .cue-content.translation-col { grid-column: 2; } .field-row { grid-template-columns: 1fr; } .bottom-actions { width: 100%; } .bottom-actions .btn { flex: 1; } }
 
-.ocr-grid{display:grid;grid-template-columns:minmax(280px,.85fr) minmax(320px,1.15fr);gap:18px;align-items:start}.ocr-page .panel-body{display:flex;flex-direction:column;gap:13px}.ocr-file-meta,.ocr-result-meta{font-size:12px;color:var(--muted);overflow-wrap:anywhere}.ocr-video-wrap{background:#10131b;border-radius:12px;overflow:hidden;min-height:80px}.ocr-video-wrap video{display:block;width:100%;max-height:280px}.ocr-actions{display:flex;gap:9px;flex-wrap:wrap}.ocr-progress{font-size:12px;color:var(--muted);min-height:18px}.ocr-page progress{width:100%;height:9px;accent-color:var(--accent)}.ocr-help{font-size:11px;line-height:1.55;color:var(--muted)}.ocr-output{width:100%;min-height:420px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;line-height:1.55;white-space:pre;tab-size:2}.ocr-page input[type=range]{padding:0;accent-color:var(--accent)}@media(max-width:850px){.ocr-grid{grid-template-columns:1fr}.ocr-output{min-height:320px}}
+.ocr-grid{display:grid;grid-template-columns:minmax(280px,.85fr) minmax(320px,1.15fr);gap:18px;align-items:start}.ocr-page .panel-body{display:flex;flex-direction:column;gap:13px}.ocr-file-meta,.ocr-result-meta{font-size:12px;color:var(--muted);overflow-wrap:anywhere}.ocr-video-wrap{background:#10131b;border-radius:12px;overflow:hidden;min-height:80px}.ocr-video-wrap video{display:block;width:100%;max-height:280px}.ocr-actions{display:flex;gap:9px;flex-wrap:wrap}.ocr-progress{font-size:12px;color:var(--muted);min-height:18px}.ocr-page progress{width:100%;height:9px;accent-color:var(--accent)}.ocr-help{font-size:11px;line-height:1.55;color:var(--muted)}.ocr-output{width:100%;min-height:420px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;line-height:1.55;white-space:pre;tab-size:2}.ocr-page input[type=range]{padding:0;accent-color:var(--accent)}
+.ocr-check{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px}
+.ocr-check input{width:15px;height:15px;accent-color:var(--accent)}@media(max-width:850px){.ocr-grid{grid-template-columns:1fr}.ocr-output{min-height:320px}}
 </style>
 </head>
 <body>
@@ -237,7 +239,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
   <header class="topbar">
     <div class="brand">
       <div class="logo-mark" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 5.5C4 4.67 4.67 4 5.5 4h13c.83 0 1.5.67 1.5 1.5v9c0 .83-.67 1.5-1.5 1.5H11l-4.5 4v-4H5.5C4.67 16 4 15.33 4 14.5v-9Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 8.5h8M8 11.5h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
-      <div><div class="brand-name">SubLingo</div><div class="brand-sub">SUBTITLE WORKSPACE · SRT TRANSLATOR · v1.2.8</div></div>
+      <div><div class="brand-name">SubLingo</div><div class="brand-sub">SUBTITLE WORKSPACE · SRT TRANSLATOR · v1.2.9</div></div>
     </div>
     <div class="top-actions">
       <div class="google-login-wrap" id="googleSignInButton"></div>
@@ -254,7 +256,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
     <nav class="page-tabs" aria-label="Chuyển trang">
       <button class="page-tab active" id="pageOneTab" type="button" aria-current="page" aria-controls="pageOneContent">Dịch phụ đề SRT</button>
       <button class="page-tab" id="pageTwoTab" type="button" aria-controls="pageTwoContent">Tạo phụ đề AI</button>
-      <button class="page-tab" id="pageThreeTab" type="button" aria-controls="pageThreeContent">Trang 3</button>
+      <button class="page-tab" id="pageThreeTab" type="button" aria-controls="pageThreeContent">Trích xuất OCR</button>
     </nav>
     <section id="pageOneContent">
     <section class="panel" style="margin-bottom:20px">
@@ -486,6 +488,8 @@ textarea.field { resize: vertical; line-height: 1.55; }
           <div class="stt-field-group"><label class="form-label" for="ocrLanguage">Ngôn ngữ phụ đề trong video</label><select class="field" id="ocrLanguage"><option value="vie">Tiếng Việt</option><option value="eng">Tiếng Anh</option><option value="vie+eng">Tiếng Việt + Anh</option><option value="chi_sim">Tiếng Trung giản thể</option><option value="chi_tra">Tiếng Trung phồn thể</option><option value="jpn">Tiếng Nhật</option><option value="kor">Tiếng Hàn</option><option value="tha">Tiếng Thái</option><option value="fra">Tiếng Pháp</option><option value="spa">Tiếng Tây Ban Nha</option><option value="deu">Tiếng Đức</option></select></div>
           <div class="stt-field-group"><label class="form-label" for="ocrInterval">Khoảng cách quét khung hình</label><select class="field" id="ocrInterval"><option value="0.25">0,25 giây · chính xác hơn, xử lý lâu hơn</option><option value="0.5" selected>0,5 giây · khuyến nghị</option><option value="1">1 giây · nhanh hơn</option></select></div>
           <div class="stt-field-group"><label class="form-label" for="ocrRoi">Vùng tìm phụ đề: <strong id="ocrRoiValue">25%</strong> phía dưới</label><input class="field" id="ocrRoi" type="range" min="15" max="40" step="5" value="25"><small class="ocr-help">Có thể tăng vùng nếu video đặt phụ đề cao hơn bình thường.</small></div>
+          <label class="ocr-check"><input id="ocrBinarize" type="checkbox" checked> Nhị phân hóa trắng/đen và tăng tương phản</label>
+          <small class="ocr-help">Bỏ chọn nếu chữ có màu, nền phức tạp hoặc ảnh nhị phân làm mất nét chữ.</small>
           <div class="ocr-actions"><button class="btn btn-primary" id="ocrStartBtn" type="button" disabled>✦ Bắt đầu trích xuất</button><button class="btn btn-ghost" id="ocrCancelBtn" type="button" disabled>Hủy</button></div>
           <div class="ocr-progress" id="ocrProgress" role="status" aria-live="polite">Chọn video để bắt đầu.</div><progress id="ocrProgressBar" max="100" value="0"></progress>
           <small class="ocr-help">Lần đầu sử dụng, trình duyệt sẽ tải mô hình OCR theo ngôn ngữ đã chọn. Thời gian xử lý phụ thuộc độ dài video và cấu hình máy tính.</small>
@@ -493,7 +497,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
         <section class="panel"><div class="panel-head"><div class="panel-title"><span class="step">02</span> Kết quả phụ đề SRT</div></div><div class="panel-body">
           <div class="ocr-result-meta" id="ocrResultMeta">Chưa có kết quả</div><textarea class="field ocr-output" id="ocrSrtOutput" rows="22" spellcheck="false" placeholder="Phụ đề OCR sẽ xuất hiện ở đây. Bạn có thể chỉnh sửa nội dung và mốc thời gian trước khi tải xuống." aria-label="Nội dung SRT có thể chỉnh sửa"></textarea>
           <div class="ocr-actions"><button class="btn btn-primary" id="ocrDownloadBtn" type="button" disabled>↓ Tải file SRT</button><button class="btn btn-ghost" id="ocrResetBtn" type="button" disabled>Xóa kết quả</button></div>
-          <small class="ocr-help">Thời gian được ước lượng theo khung hình đã quét. Hãy rà soát các câu ngắn, chữ hiệu ứng hoặc phụ đề xuất hiện rất nhanh trước khi dùng.</small>
+          <small class="ocr-help">Mốc đầu/cuối được suy ra từ các khung hình đã quét, nên độ phân giải thời gian phụ thuộc bước 0,25 / 0,5 / 1 giây; không thể bảo đảm chính xác tuyệt đối từng mili-giây. Hãy rà soát câu ngắn, chữ hiệu ứng và mốc thời gian trước khi dùng.</small>
         </div></section>
       </div><canvas id="ocrCanvas" hidden></canvas>
     </section>
@@ -1120,30 +1124,340 @@ textarea.field { resize: vertical; line-height: 1.55; }
   let ocrVideoUrl = '';
   let ocrCancelled = false;
   let ocrWorker = null;
-  function ocrNormalize(value) { return String(value || '').normalize('NFKC').toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, ''); }
-  function ocrSimilarity(left, right) {
-    const a=Array.from(ocrNormalize(left)), b=Array.from(ocrNormalize(right));
-    if(!a.length||!b.length)return 0;
-    let prev=Array.from({length:b.length+1},(_,i)=>i);
-    for(let i=1;i<=a.length;i++){const cur=[i];for(let j=1;j<=b.length;j++)cur[j]=Math.min(cur[j-1]+1,prev[j]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));prev=cur;}
-    return 1-prev[b.length]/Math.max(a.length,b.length);
+
+  function ocrNormalize(value) {
+    return String(value || '').normalize('NFKC').toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
   }
-  function ocrClock(seconds){const ms=Math.max(0,Math.round(seconds*1000)),h=Math.floor(ms/3600000),m=Math.floor(ms%3600000/60000),s=Math.floor(ms%60000/1000);return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')+','+String(ms%1000).padStart(3,'0');}
-  function ocrOtsuThreshold(image){const hist=new Uint32Array(256),data=image.data;let sum=0;for(let i=0;i<data.length;i+=4){const g=Math.round(data[i]*.299+data[i+1]*.587+data[i+2]*.114);hist[g]++;sum+=g;}let bg=0,bgSum=0,best=-1,threshold=150;const total=data.length/4;for(let i=0;i<256;i++){bg+=hist[i];if(!bg)continue;const fg=total-bg;if(!fg)break;bgSum+=i*hist[i];const variance=bg*fg*Math.pow(bgSum/bg-(sum-bgSum)/fg,2);if(variance>best){best=variance;threshold=i;}}return threshold;}
-  function ocrPrepareFrame(video,canvas,roi){const w=video.videoWidth,h=video.videoHeight,cropH=Math.max(1,Math.round(h*roi/100)),scale=Math.min(2.2,1600/w);canvas.width=Math.max(1,Math.round(w*scale));canvas.height=Math.max(1,Math.round(cropH*scale));const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.drawImage(video,0,h-cropH,w,cropH,0,0,canvas.width,canvas.height);const image=ctx.getImageData(0,0,canvas.width,canvas.height),threshold=ocrOtsuThreshold(image);for(let i=0;i<image.data.length;i+=4){const g=image.data[i]*.299+image.data[i+1]*.587+image.data[i+2]*.114,v=g>=threshold?255:0;image.data[i]=v;image.data[i+1]=v;image.data[i+2]=v;}ctx.putImageData(image,0,0);return canvas;}
-  function ocrBuildCues(samples,interval,duration){const groups=[];let current=null;const close=end=>{if(!current)return;current.end=Math.max(current.start+interval,Math.min(duration,end));if(current.count>=2&&current.end-current.start>=interval*.75)groups.push(current);current=null;};for(const sample of samples){const text=String(sample.text||'').replace(/\r/g,'').split('\n').map(x=>x.trim()).filter(Boolean).join('\n');if(!ocrNormalize(text)){close(sample.time);continue;}if(current&&ocrSimilarity(current.text,text)>=.78){current.end=sample.time+interval;current.count++;if((sample.confidence||0)>current.confidence||text.length>current.text.length){current.text=text;current.confidence=sample.confidence||0;}}else{close(sample.time);current={start:sample.time,end:sample.time+interval,text,confidence:sample.confidence||0,count:1};}}close(duration);return groups.map(g=>({start:Math.max(0,g.start),end:Math.max(g.start+.1,g.end),text:g.text}));}
-  function ocrToSrt(cues){return cues.map((c,i)=>(i+1)+'\n'+ocrClock(c.start)+' --> '+ocrClock(c.end)+'\n'+c.text).join('\n\n')+(cues.length?'\n':'');}
-  function ocrSetBusy(busy){$('ocrStartBtn').disabled=busy||!$('ocrVideo').src;$('ocrCancelBtn').disabled=!busy;$('ocrVideoInput').disabled=busy;$('ocrLanguage').disabled=busy;$('ocrInterval').disabled=busy;$('ocrRoi').disabled=busy;}
-  $('ocrRoi').addEventListener('input',()=>{$('ocrRoiValue').textContent=$('ocrRoi').value+'%';});
-  $('ocrVideoInput').addEventListener('change',()=>{const file=$('ocrVideoInput').files&&$('ocrVideoInput').files[0];if(!file)return;if(ocrVideoUrl)URL.revokeObjectURL(ocrVideoUrl);ocrVideoUrl=URL.createObjectURL(file);$('ocrVideo').src=ocrVideoUrl;$('ocrFileMeta').textContent=file.name+' · '+(file.size/1048576).toFixed(1)+' MB';$('ocrProgress').textContent='Đã chọn video. Đang kiểm tra khả năng đọc video…';$('ocrProgressBar').value=0;$('ocrSrtOutput').value='';$('ocrResultMeta').textContent='Chưa có kết quả';$('ocrDownloadBtn').disabled=true;$('ocrResetBtn').disabled=true;});
-  $('ocrVideo').addEventListener('loadedmetadata',()=>{$('ocrProgress').textContent='Video '+$('ocrVideo').videoWidth+'×'+$('ocrVideo').videoHeight+' · '+$('ocrVideo').duration.toFixed(1)+' giây. Sẵn sàng quét.';$('ocrStartBtn').disabled=false;});
-  $('ocrVideo').addEventListener('error',()=>{$('ocrProgress').textContent='Trình duyệt không đọc được codec video này. Hãy thử MP4 (H.264) hoặc WebM.';$('ocrStartBtn').disabled=true;});
-  $('ocrCancelBtn').addEventListener('click',()=>{ocrCancelled=true;$('ocrProgress').textContent='Đang dừng sau khung hình hiện tại…';});
-  $('ocrResetBtn').addEventListener('click',()=>{$('ocrSrtOutput').value='';$('ocrResultMeta').textContent='Đã xóa kết quả';$('ocrDownloadBtn').disabled=true;$('ocrResetBtn').disabled=true;$('ocrProgressBar').value=0;});
-  $('ocrDownloadBtn').addEventListener('click',()=>{const content=$('ocrSrtOutput').value.trim();if(!content)return;const blob=new Blob(['\uFEFF'+content+'\n'],{type:'application/x-subrip;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a'),name=(($('ocrVideoInput').files||[])[0]?.name||'video').replace(/\.[^.]+$/,'');a.href=url;a.download=name+'_hardsub_ocr.srt';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);});
-  $('ocrStartBtn').addEventListener('click',async()=>{const video=$('ocrVideo');if(!video.src||!Number.isFinite(video.duration)||!video.videoWidth)return;const interval=Number($('ocrInterval').value),duration=video.duration,totalFrames=Math.ceil(duration/interval);if(duration>10800||totalFrames>20000){toast('Video quá dài cho OCR trên trình duyệt. Hãy chia video thành các đoạn ngắn hơn.');return;}if(!window.Tesseract||typeof window.Tesseract.createWorker!=='function'){toast('Không tải được thư viện OCR. Kiểm tra kết nối Internet rồi thử lại.');return;}ocrCancelled=false;ocrSetBusy(true);$('ocrProgressBar').value=0;$('ocrProgress').textContent='Đang tải mô hình OCR…';$('ocrSrtOutput').value='';const samples=[];let processed=0;const originalTime=video.currentTime,language=$('ocrLanguage').value,roi=Number($('ocrRoi').value),canvas=$('ocrCanvas');
-    const seek=time=>new Promise((resolve,reject)=>{if(Math.abs(video.currentTime-time)<.015&&video.readyState>=2)return resolve();let timer;const cleanup=()=>{video.removeEventListener('seeked',ok);video.removeEventListener('error',fail);clearTimeout(timer);};const ok=()=>{cleanup();resolve();};const fail=()=>{cleanup();reject(new Error('Không thể đọc một khung hình video.'));};video.addEventListener('seeked',ok,{once:true});video.addEventListener('error',fail,{once:true});video.currentTime=time;timer=setTimeout(()=>{cleanup();reject(new Error('Video phản hồi quá chậm khi tua khung hình.'));},12000);});
-    try{ocrWorker=await window.Tesseract.createWorker(language,1,{workerPath:'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/worker.min.js',corePath:'https://cdn.jsdelivr.net/npm/tesseract.js-core@5/tesseract-core.wasm.js',langPath:'https://tessdata.projectnaptha.com/4.0.0',logger:m=>{if(m.status==='loading tesseract core')$('ocrProgress').textContent='Đang tải bộ máy OCR…';else if(m.status==='loading language traineddata')$('ocrProgress').textContent='Đang tải dữ liệu ngôn ngữ…';}});await ocrWorker.setParameters({tessedit_pageseg_mode:'6',preserve_interword_spaces:'1'});for(let i=0;i<totalFrames;i++){if(ocrCancelled)break;const time=Math.min(i*interval,Math.max(0,duration-.04));await seek(time);ocrPrepareFrame(video,canvas,roi);const result=await ocrWorker.recognize(canvas);samples.push({time,text:result.data.text||'',confidence:result.data.confidence||0});processed++;const percent=Math.round(processed/totalFrames*100);$('ocrProgressBar').value=percent;$('ocrProgress').textContent='Đã quét '+processed+'/'+totalFrames+' khung hình ('+percent+'%)…';}const cues=ocrBuildCues(samples,interval,duration);$('ocrSrtOutput').value=ocrToSrt(cues);$('ocrResultMeta').textContent=cues.length+' câu phụ đề · '+processed+' khung hình đã quét'+(ocrCancelled?' · Đã dừng theo yêu cầu':'');$('ocrDownloadBtn').disabled=cues.length===0;$('ocrResetBtn').disabled=cues.length===0;$('ocrProgress').textContent=ocrCancelled?'Đã dừng. Kết quả một phần đã được giữ lại.':'Hoàn tất trích xuất. Hãy rà soát SRT trước khi tải xuống.';$('ocrProgressBar').value=processed/totalFrames*100;if(!cues.length)toast('Chưa nhận diện được câu phụ đề ổn định. Thử tăng vùng OCR hoặc chọn đúng ngôn ngữ.');}catch(error){console.error('Hardsub OCR failed:',error);$('ocrProgress').textContent=error.message||'Có lỗi khi xử lý OCR.';toast(error.message||'Không thể trích xuất phụ đề.');}finally{if(ocrWorker){try{await ocrWorker.terminate();}catch{}ocrWorker=null;}try{video.currentTime=originalTime;}catch{}ocrSetBusy(false);$('ocrStartBtn').disabled=!video.src||!video.videoWidth;}});
+  function ocrSimilarity(left, right) {
+    const a = Array.from(ocrNormalize(left));
+    const b = Array.from(ocrNormalize(right));
+    if (!a.length || !b.length) return 0;
+    let previous = Array.from({ length: b.length + 1 }, (_, index) => index);
+    for (let i = 1; i <= a.length; i += 1) {
+      const current = [i];
+      for (let j = 1; j <= b.length; j += 1) {
+        current[j] = Math.min(
+          current[j - 1] + 1,
+          previous[j] + 1,
+          previous[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+        );
+      }
+      previous = current;
+    }
+    return 1 - previous[b.length] / Math.max(a.length, b.length);
+  }
+  function ocrClock(seconds) {
+    const milliseconds = Math.max(0, Math.round(seconds * 1000));
+    const hours = Math.floor(milliseconds / 3600000);
+    const minutes = Math.floor((milliseconds % 3600000) / 60000);
+    const secs = Math.floor((milliseconds % 60000) / 1000);
+    return String(hours).padStart(2, '0') + ':' +
+      String(minutes).padStart(2, '0') + ':' +
+      String(secs).padStart(2, '0') + ',' +
+      String(milliseconds % 1000).padStart(3, '0');
+  }
+  function ocrOtsuThreshold(image) {
+    const histogram = new Uint32Array(256);
+    const data = image.data;
+    let sum = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      const gray = Math.round(data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114);
+      histogram[gray] += 1;
+      sum += gray;
+    }
+    let backgroundWeight = 0;
+    let backgroundSum = 0;
+    let bestVariance = -1;
+    let threshold = 150;
+    const total = data.length / 4;
+    for (let i = 0; i < 256; i += 1) {
+      backgroundWeight += histogram[i];
+      if (!backgroundWeight) continue;
+      const foregroundWeight = total - backgroundWeight;
+      if (!foregroundWeight) break;
+      backgroundSum += i * histogram[i];
+      const variance = backgroundWeight * foregroundWeight *
+        Math.pow(backgroundSum / backgroundWeight - (sum - backgroundSum) / foregroundWeight, 2);
+      if (variance > bestVariance) {
+        bestVariance = variance;
+        threshold = i;
+      }
+    }
+    return threshold;
+  }
+  function ocrPrepareFrame(video, canvas, roi, binarize = true) {
+    const width = video.videoWidth;
+    const height = video.videoHeight;
+    const cropHeight = Math.max(1, Math.round(height * roi / 100));
+    const scale = Math.min(2.2, 1600 / width);
+    canvas.width = Math.max(1, Math.round(width * scale));
+    canvas.height = Math.max(1, Math.round(cropHeight * scale));
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    context.drawImage(video, 0, height - cropHeight, width, cropHeight, 0, 0, canvas.width, canvas.height);
+    const image = context.getImageData(0, 0, canvas.width, canvas.height);
+    const threshold = binarize ? ocrOtsuThreshold(image) : 0;
+    for (let i = 0; i < image.data.length; i += 4) {
+      let gray = image.data[i] * 0.299 + image.data[i + 1] * 0.587 + image.data[i + 2] * 0.114;
+      if (binarize) gray = gray >= threshold ? 255 : 0;
+      else gray = Math.max(0, Math.min(255, 128 + (gray - 128) * 1.25));
+      image.data[i] = gray;
+      image.data[i + 1] = gray;
+      image.data[i + 2] = gray;
+    }
+    context.putImageData(image, 0, 0);
+    return canvas;
+  }
+  function ocrBuildCues(samples, interval, duration) {
+    const groups = [];
+    let current = null;
+    let blankStarted = null;
+
+    const close = (boundary) => {
+      if (!current) return;
+      const end = Math.min(duration, Math.max(current.start + 0.1, boundary));
+      const survivesNoiseFilter =
+        current.count >= 2 ||
+        (interval <= 0.25 && current.count === 1 && current.bestConfidence >= 90 && end - current.start >= interval * 0.75);
+      if (survivesNoiseFilter) {
+        groups.push({
+          start: Math.max(0, current.start),
+          end,
+          text: current.text,
+          confidence: current.bestConfidence,
+          samples: current.count
+        });
+      }
+      current = null;
+      blankStarted = null;
+    };
+    const begin = (sample, text) => {
+      current = {
+        start: sample.time,
+        lastSeen: sample.time,
+        end: Math.min(duration, sample.time + interval),
+        text,
+        bestConfidence: Math.max(0, Number(sample.confidence) || 0),
+        count: 1
+      };
+      blankStarted = null;
+    };
+
+    for (const sample of samples) {
+      const text = String(sample.text || '')
+        .replace(/\r/g, '')
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .join('\n');
+      if (!ocrNormalize(text)) {
+        if (current && blankStarted === null) blankStarted = sample.time;
+        continue;
+      }
+
+      if (!current) {
+        begin(sample, text);
+        continue;
+      }
+
+      const gap = sample.time - current.lastSeen;
+      const similar = ocrSimilarity(current.text, text) >= 0.78;
+      if (similar && gap <= interval * 2.05) {
+        current.lastSeen = sample.time;
+        current.end = Math.min(duration, sample.time + interval);
+        current.count += 1;
+        const confidence = Math.max(0, Number(sample.confidence) || 0);
+        if (confidence >= current.bestConfidence) {
+          current.text = text;
+          current.bestConfidence = confidence;
+        }
+        blankStarted = null;
+      } else {
+        close(blankStarted === null ? sample.time : blankStarted);
+        begin(sample, text);
+      }
+    }
+
+    if (current) close(blankStarted === null ? current.lastSeen + interval : blankStarted);
+    return groups.filter((cue) => cue.end > cue.start && cue.text.trim());
+  }
+  function ocrToSrt(cues) {
+    return cues.map((cue, index) =>
+      (index + 1) + '\n' +
+      ocrClock(cue.start) + ' --> ' + ocrClock(cue.end) + '\n' +
+      cue.text
+    ).join('\n\n') + (cues.length ? '\n' : '');
+  }
+  function ocrSetBusy(busy) {
+    $('ocrStartBtn').disabled = busy || !$('ocrVideo').src;
+    $('ocrCancelBtn').disabled = !busy;
+    $('ocrVideoInput').disabled = busy;
+    $('ocrLanguage').disabled = busy;
+    $('ocrInterval').disabled = busy;
+    $('ocrRoi').disabled = busy;
+    $('ocrBinarize').disabled = busy;
+  }
+  $('ocrRoi').addEventListener('input', () => {
+    $('ocrRoiValue').textContent = $('ocrRoi').value + '%';
+  });
+  $('ocrVideoInput').addEventListener('change', () => {
+    const file = $('ocrVideoInput').files && $('ocrVideoInput').files[0];
+    if (!file) return;
+    if (file.size > 150 * 1024 * 1024) {
+      $('ocrProgress').textContent = 'Video vượt quá 150 MB. Hãy chọn file nhỏ hơn hoặc chia video thành đoạn ngắn hơn.';
+      $('ocrVideoInput').value = '';
+      return;
+    }
+    if (ocrVideoUrl) URL.revokeObjectURL(ocrVideoUrl);
+    ocrVideoUrl = URL.createObjectURL(file);
+    $('ocrVideo').src = ocrVideoUrl;
+    $('ocrFileMeta').textContent = file.name + ' · ' + (file.size / 1048576).toFixed(1) + ' MB';
+    $('ocrProgress').textContent = 'Đã chọn video. Đang kiểm tra khả năng đọc video…';
+    $('ocrProgressBar').value = 0;
+    $('ocrSrtOutput').value = '';
+    $('ocrResultMeta').textContent = 'Chưa có kết quả';
+    $('ocrDownloadBtn').disabled = true;
+    $('ocrResetBtn').disabled = true;
+  });
+  $('ocrVideo').addEventListener('loadedmetadata', () => {
+    $('ocrProgress').textContent = 'Video ' + $('ocrVideo').videoWidth + '×' +
+      $('ocrVideo').videoHeight + ' · ' + $('ocrVideo').duration.toFixed(1) +
+      ' giây. Sẵn sàng quét.';
+    $('ocrStartBtn').disabled = false;
+  });
+  $('ocrVideo').addEventListener('error', () => {
+    $('ocrProgress').textContent = 'Trình duyệt không đọc được codec video này. Hãy thử MP4 (H.264) hoặc WebM.';
+    $('ocrStartBtn').disabled = true;
+  });
+  $('ocrCancelBtn').addEventListener('click', () => {
+    ocrCancelled = true;
+    $('ocrProgress').textContent = 'Đang dừng sau khung hình hiện tại…';
+  });
+  $('ocrResetBtn').addEventListener('click', () => {
+    $('ocrSrtOutput').value = '';
+    $('ocrResultMeta').textContent = 'Đã xóa kết quả';
+    $('ocrDownloadBtn').disabled = true;
+    $('ocrResetBtn').disabled = true;
+    $('ocrProgressBar').value = 0;
+  });
+  $('ocrDownloadBtn').addEventListener('click', () => {
+    const content = $('ocrSrtOutput').value.trim();
+    if (!content) return;
+    const blob = new Blob(['\uFEFF' + content + '\n'], { type: 'application/x-subrip;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    const name = (($('ocrVideoInput').files || [])[0]?.name || 'video').replace(/\.[^.]+$/, '');
+    anchor.href = url;
+    anchor.download = name + '_hardsub_ocr.srt';
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+  $('ocrStartBtn').addEventListener('click', async () => {
+    const video = $('ocrVideo');
+    if (!video.src || !Number.isFinite(video.duration) || !video.videoWidth) return;
+    const interval = Number($('ocrInterval').value);
+    const duration = video.duration;
+    const totalFrames = Math.ceil(duration / interval);
+    if (duration > 10800 || totalFrames > 20000) {
+      toast('Video quá dài cho OCR trên trình duyệt. Hãy chia video thành các đoạn ngắn hơn.');
+      return;
+    }
+    if (!window.Tesseract || typeof window.Tesseract.createWorker !== 'function') {
+      toast('Không tải được thư viện OCR. Kiểm tra kết nối Internet rồi thử lại.');
+      return;
+    }
+    ocrCancelled = false;
+    ocrSetBusy(true);
+    $('ocrProgressBar').value = 0;
+    $('ocrProgress').textContent = 'Đang tải mô hình OCR…';
+    $('ocrSrtOutput').value = '';
+    const samples = [];
+    let processed = 0;
+    const originalTime = video.currentTime;
+    const language = $('ocrLanguage').value;
+    const roi = Number($('ocrRoi').value);
+    const binarize = $('ocrBinarize').checked;
+    const canvas = $('ocrCanvas');
+
+    const seek = (time) => new Promise((resolve, reject) => {
+      if (Math.abs(video.currentTime - time) < 0.015 && video.readyState >= 2) return resolve();
+      let timer;
+      const cleanup = () => {
+        video.removeEventListener('seeked', onSeeked);
+        video.removeEventListener('error', onError);
+        clearTimeout(timer);
+      };
+      const onSeeked = () => { cleanup(); resolve(); };
+      const onError = () => { cleanup(); reject(new Error('Không thể đọc một khung hình video.')); };
+      video.addEventListener('seeked', onSeeked, { once: true });
+      video.addEventListener('error', onError, { once: true });
+      try {
+        video.currentTime = time;
+      } catch (error) {
+        cleanup();
+        reject(error);
+        return;
+      }
+      timer = setTimeout(() => {
+        cleanup();
+        reject(new Error('Video phản hồi quá chậm khi tua khung hình.'));
+      }, 12000);
+    });
+
+    try {
+      ocrWorker = await window.Tesseract.createWorker(language, 1, {
+        workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/worker.min.js',
+        corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@5',
+        langPath: 'https://tessdata.projectnaptha.com/4.0.0',
+        logger: (message) => {
+          if (message.status === 'loading tesseract core') $('ocrProgress').textContent = 'Đang tải bộ máy OCR…';
+          else if (message.status === 'loading language traineddata') $('ocrProgress').textContent = 'Đang tải dữ liệu ngôn ngữ…';
+        }
+      });
+      await ocrWorker.setParameters({ tessedit_pageseg_mode: '6', preserve_interword_spaces: '1' });
+
+      for (let index = 0; index < totalFrames; index += 1) {
+        if (ocrCancelled) break;
+        const time = Math.min(index * interval, Math.max(0, duration - 0.04));
+        await seek(time);
+        if (ocrCancelled) break;
+        ocrPrepareFrame(video, canvas, roi, binarize);
+        const result = await ocrWorker.recognize(canvas);
+        samples.push({ time, text: result.data.text || '', confidence: result.data.confidence || 0 });
+        processed += 1;
+        const percent = Math.round(processed / totalFrames * 100);
+        $('ocrProgressBar').value = percent;
+        $('ocrProgress').textContent = 'Đã quét ' + processed + '/' + totalFrames +
+          ' khung hình (' + percent + '%)…';
+        if (index % 5 === 0) await new Promise((resolve) => setTimeout(resolve, 0));
+      }
+
+      const cues = ocrBuildCues(samples, interval, duration);
+      $('ocrSrtOutput').value = ocrToSrt(cues);
+      $('ocrResultMeta').textContent = cues.length + ' câu phụ đề · ' + processed +
+        ' khung hình đã quét' + (ocrCancelled ? ' · Đã dừng theo yêu cầu' : '');
+      $('ocrDownloadBtn').disabled = cues.length === 0;
+      $('ocrResetBtn').disabled = cues.length === 0;
+      $('ocrProgress').textContent = ocrCancelled
+        ? 'Đã dừng. Kết quả một phần đã được giữ lại.'
+        : 'Hoàn tất trích xuất. Hãy rà soát SRT trước khi tải xuống.';
+      $('ocrProgressBar').value = totalFrames ? processed / totalFrames * 100 : 0;
+      if (!cues.length) toast('Chưa nhận diện được câu phụ đề ổn định. Thử tăng vùng OCR hoặc chọn đúng ngôn ngữ.');
+    } catch (error) {
+      console.error('Hardsub OCR failed:', error);
+      $('ocrProgress').textContent = error && error.message ? error.message : 'Có lỗi khi xử lý OCR.';
+      toast(error && error.message ? error.message : 'Không thể trích xuất phụ đề.');
+    } finally {
+      if (ocrWorker) {
+        try { await ocrWorker.terminate(); } catch (_) {}
+        ocrWorker = null;
+      }
+      try { video.currentTime = originalTime; } catch (_) {}
+      ocrSetBusy(false);
+      $('ocrStartBtn').disabled = !video.src || !video.videoWidth;
+    }
+  });
 
   function formatSttClock(seconds) {
     const totalMs = Math.max(0, Math.round((Number(seconds) || 0) * 1000));
