@@ -236,7 +236,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
   <header class="topbar">
     <div class="brand">
       <div class="logo-mark" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 5.5C4 4.67 4.67 4 5.5 4h13c.83 0 1.5.67 1.5 1.5v9c0 .83-.67 1.5-1.5 1.5H11l-4.5 4v-4H5.5C4.67 16 4 15.33 4 14.5v-9Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 8.5h8M8 11.5h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
-      <div><div class="brand-name">SubLingo</div><div class="brand-sub">SUBTITLE WORKSPACE · SRT TRANSLATOR · v1.2.30</div></div>
+      <div><div class="brand-name">SubLingo</div><div class="brand-sub">SUBTITLE WORKSPACE · SRT TRANSLATOR · v1.2.31</div></div>
     </div>
     <div class="top-actions">
       <div class="google-login-wrap" id="googleSignInButton"></div>
@@ -1052,11 +1052,10 @@ textarea.field { resize: vertical; line-height: 1.55; }
             if (error.quotaType === 'daily') throw error;
             if (!canRetry) throw error;
             if (attempt < maxAttempts) {
-              const fallbackBaseMs = error.status === 503 ? 10000 : 1000;
-              const fallbackBackoffMs = Math.min(60000, fallbackBaseMs * (2 ** (attempt - 1))) + Math.floor(Math.random() * 750);
+              const fallbackRetryDelaysMs = [1000, 5000, 10000];
               pendingRetryDelayMs = Number.isFinite(error.retryAfterMs) && error.retryAfterMs > 0
-                ? Math.min(120000, error.retryAfterMs)
-                : fallbackBackoffMs;
+                ? Math.min(10000, error.retryAfterMs)
+                : fallbackRetryDelaysMs[Math.min(attempt - 1, fallbackRetryDelaysMs.length - 1)];
               button.textContent = (requestProvider === 'gemini' ? 'Gemini' : 'OpenAI') + ' tạm bận · chờ tối đa ' + Math.ceil(pendingRetryDelayMs / 1000) + ' giây rồi thử lại...';
             }
           }

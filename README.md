@@ -1,6 +1,6 @@
-# SubLingo 1.2.30 — Dịch SRT và tạo phụ đề
+# SubLingo 1.2.31 — Dịch SRT và tạo phụ đề
 
-**Phiên bản hiện tại:** 1.2.30 — *Cải thiện xử lý Gemini 503 và thử lại an toàn cho Trang 1/2*.
+**Phiên bản hiện tại:** 1.2.31 — *Rút ngắn thời gian chờ thử lại Gemini ở Trang 1/2*.
 
 SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT và tạo phụ đề tự động từ video bằng Gemini và OpenAI.
 
@@ -24,7 +24,7 @@ SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT và t
 - Backend dùng FFmpeg tách âm thanh mono 16 kHz, nén MP3 và áp dụng bộ lọc cơ bản để giảm một phần tiếng ồn nền; đây không phải mô hình tách giọng nói khỏi nhạc.
 - Âm thanh được chia thành từng đoạn 9 phút để gửi đến Google Gemini 3.5 Transcribe qua Files API và Interactions API. Model trả về timestamp từng từ; SubLingo gom các từ gần nhau thành câu phụ đề.
 - Model giới hạn âm thanh tối đa 30 phút mỗi yêu cầu khi bật timestamp từng từ; các đoạn 9 phút của SubLingo nằm trong giới hạn đó.
-- Khi Google trả về lỗi 429 hoặc 503, Trang 1 và Trang 2 tôn trọng Retry-After/RetryInfo và dùng backoff tăng dần; nếu Gemini quá tải kéo dài, Trang 1 dừng gửi các nhóm tiếp theo để tránh gọi dồn. Hạn mức theo ngày cần chờ quota được đặt lại.
+- Khi Google trả về lỗi 429 hoặc 503, Trang 1 thử lại sau 1–5–10 giây và Trang 2 sau 1–6–12 giây; thời gian Retry-After/RetryInfo cũng được giới hạn tối đa 10 giây ở Trang 1 và 12 giây ở Trang 2. Nếu Gemini quá tải kéo dài, Trang 1 dừng gửi các nhóm tiếp theo để tránh gọi dồn. Hạn mức theo ngày cần chờ quota được đặt lại.
 - Video và âm thanh gốc tạm được ghi trong thư mục tạm trên máy chủ và xóa sau khi xử lý. Tệp âm thanh tải lên Google Files API được xóa ngay sau khi nhận diện; tệp còn sót sẽ tự hết hạn sau tối đa 48 giờ.
 - Gemini 3.5 Transcribe có Free Tier trong hạn mức được cấp; nếu dự án thuộc Paid Tier hoặc vượt quota, có thể phát sinh phí Google. Không có bảo đảm miễn phí vô hạn.
 - **Lưu ý quyền riêng tư:** Nội dung gửi qua Free Tier/unpaid quota có thể được Google dùng để cải thiện sản phẩm và có thể được người đánh giá xử lý. Không tải video có thông tin nhạy cảm hoặc bí mật nếu không chấp nhận điều khoản này.
@@ -62,7 +62,7 @@ Kiểm tra backend:
 curl http://localhost:10000/api/health
 ~~~
 
-Endpoint trả về trạng thái cùng phiên bản hiện tại, ví dụ {"ok":true,"service":"sublingo-api","version":"1.2.30"}.
+Endpoint trả về trạng thái cùng phiên bản hiện tại, ví dụ {"ok":true,"service":"sublingo-api","version":"1.2.31"}.
 
 ## Đưa lên Render
 
@@ -71,7 +71,7 @@ Endpoint trả về trạng thái cùng phiên bản hiện tại, ví dụ {"ok
 3. Trong Google Cloud Console, thêm `https://sublingo-srt-translator.onrender.com` vào **Authorized JavaScript origins** của OAuth Client ID. Ứng dụng dùng Google Identity Services popup nên không cần redirect URI.
 4. Lưu cấu hình và chờ Render khởi động lại service. Khi chưa có `GOOGLE_CLIENT_ID`, nút đăng nhập sẽ hiển thị trạng thái đang chờ cấu hình; đây không phải lỗi tài khoản Google.
 5. Ứng dụng hiện hỗ trợ **đăng nhập bằng Google**, chưa có đăng ký email/mật khẩu riêng. Phiên đăng nhập được lưu bằng cookie HttpOnly trong 7 ngày; ứng dụng chưa lưu hồ sơ người dùng hoặc lịch sử dịch vào database.
-4. Sau khi deploy, kiểm tra /api/health và xác nhận trường version là 1.2.30. Bản cài đặt cần tải thêm binary FFmpeg từ package ffmpeg-static.
+4. Sau khi deploy, kiểm tra /api/health và xác nhận trường version là 1.2.31. Bản cài đặt cần tải thêm binary FFmpeg từ package ffmpeg-static.
 
 ## Cấu hình API key
 
@@ -97,6 +97,12 @@ npm test
 GitHub Actions tự chạy bộ test khi có push hoặc pull request vào nhánh main.
 
 ## Nhật ký phiên bản
+
+### 1.2.31 — 2026-11-05
+- Trang 1 giảm lịch chờ thử lại xuống 1–5–10 giây; giới hạn Retry-After/RetryInfo tối đa 10 giây.
+- Trang 2 giảm lịch chờ thử lại xuống 1–6–12 giây; giới hạn Retry-After/RetryInfo tối đa 12 giây.
+- Giữ nguyên việc dừng gửi nhóm tiếp theo ở Trang 1 khi Gemini liên tục trả lỗi 503.
+- Đồng bộ phiên bản 1.2.31 trong package, backend, giao diện và README.
 
 ### 1.2.30 — 2026-11-05
 - Tăng thời gian chờ dự phòng khi Gemini trả về 503 ở Trang 1 và Trang 2 (10, 20, 40 giây), đồng thời vẫn ưu tiên Retry-After/RetryInfo của Google.
