@@ -1,6 +1,6 @@
-# SubLingo 1.2.17 — Dịch phụ đề SRT & tạo phụ đề tự động
+# SubLingo 1.2.18 — Dịch phụ đề SRT & tạo phụ đề tự động
 
-**Phiên bản hiện tại:** 1.2.17 — *Hardsub OCR progress & timeline smoothing*.
+**Phiên bản hiện tại:** 1.2.18 — *Two-page SRT translation & AI transcription*.
 
 SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT bằng Google Gemini hoặc OpenAI.
 
@@ -29,17 +29,6 @@ SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT bằn
 - **Lưu ý quyền riêng tư:** Nội dung gửi qua Free Tier/unpaid quota có thể được Google dùng để cải thiện sản phẩm và có thể được người đánh giá xử lý. Không tải video có thông tin nhạy cảm hoặc bí mật nếu không chấp nhận điều khoản này.
 - Không gửi API key qua chat; hãy nhập trực tiếp trong giao diện website.
 
-
-## Trích xuất phụ đề cứng (Hardsub OCR · Trang 3)
-
-- Trang 3 đọc phụ đề được đóng trực tiếp trên hình video bằng Tesseract.js chạy trong trình duyệt/Web Worker. Video không được tải lên backend; việc quét khung hình và tạo SRT diễn ra cục bộ trên thiết bị.
-- Cho phép chọn vùng OCR bằng cách kéo khung trên video hoặc nhập tọa độ X, Y, W, H; có thể phóng to vùng xem trước để căn chữ.
-- Chọn ngôn ngữ OCR, khoảng cách lấy mẫu 0,25 / 0,5 / 1 giây, cùng ba cấu hình Nhanh / Cân bằng / Chất lượng.
-- Hỗ trợ ngưỡng thích nghi (adaptive threshold) và Otsu để tăng khả năng đọc chữ trên nền video sáng/tối khác nhau.
-- Tối ưu bằng cách tái sử dụng kết quả OCR cho các khung hình gần như giống nhau; kết quả vẫn được đưa vào timeline để xác định thời gian phụ đề.
-- Làm mượt timeline: lùi thời điểm bắt đầu 120 ms, ưu tiên thời lượng đọc tối thiểu 1,1 giây khi không bị câu tiếp theo chặn, nối khoảng trống không quá 250 ms và nhắm tốc độ đọc 18 ký tự/giây. Mốc thời gian được giới hạn trong độ dài video và tránh chồng lấn câu kế tiếp.
-- Thanh tiến trình đồng bộ giao diện Trang 1: hiển thị phần trăm, số khung hình đã quét / tổng số và số khung hình còn lại; trạng thái tải mô hình, khung lỗi và khung hình được tái sử dụng vẫn được thông báo riêng.
-- Có thể khai báo từ điển sửa lỗi OCR theo mẫu `từ sai => từ đúng`; ứng dụng chỉ thay thế cụm khớp rõ ràng, không tự đoán những ký tự dễ nhầm.
 
 ## Model hiện hỗ trợ
 
@@ -72,7 +61,7 @@ Kiểm tra backend:
 curl http://localhost:10000/api/health
 ~~~
 
-Endpoint trả về trạng thái cùng phiên bản hiện tại, ví dụ {"ok":true,"service":"sublingo-api","version":"1.2.17"}.
+Endpoint trả về trạng thái cùng phiên bản hiện tại, ví dụ {"ok":true,"service":"sublingo-api","version":"1.2.18"}.
 
 ## Đưa lên Render
 
@@ -81,7 +70,7 @@ Endpoint trả về trạng thái cùng phiên bản hiện tại, ví dụ {"ok
 3. Trong Google Cloud Console, thêm `https://sublingo-srt-translator.onrender.com` vào **Authorized JavaScript origins** của OAuth Client ID. Ứng dụng dùng Google Identity Services popup nên không cần redirect URI.
 4. Lưu cấu hình và chờ Render khởi động lại service. Khi chưa có `GOOGLE_CLIENT_ID`, nút đăng nhập sẽ hiển thị trạng thái đang chờ cấu hình; đây không phải lỗi tài khoản Google.
 5. Ứng dụng hiện hỗ trợ **đăng nhập bằng Google**, chưa có đăng ký email/mật khẩu riêng. Phiên đăng nhập được lưu bằng cookie HttpOnly trong 7 ngày; ứng dụng chưa lưu hồ sơ người dùng hoặc lịch sử dịch vào database.
-4. Sau khi deploy, kiểm tra /api/health và xác nhận trường version là 1.2.17. Bản cài đặt cần tải thêm binary FFmpeg từ package ffmpeg-static.
+4. Sau khi deploy, kiểm tra /api/health và xác nhận trường version là 1.2.18. Bản cài đặt cần tải thêm binary FFmpeg từ package ffmpeg-static.
 
 ## Cấu hình API key
 
@@ -107,6 +96,11 @@ npm test
 GitHub Actions tự chạy bộ test khi có push hoặc pull request vào nhánh main.
 
 ## Nhật ký phiên bản
+
+### 1.2.18
+- Gỡ trang 3 Hardsub OCR khỏi giao diện và ứng dụng theo định hướng sản phẩm.
+- Giữ nguyên hai chức năng chính: dịch phụ đề SRT (Trang 1) và tạo phụ đề bằng AI (Trang 2).
+
 
 ### 1.2.17
 - Đồng bộ thanh tiến trình OCR Trang 3 với giao diện Trang 1.

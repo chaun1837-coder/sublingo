@@ -136,6 +136,20 @@ test('all static element references exist and inline JavaScript parses', () => {
   for (const script of scripts) assert.doesNotThrow(() => new Script(script[1]));
 });
 
+test('two-page navigation keeps SRT translation and AI transcription without Hardsub OCR', () => {
+  assert.ok(html.includes('id="pageOneTab"'));
+  assert.ok(html.includes('id="pageTwoTab"'));
+  assert.ok(html.includes('id="pageOneContent"'));
+  assert.ok(html.includes('id="pageTwoContent"'));
+  for (const retiredId of ['pageThreeTab','pageThreeContent','ocrVideoInput','ocrSrtOutput','ocrStartBtn']) {
+    assert.ok(!html.includes('id="' + retiredId + '"'));
+  }
+  assert.doesNotMatch(html, /Hardsub OCR|tesseract\.js|function ocrPrepareFrame/);
+  assert.match(html, /function showPage\(pageNumber\)/);
+  assert.match(html, /showPage\(1\)/);
+  assert.match(html, /showPage\(2\)/);
+});
+
 test('translation progress uses an explicit completion flag, including for unchanged text', () => {
   assert.match(html, /translated: false/);
   assert.match(html, /const done = cues\.filter\(\(cue\) => cue\.translated\)\.length/);
@@ -159,72 +173,6 @@ test('backend preserves upstream status codes for retry decisions', () => {
   assert.match(server, /error\.upstreamStatus = response\.status/);
   assert.match(server, /Number\.isInteger\(error\?\.upstreamStatus\)/);
   assert.match(server, /Gemini đang tạm quá tải \(503\)/);
-});
-
-
-test('three-page navigation exposes Hardsub OCR and preserves existing workspaces', () => {
-  assert.ok(html.includes('id="pageOneTab"'));
-  assert.ok(html.includes('id="pageTwoTab"'));
-  assert.ok(html.includes('id="pageThreeTab"'));
-  assert.ok(html.includes('id="pageThreeTab" type="button" aria-controls="pageThreeContent">Trích xuất OCR</button>'));
-  assert.ok(html.includes('id="pageThreeContent" class="stt-page ocr-page" hidden'));
-  assert.ok(html.includes('id="ocrTitle">Trích xuất phụ đề cứng (Hardsub OCR)</h2>'));
-  for (const id of ['ocrVideoInput','ocrLanguage','ocrInterval','ocrCropX','ocrCropY','ocrCropW','ocrCropH','ocrSrtOutput','ocrDownloadBtn']) assert.ok(html.includes('id="' + id + '"'));
-  assert.ok(html.includes('window.Tesseract.createWorker'));
-  assert.ok(html.includes('function ocrPrepareFrame'));
-  assert.ok(html.includes('function ocrBuildCues'));
-  assert.ok(html.includes('function ocrSimilarity'));
-  assert.ok(html.includes('Video được xử lý ngay trên trình duyệt, không tải lên máy chủ'));
-  assert.ok(html.includes("showPage(3)"));
-  assert.ok(html.includes('id="sttVideoInput"'));
-  assert.ok(html.includes('id="sttCaptionList"'));
-});
-
-
-test('Hardsub OCR merges a single missed frame, filters one-frame noise and preserves multiline SRT', () => {
-  const start = html.indexOf('  function ocrNormalize(');
-  const end = html.indexOf('  function ocrSetBusy(', start);
-  assert.ok(start >= 0 && end > start, 'OCR helper functions should be extractable');
-  const helpers = new Function(html.slice(start, end) + '; return { ocrNormalize, ocrSimilarity, ocrBuildCues, ocrToSrt };')();
-  assert.equal(helpers.ocrNormalize('Xin chào!'), helpers.ocrNormalize('Xin chào'));
-  assert.equal(helpers.ocrSimilarity('Xin chào', 'Xin chào!'), 1);
-
-  const cues = helpers.ocrBuildCues([
-    { time: 0, text: 'Xin chào\nmọi người', confidence: 95 },
-    { time: 0.5, text: 'Xin chào\nmọi người', confidence: 94 },
-    { time: 1, text: '', confidence: 0 },
-    { time: 1.5, text: 'Xin chào\nmọi người', confidence: 93 },
-    { time: 2, text: 'Câu tiếp theo', confidence: 96 },
-    { time: 2.5, text: 'Câu tiếp theo', confidence: 95 },
-    { time: 3, text: '', confidence: 0 }
-  ], 0.5, 4);
-
-  assert.equal(cues.length, 2);
-  assert.equal(cues[0].start, 0);
-  assert.equal(cues[0].end, 1.75);
-  assert.equal(cues[0].text, 'Xin chào\nmọi người');
-  assert.equal(cues[1].start, 1.75);
-  assert.equal(cues[1].end, 2.75);
-
-  const srt = helpers.ocrToSrt(cues);
-  assert.match(srt, /00:00:00,000 --> 00:00:01,750/);
-  assert.ok(srt.includes('Xin chào\nmọi người'));
-  assert.ok(srt.endsWith('\n'));
-  assert.equal(helpers.ocrBuildCues([
-    { time: 0, text: 'Nhiễu một khung hình', confidence: 70 },
-    { time: 0.25, text: '', confidence: 0 }
-  ], 0.5, 1).length, 0);
-  assert.equal(helpers.ocrBuildCues([
-    { time: 0, text: 'Câu ngắn nhưng rõ', confidence: 95 }
-  ], 0.25, 0.5).length, 1);
-});
-
-test('Hardsub OCR uses a selectable binarization mode, a 150 MB browser limit and the full Tesseract core directory', () => {
-  assert.match(html, /id="ocrBinarize" type="checkbox" checked/);
-  assert.ok(html.includes("file.size > 150 * 1024 * 1024"));
-  assert.ok(html.includes("corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@5'"));
-  assert.ok(html.includes('ocrPrepareFrame(video, canvas, crop, binarize, processingProfileName, thresholdMode)'));
-  assert.match(html, /Hãy rà soát SRT trước khi tải xuống/);
 });
 
 
@@ -311,7 +259,7 @@ test('index HTML is not cached so fixes appear without stale frontend code', () 
 });
 
 test('package and visible UI expose the same semantic version', () => {
-  assert.equal(pkg.version, '1.2.17');
+  assert.equal(pkg.version, '1.2.18');
   assert.match(html, /SRT TRANSLATOR · v1\.2\.16/);
   assert.match(server, /APP_VERSION/);
 });
@@ -415,18 +363,6 @@ test('Page 2 progress bar matches Page 1 sizing and exposes accessible live prog
 });
 
 
-test('Page 3 OCR progress matches Page 1 and reports scanned frames accessibly', () => {
-  for (const id of ['ocrProgressTrack','ocrProgressFill','ocrProgressSummary','ocrProgressCount','ocrProgressPercent']) {
-    assert.ok(html.includes('id="' + id + '"'));
-  }
-  assert.match(html, /class="progress-track" id="ocrProgressTrack" role="progressbar"/);
-  assert.match(html, /class="progress-summary" id="ocrProgressSummary"/);
-  assert.match(html, /function ocrSetProgress\(processed, total, message\)/);
-  assert.match(html, /ocrSetProgress\(processed, totalFrames,/);
-  assert.match(html, /khung hình đã quét/);
-  assert.doesNotMatch(html, /ocrProgressBar/);
-});
-
 test('Page 2 bounds long preview captions and limits generated caption length', () => {
   assert.ok(html.includes('max-height:58%; overflow-y:auto'));
   assert.ok(server.includes('current.length >= 9'));
@@ -507,257 +443,3 @@ test('FFmpeg audio encoding is limited to one worker thread', () => {
 });
 
 
-test('Page 3 applies explicit OCR correction rules only to whole words or phrases', () => {
-  const start = html.indexOf('  function ocrParseCorrectionRules(');
-  const end = html.indexOf('  function ocrToSrt(', start);
-  assert.ok(start >= 0 && end > start, 'OCR correction helpers must exist');
-  const helpers = new Function(html.slice(start, end) + '; return { ocrParseCorrectionRules, ocrCorrectText, ocrApplyCorrectionsToCues, ocrApplyCorrectionsToSrt };')();
-  const result = helpers.ocrApplyCorrectionsToCues([
-    { start: 1, end: 2, text: 'Teh test, tehx; em dít!' },
-    { start: 3, end: 4, text: 'No change.' }
-  ], 'Teh => The\nem dít => edit');
-  assert.deepEqual(result.cues.map((cue) => cue.text), ['The test, tehx; edit!', 'No change.']);
-  assert.equal(result.replacements, 2);
-});
-
-test('Page 3 correction preserves SRT cue indexes, timestamps and multiline text', () => {
-  const start = html.indexOf('  function ocrParseCorrectionRules(');
-  const end = html.indexOf('  function ocrToSrt(', start);
-  const helpers = new Function(html.slice(start, end) + '; return { ocrApplyCorrectionsToSrt };')();
-  const source = '1\n00:00:01,000 --> 00:00:02,500\nTeh test\nline two\n\n2\n00:00:03,000 --> 00:00:04,000\nNo change';
-  const result = helpers.ocrApplyCorrectionsToSrt(source, 'Teh => The');
-  assert.equal(result.replacements, 1);
-  assert.equal(result.text, '1\n00:00:01,000 --> 00:00:02,500\nThe test\nline two\n\n2\n00:00:03,000 --> 00:00:04,000\nNo change\n');
-});
-
-test('Page 3 exposes the optional correction dictionary and auto-applies it to OCR results', () => {
-  assert.ok(html.includes('id="ocrCorrections"'));
-  assert.ok(html.includes('id="ocrApplyCorrectionsBtn"'));
-  assert.ok(html.includes('ocrApplyCorrectionsToCues(cues,'));
-});
-
-
-test('Hardsub OCR cropper defaults to the bottom quarter and supports bounded pointer movement and resizing', () => {
-  const start = html.indexOf('  function ocrClampCrop(');
-  const end = html.indexOf('  function ocrPrepareFrame(', start);
-  assert.ok(start >= 0 && end > start, 'crop helpers must be extractable');
-  const helpers = new Function(html.slice(start, end) + '; return { ocrClampCrop, ocrAdjustCropFromPointer, ocrCropToSourceRect };')();
-  assert.ok(html.includes('let ocrCrop = { x: 0, y: 75, w: 100, h: 25 }'));
-  assert.deepEqual(helpers.ocrClampCrop({ x: -10, y: 90, w: 60, h: 30 }), { x: 0, y: 70, w: 60, h: 30 });
-  assert.deepEqual(helpers.ocrAdjustCropFromPointer({ x: 20, y: 60, w: 40, h: 25 }, 'move', 15, -10),
-    { x: 35, y: 50, w: 40, h: 25 });
-  assert.deepEqual(helpers.ocrAdjustCropFromPointer({ x: 20, y: 60, w: 40, h: 25 }, 'se', 10, 5),
-    { x: 20, y: 60, w: 50, h: 30 });
-  assert.deepEqual(helpers.ocrAdjustCropFromPointer({ x: 20, y: 60, w: 40, h: 25 }, 'nw', -30, -80),
-    { x: 0, y: 0, w: 60, h: 85 });
-  assert.deepEqual(helpers.ocrCropToSourceRect({ x: 25, y: 50, w: 40, h: 30 }, 1920, 1080),
-    { x: 480, y: 540, width: 768, height: 324 });
-});
-
-
-test('Page 3 can expand the video preview across the workspace for accurate OCR crop selection', () => {
-  assert.match(html, /class="ocr-grid" id="ocrGrid"|id="ocrGrid" class="ocr-grid"/);
-  assert.ok(html.includes('id="ocrZoomBtn"'));
-  assert.match(html, /\.ocr-grid\.ocr-video-expanded\{grid-template-columns:minmax\(0,1fr\)\}/);
-  assert.match(html, /classList\.toggle\('ocr-video-expanded', expanded\)/);
-  assert.match(html, /requestAnimationFrame\(ocrSyncCropOverlay\)/);
-  assert.match(html, /max-height:min\(70vh,760px\)/);
-});
-
-test('Hardsub OCR cropper exposes eight mouse/touch resize handles and editable X Y W H fields', () => {
-  for (const id of ['ocrCropOverlay','ocrCropBox','ocrCropX','ocrCropY','ocrCropW','ocrCropH']) {
-    assert.ok(html.includes('id="' + id + '"'));
-  }
-  for (const handle of ['nw','n','ne','e','se','s','sw','w']) assert.ok(html.includes('data-crop-handle="' + handle + '"'));
-  assert.ok(html.includes('touch-action:none'));
-  assert.ok(html.includes('pointerdown'));
-  assert.ok(html.includes('pointermove'));
-  assert.ok(html.includes('#20A7FF'));
-});
-
-
-test('Hardsub OCR deduplicates repeated lines, bridges two missed samples and keeps short clear captions', () => {
-  const start = html.indexOf('  function ocrNormalize(');
-  const end = html.indexOf('  function ocrSetBusy(', start);
-  assert.ok(start >= 0 && end > start);
-  const helpers = new Function(html.slice(start, end) +
-    '; return { ocrCleanSampleText, ocrBuildCues, ocrMergeAdjacentCues };')();
-
-  assert.equal(helpers.ocrCleanSampleText('Xin chào\nXin chào\n|||\n___', 95), 'Xin chào');
-  assert.equal(helpers.ocrCleanSampleText('P a t', 35), '');
-
-  const stable = helpers.ocrBuildCues([
-    { time: 0, text: 'Xin chào mọi người', confidence: 94 },
-    { time: 0.5, text: 'Xin chào mọi người', confidence: 94 },
-    { time: 1, text: '', confidence: 0 },
-    { time: 1.5, text: '', confidence: 0 },
-    { time: 2, text: 'Xin chào mọi người', confidence: 93 },
-    { time: 2.5, text: 'Xin chào mọi người', confidence: 94 }
-  ], 0.5, 3);
-  assert.equal(stable.length, 1);
-  assert.equal(stable[0].samples, 4);
-
-  const brief = helpers.ocrBuildCues([
-    { time: 0.5, text: 'Câu ngắn', confidence: 92 },
-    { time: 1, text: '', confidence: 0 }
-  ], 0.5, 2);
-  assert.equal(brief.length, 1);
-  assert.ok(brief[0].end - brief[0].start >= 0.1);
-  assert.equal(helpers.ocrBuildCues([
-    { time: 0, text: 'Chữ nhiễu', confidence: 55 }
-  ], 0.5, 1).length, 0);
-});
-
-test('Hardsub OCR centers timestamps, rejects micro-duration noise and pads the selected crop edges', () => {
-  const start = html.indexOf('  function ocrClampCrop(');
-  const end = html.indexOf('  function ocrCleanSampleText(', start);
-  assert.ok(start >= 0 && end > start);
-  const helpers = new Function(html.slice(start, end) +
-    '; return { ocrCropToSourceRect, ocrExpandSourceRect };')();
-  const raw = helpers.ocrCropToSourceRect({ x: 25, y: 50, w: 40, h: 30 }, 1920, 1080);
-  assert.deepEqual(raw, { x: 480, y: 540, width: 768, height: 324 });
-  assert.deepEqual(helpers.ocrExpandSourceRect(raw, 1920, 1080),
-    { x: 465, y: 531, width: 798, height: 342 });
-
-  const cues = new Function(
-    html.slice(html.indexOf('  function ocrNormalize('), html.indexOf('  function ocrSetBusy(')) +
-    '; return ocrBuildCues;'
-  )();
-  const centered = cues([
-    { time: 0.5, text: 'Xin chào', confidence: 95 },
-    { time: 1, text: '', confidence: 0 }
-  ], 0.5, 2);
-  assert.equal(centered.length, 1);
-  assert.equal(centered[0].start, 0.25);
-  assert.equal(centered[0].end, 0.75);
-  assert.ok(centered.every((cue) => cue.end - cue.start >= 0.1));
-});
-
-test('Hardsub OCR passes the selected language, retries transient seeks and releases browser memory', () => {
-  assert.match(html, /createWorker\(language, 1/);
-  assert.match(html, /const seekWithRetry = async \(time\)/);
-  assert.match(html, /await ocrWorker\.terminate\(\)/);
-  assert.match(html, /samples\.length = 0/);
-  assert.match(html, /canvas\.width = 0/);
-  assert.match(html, /URL\.revokeObjectURL\(ocrVideoUrl\)/);
-  assert.match(html, /user_defined_dpi: '300'/);
-  assert.match(html, /ocrCleanSampleText\(result\.data\.text \|\| '', frameConfidence\)/);
-});
-
-
-test('Hardsub OCR exposes selectable fast, balanced and quality profiles plus adaptive thresholding', () => {
-  for (const id of ['ocrSpeedProfile', 'ocrThresholdMode']) assert.ok(html.includes('id="' + id + '"'));
-  assert.ok(html.includes("value=\"fast\""));
-  assert.ok(html.includes("value=\"balanced\" selected"));
-  assert.ok(html.includes("value=\"quality\""));
-  assert.ok(html.includes("value=\"adaptive\" selected"));
-  assert.ok(html.includes("value=\"otsu\""));
-  assert.ok(html.includes("4.0.0_fast"));
-  assert.ok(html.includes("ocrAdaptiveThreshold(image, canvas.width, canvas.height)"));
-});
-
-test('Hardsub OCR reuses near-identical frame OCR results and prevents overlapping jobs', () => {
-  assert.ok(html.includes('function ocrFrameSignature('));
-  assert.ok(html.includes('function ocrFramesNearlyEqual('));
-  assert.ok(html.includes('if (previousSignature && ocrFramesNearlyEqual(previousSignature, currentSignature))'));
-  assert.ok(html.includes('let ocrRunActive = false'));
-  assert.ok(html.includes('if (ocrRunActive) return'));
-  assert.ok(html.includes('recognizedFrames'));
-  assert.ok(html.includes('reusedFrames'));
-});
-
-test('Hardsub OCR adaptive thresholding normalizes both dark and bright backgrounds', () => {
-  const start = html.indexOf('  function ocrAdaptiveThreshold(');
-  const end = html.indexOf('  function ocrFrameSignature(', start);
-  assert.ok(start >= 0 && end > start);
-  const adaptive = new Function(html.slice(start, end) + '; return ocrAdaptiveThreshold;')();
-  const makeImage = (background, foreground) => {
-    const width = 31, height = 31;
-    const data = new Uint8ClampedArray(width * height * 4);
-    for (let i = 0; i < width * height; i += 1) {
-      const x = i % width, y = Math.floor(i / width);
-      const inText = x >= 13 && x <= 17 && y >= 13 && y <= 17;
-      const value = inText ? foreground : background;
-      data[i * 4] = value; data[i * 4 + 1] = value; data[i * 4 + 2] = value; data[i * 4 + 3] = 255;
-    }
-    return { data };
-  };
-  for (const [background, foreground] of [[35, 225], [225, 35]]) {
-    const image = makeImage(background, foreground);
-    adaptive(image, 31, 31);
-    const center = (15 * 31 + 15) * 4;
-    const corner = 0;
-    assert.equal(image.data[center], 0);
-    assert.equal(image.data[corner], 255);
-  }
-});
-
-test('Hardsub OCR frame fingerprints distinguish changed subtitle regions but reuse static frames', () => {
-  const start = html.indexOf('  function ocrFrameSignature(');
-  const end = html.indexOf('  function ocrPrepareFrame(', start);
-  assert.ok(start >= 0 && end > start);
-  const helpers = new Function(html.slice(start, end) +
-    '; return { ocrFrameSignature, ocrFramesNearlyEqual };')();
-  const width = 192, height = 64;
-  const make = (changed) => {
-    const data = new Uint8ClampedArray(width * height * 4);
-    data.fill(0);
-    for (let i = 3; i < data.length; i += 4) data[i] = 255;
-    if (changed) {
-      for (let y = 45; y < 55; y += 1) for (let x = 35; x < 150; x += 1) {
-        const i = (y * width + x) * 4;
-        data[i] = 255; data[i + 1] = 255; data[i + 2] = 255;
-      }
-    }
-    return helpers.ocrFrameSignature({ data }, width, height);
-  };
-  const stillA = make(false);
-  const stillB = make(false);
-  const subtitleChanged = make(true);
-  assert.equal(helpers.ocrFramesNearlyEqual(stillA, stillB), true);
-  assert.equal(helpers.ocrFramesNearlyEqual(stillA, subtitleChanged), false);
-});
-
-test('Hardsub OCR keeps video processing local and only sends sampled frames to one Web Worker', () => {
-  assert.ok(html.includes('Video được xử lý ngay trên trình duyệt, không tải lên máy chủ'));
-  assert.ok(html.includes('createWorker(language, 1'));
-  assert.ok(html.includes('canvas.width = 0'));
-  assert.ok(html.includes('samples.length = 0'));
-  assert.ok(html.includes('langPath: processingProfile.langPath'));
-});
-
-test('Hardsub OCR smooths subtitle timing with start padding, minimum reading time, gap closing and CPS', () => {
-  const start = html.indexOf('  function ocrNormalize(');
-  const end = html.indexOf('  function ocrSetBusy(', start);
-  assert.ok(start >= 0 && end > start, 'timeline helpers must be extractable');
-  const helpers = new Function(html.slice(start, end) +
-    '; return { ocrSmoothCues };')();
-
-  const shortCue = helpers.ocrSmoothCues([
-    { start: 1, end: 1.2, text: 'OK', confidence: 95, samples: 2 },
-    { start: 5, end: 5.5, text: 'Xin chào', confidence: 95, samples: 2 }
-  ], 10);
-  assert.equal(shortCue[0].start, 0.88);
-  assert.ok(Math.abs(shortCue[0].end - 1.98) < 0.001);
-  assert.ok(shortCue[0].end - shortCue[0].start >= 1.099);
-
-  const closedGap = helpers.ocrSmoothCues([
-    { start: 1, end: 1.5, text: 'Câu trước', confidence: 95, samples: 2 },
-    { start: 1.7, end: 2.4, text: 'Câu sau', confidence: 95, samples: 2 }
-  ], 10);
-  assert.equal(closedGap[0].end, closedGap[1].start);
-
-  const longCue = helpers.ocrSmoothCues([
-    { start: 1, end: 1.3, text: 'A'.repeat(45), confidence: 95, samples: 3 }
-  ], 10);
-  const cps = Array.from(longCue[0].text).length / (longCue[0].end - longCue[0].start);
-  assert.ok(cps <= 18.001);
-  assert.ok(longCue[0].end - longCue[0].start >= 2.49);
-
-  const adjacent = helpers.ocrSmoothCues([
-    { start: 1, end: 2.8, text: 'B'.repeat(45), confidence: 95, samples: 3 },
-    { start: 2.5, end: 3, text: 'Tiếp theo', confidence: 95, samples: 2 }
-  ], 10);
-  assert.ok(adjacent[0].end <= adjacent[1].start);
-  assert.ok(adjacent.every((cue) => cue.end <= 10 && cue.start >= 0));
-});
