@@ -262,8 +262,8 @@ test('index HTML is not cached so fixes appear without stale frontend code', () 
 });
 
 test('package and visible UI expose the same semantic version', () => {
-  assert.equal(pkg.version, '1.2.7');
-  assert.match(html, /SRT TRANSLATOR · v1\.2\.7/);
+  assert.equal(pkg.version, '1.2.8');
+  assert.match(html, /SRT TRANSLATOR · v1\.2\.8/);
   assert.match(server, /APP_VERSION/);
 });
 
