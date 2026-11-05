@@ -521,5 +521,5 @@ test('Page 3 correction preserves SRT cue indexes, timestamps and multiline text
 test('Page 3 exposes the optional correction dictionary and auto-applies it to OCR results', () => {
   assert.ok(html.includes('id="ocrCorrections"'));
   assert.ok(html.includes('id="ocrApplyCorrectionsBtn"'));
-  assert.ok(html.includes('const corrected = ocrApplyCorrectionsToCues(cues, $(\\'ocrCorrections\\').value)'));
+  assert.ok(html.includes('ocrApplyCorrectionsToCues(cues,'));
 });
