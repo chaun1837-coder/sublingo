@@ -311,8 +311,8 @@ test('index HTML is not cached so fixes appear without stale frontend code', () 
 });
 
 test('package and visible UI expose the same semantic version', () => {
-  assert.equal(pkg.version, '1.2.10');
-  assert.match(html, /SRT TRANSLATOR · v1\.2\.10/);
+  assert.equal(pkg.version, '1.2.11');
+  assert.match(html, /SRT TRANSLATOR · v1\.2\.11/);
   assert.match(server, /APP_VERSION/);
 });
 
@@ -492,4 +492,34 @@ test('Gemini transcription uses BCP-47 language hints and 18-minute audio batche
 
 test('FFmpeg audio encoding is limited to one worker thread', () => {
   assert.ok(server.includes("'-threads', '1'"));
+});
+
+
+test('Page 3 applies explicit OCR correction rules only to whole words or phrases', () => {
+  const start = html.indexOf('  function ocrParseCorrectionRules(');
+  const end = html.indexOf('  function ocrToSrt(', start);
+  assert.ok(start >= 0 && end > start, 'OCR correction helpers must exist');
+  const helpers = new Function(html.slice(start, end) + '; return { ocrParseCorrectionRules, ocrCorrectText, ocrApplyCorrectionsToCues, ocrApplyCorrectionsToSrt };')();
+  const result = helpers.ocrApplyCorrectionsToCues([
+    { start: 1, end: 2, text: 'Teh test, tehx; em dít!' },
+    { start: 3, end: 4, text: 'No change.' }
+  ], 'Teh => The\nem dít => edit');
+  assert.deepEqual(result.cues.map((cue) => cue.text), ['The test, tehx; edit!', 'No change.']);
+  assert.equal(result.replacements, 2);
+});
+
+test('Page 3 correction preserves SRT cue indexes, timestamps and multiline text', () => {
+  const start = html.indexOf('  function ocrParseCorrectionRules(');
+  const end = html.indexOf('  function ocrToSrt(', start);
+  const helpers = new Function(html.slice(start, end) + '; return { ocrApplyCorrectionsToSrt };')();
+  const source = '1\n00:00:01,000 --> 00:00:02,500\nTeh test\nline two\n\n2\n00:00:03,000 --> 00:00:04,000\nNo change';
+  const result = helpers.ocrApplyCorrectionsToSrt(source, 'Teh => The');
+  assert.equal(result.replacements, 1);
+  assert.equal(result.text, '1\n00:00:01,000 --> 00:00:02,500\nThe test\nline two\n\n2\n00:00:03,000 --> 00:00:04,000\nNo change\n');
+});
+
+test('Page 3 exposes the optional correction dictionary and auto-applies it to OCR results', () => {
+  assert.ok(html.includes('id="ocrCorrections"'));
+  assert.ok(html.includes('id="ocrApplyCorrectionsBtn"'));
+  assert.ok(html.includes('const corrected = ocrApplyCorrectionsToCues(cues, $(\\'ocrCorrections\\').value)'));
 });

@@ -488,6 +488,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
           <div class="stt-field-group"><label class="form-label" for="ocrLanguage">Ngôn ngữ phụ đề trong video</label><select class="field" id="ocrLanguage"><option value="vie">Tiếng Việt</option><option value="eng">Tiếng Anh</option><option value="vie+eng">Tiếng Việt + Anh</option><option value="chi_sim">Tiếng Trung giản thể</option><option value="chi_tra">Tiếng Trung phồn thể</option><option value="jpn">Tiếng Nhật</option><option value="kor">Tiếng Hàn</option><option value="tha">Tiếng Thái</option><option value="fra">Tiếng Pháp</option><option value="spa">Tiếng Tây Ban Nha</option><option value="deu">Tiếng Đức</option></select></div>
           <div class="stt-field-group"><label class="form-label" for="ocrInterval">Khoảng cách quét khung hình</label><select class="field" id="ocrInterval"><option value="0.25">0,25 giây · chính xác hơn, xử lý lâu hơn</option><option value="0.5" selected>0,5 giây · khuyến nghị</option><option value="1">1 giây · nhanh hơn</option></select></div>
           <div class="stt-field-group"><label class="form-label" for="ocrRoi">Vùng tìm phụ đề: <strong id="ocrRoiValue">25%</strong> phía dưới</label><input class="field" id="ocrRoi" type="range" min="15" max="40" step="5" value="25"><small class="ocr-help">Có thể tăng vùng nếu video đặt phụ đề cao hơn bình thường.</small></div>
+          <div class="stt-field-group"><label class="form-label" for="ocrCorrections">Quy tắc sửa lỗi OCR (không bắt buộc)</label><textarea class="field" id="ocrCorrections" rows="3" maxlength="3000" placeholder="em dít =&gt; edit&#10;teh =&gt; the"></textarea><small class="ocr-help">Mỗi dòng một quy tắc: chữ OCR sai =&gt; chữ đúng. Quy tắc được tự áp dụng khi tạo SRT; chỉ thay cụm khớp trọn từ/cụm từ, tối đa 50 quy tắc. Không tự đổi các ký tự dễ nhầm như 0/O hoặc 1/l.</small></div>
           <label class="ocr-check"><input id="ocrBinarize" type="checkbox" checked> Nhị phân hóa trắng/đen và tăng tương phản</label>
           <small class="ocr-help">Bỏ chọn nếu chữ có màu, nền phức tạp hoặc ảnh nhị phân làm mất nét chữ.</small>
           <div class="ocr-actions"><button class="btn btn-primary" id="ocrStartBtn" type="button" disabled>✦ Bắt đầu trích xuất</button><button class="btn btn-ghost" id="ocrCancelBtn" type="button" disabled>Hủy</button></div>
@@ -496,7 +497,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
         </div></section>
         <section class="panel"><div class="panel-head"><div class="panel-title"><span class="step">02</span> Kết quả phụ đề SRT</div></div><div class="panel-body">
           <div class="ocr-result-meta" id="ocrResultMeta">Chưa có kết quả</div><textarea class="field ocr-output" id="ocrSrtOutput" rows="22" spellcheck="false" placeholder="Phụ đề OCR sẽ xuất hiện ở đây. Bạn có thể chỉnh sửa nội dung và mốc thời gian trước khi tải xuống." aria-label="Nội dung SRT có thể chỉnh sửa"></textarea>
-          <div class="ocr-actions"><button class="btn btn-primary" id="ocrDownloadBtn" type="button" disabled>↓ Tải file SRT</button><button class="btn btn-ghost" id="ocrResetBtn" type="button" disabled>Xóa kết quả</button></div>
+          <div class="ocr-actions"><button class="btn btn-ghost" id="ocrApplyCorrectionsBtn" type="button" disabled>✓ Áp dụng sửa lỗi</button><button class="btn btn-primary" id="ocrDownloadBtn" type="button" disabled>↓ Tải file SRT</button><button class="btn btn-ghost" id="ocrResetBtn" type="button" disabled>Xóa kết quả</button></div>
           <small class="ocr-help">Mốc đầu/cuối được suy ra từ các khung hình đã quét, nên độ phân giải thời gian phụ thuộc bước 0,25 / 0,5 / 1 giây; không thể bảo đảm chính xác tuyệt đối từng mili-giây. Hãy rà soát câu ngắn, chữ hiệu ứng và mốc thời gian trước khi dùng.</small>
         </div></section>
       </div><canvas id="ocrCanvas" hidden></canvas>
@@ -1280,6 +1281,57 @@ textarea.field { resize: vertical; line-height: 1.55; }
     if (current) close(blankStarted === null ? current.lastSeen + interval : blankStarted);
     return groups.filter((cue) => cue.end > cue.start && cue.text.trim());
   }
+  function ocrParseCorrectionRules(rawRules) {
+    return String(rawRules || '').split(/\r?\n/).map((line) => {
+      const splitAt = line.indexOf('=>');
+      if (splitAt < 0) return null;
+      const from = line.slice(0, splitAt).trim();
+      const to = line.slice(splitAt + 2).trim();
+      return from && to ? { from, to } : null;
+    }).filter(Boolean).slice(0, 50);
+  }
+
+  function ocrCorrectText(value, rules) {
+    let text = String(value || '');
+    let replacements = 0;
+    const special = new Set(['.', '*', '+', '?', '^', '$', '{', '}', '(', ')', '|', '[', ']', '\\']);
+    for (const rule of rules) {
+      const escaped = [...rule.from].map((character) => special.has(character) ? '\\' + character : character).join('');
+      const expression = new RegExp('(^|[^\\p{L}\\p{N}_])(' + escaped + ')(?=$|[^\\p{L}\\p{N}_])', 'giu');
+      text = text.replace(expression, (_match, prefix) => {
+        replacements += 1;
+        return prefix + rule.to;
+      });
+    }
+    return { text, replacements };
+  }
+
+  function ocrApplyCorrectionsToCues(cues, rawRules) {
+    const rules = ocrParseCorrectionRules(rawRules);
+    let replacements = 0;
+    const corrected = (cues || []).map((cue) => {
+      const result = ocrCorrectText(cue.text, rules);
+      replacements += result.replacements;
+      return { ...cue, text: result.text };
+    });
+    return { cues: corrected, replacements };
+  }
+
+  function ocrApplyCorrectionsToSrt(source, rawRules) {
+    const input = String(source || '').trim();
+    if (!input) return { text: '', replacements: 0 };
+    const rules = ocrParseCorrectionRules(rawRules);
+    let replacements = 0;
+    const blocks = input.replace(/\r\n?/g, '\n').split(/\n{2,}/).map((block) => {
+      const lines = block.split('\n');
+      if (lines.length < 3 || !/^[ \t]*\d+[ \t]*$/.test(lines[0]) || !lines[1].includes('-->')) return block;
+      const result = ocrCorrectText(lines.slice(2).join('\n'), rules);
+      replacements += result.replacements;
+      return [lines[0], lines[1], result.text].join('\n');
+    });
+    return { text: blocks.join('\n\n') + '\n', replacements };
+  }
+
   function ocrToSrt(cues) {
     return cues.map((cue, index) =>
       (index + 1) + '\n' +
@@ -1295,6 +1347,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
     $('ocrInterval').disabled = busy;
     $('ocrRoi').disabled = busy;
     $('ocrBinarize').disabled = busy;
+    $('ocrCorrections').disabled = busy;
   }
   $('ocrRoi').addEventListener('input', () => {
     $('ocrRoiValue').textContent = $('ocrRoi').value + '%';
@@ -1317,6 +1370,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
     $('ocrResultMeta').textContent = 'Chưa có kết quả';
     $('ocrDownloadBtn').disabled = true;
     $('ocrResetBtn').disabled = true;
+    $('ocrApplyCorrectionsBtn').disabled = true;
   });
   $('ocrVideo').addEventListener('loadedmetadata', () => {
     $('ocrProgress').textContent = 'Video ' + $('ocrVideo').videoWidth + '×' +
@@ -1337,7 +1391,23 @@ textarea.field { resize: vertical; line-height: 1.55; }
     $('ocrResultMeta').textContent = 'Đã xóa kết quả';
     $('ocrDownloadBtn').disabled = true;
     $('ocrResetBtn').disabled = true;
+    $('ocrApplyCorrectionsBtn').disabled = true;
     $('ocrProgressBar').value = 0;
+  });
+  $('ocrApplyCorrectionsBtn').addEventListener('click', () => {
+    const rules = ocrParseCorrectionRules($('ocrCorrections').value);
+    if (!rules.length) {
+      toast('Hãy nhập quy tắc theo mẫu: chữ sai => chữ đúng.');
+      $('ocrCorrections').focus();
+      return;
+    }
+    const result = ocrApplyCorrectionsToSrt($('ocrSrtOutput').value, $('ocrCorrections').value);
+    $('ocrSrtOutput').value = result.text;
+    const status = result.replacements
+      ? 'Đã áp dụng ' + result.replacements + ' lần thay thế.'
+      : 'Không tìm thấy cụm từ khớp để sửa.';
+    $('ocrResultMeta').textContent = $('ocrResultMeta').textContent.split(' · Quy tắc sửa:')[0] + ' · Quy tắc sửa: ' + status;
+    toast(status);
   });
   $('ocrDownloadBtn').addEventListener('click', () => {
     const content = $('ocrSrtOutput').value.trim();
@@ -1434,11 +1504,14 @@ textarea.field { resize: vertical; line-height: 1.55; }
       }
 
       const cues = ocrBuildCues(samples, interval, duration);
-      $('ocrSrtOutput').value = ocrToSrt(cues);
-      $('ocrResultMeta').textContent = cues.length + ' câu phụ đề · ' + processed +
-        ' khung hình đã quét' + (ocrCancelled ? ' · Đã dừng theo yêu cầu' : '');
-      $('ocrDownloadBtn').disabled = cues.length === 0;
-      $('ocrResetBtn').disabled = cues.length === 0;
+      const corrected = ocrApplyCorrectionsToCues(cues, $('ocrCorrections').value);
+      $('ocrSrtOutput').value = ocrToSrt(corrected.cues);
+      $('ocrResultMeta').textContent = corrected.cues.length + ' câu phụ đề · ' + processed +
+        ' khung hình đã quét' + (ocrCancelled ? ' · Đã dừng theo yêu cầu' : '') +
+        (corrected.replacements ? ' · Quy tắc sửa: ' + corrected.replacements + ' lần thay thế' : '');
+      $('ocrDownloadBtn').disabled = corrected.cues.length === 0;
+      $('ocrApplyCorrectionsBtn').disabled = corrected.cues.length === 0;
+      $('ocrResetBtn').disabled = corrected.cues.length === 0;
       $('ocrProgress').textContent = ocrCancelled
         ? 'Đã dừng. Kết quả một phần đã được giữ lại.'
         : 'Hoàn tất trích xuất. Hãy rà soát SRT trước khi tải xuống.';
