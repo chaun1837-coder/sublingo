@@ -311,8 +311,8 @@ test('index HTML is not cached so fixes appear without stale frontend code', () 
 });
 
 test('package and visible UI expose the same semantic version', () => {
-  assert.equal(pkg.version, '1.2.15');
-  assert.match(html, /SRT TRANSLATOR · v1\.2\.15/);
+  assert.equal(pkg.version, '1.2.16');
+  assert.match(html, /SRT TRANSLATOR · v1\.2\.16/);
   assert.match(server, /APP_VERSION/);
 });
 
@@ -712,4 +712,40 @@ test('Hardsub OCR keeps video processing local and only sends sampled frames to 
   assert.ok(html.includes('canvas.width = 0'));
   assert.ok(html.includes('samples.length = 0'));
   assert.ok(html.includes('langPath: processingProfile.langPath'));
+});
+
+test('Hardsub OCR smooths subtitle timing with start padding, minimum reading time, gap closing and CPS', () => {
+  const start = html.indexOf('  function ocrNormalize(');
+  const end = html.indexOf('  function ocrSetBusy(', start);
+  assert.ok(start >= 0 && end > start, 'timeline helpers must be extractable');
+  const helpers = new Function(html.slice(start, end) +
+    '; return { ocrSmoothCues };')();
+
+  const shortCue = helpers.ocrSmoothCues([
+    { start: 1, end: 1.2, text: 'OK', confidence: 95, samples: 2 },
+    { start: 5, end: 5.5, text: 'Xin chào', confidence: 95, samples: 2 }
+  ], 10);
+  assert.equal(shortCue[0].start, 0.88);
+  assert.ok(Math.abs(shortCue[0].end - 1.98) < 0.001);
+  assert.ok(shortCue[0].end - shortCue[0].start >= 1.099);
+
+  const closedGap = helpers.ocrSmoothCues([
+    { start: 1, end: 1.5, text: 'Câu trước', confidence: 95, samples: 2 },
+    { start: 1.7, end: 2.4, text: 'Câu sau', confidence: 95, samples: 2 }
+  ], 10);
+  assert.equal(closedGap[0].end, closedGap[1].start);
+
+  const longCue = helpers.ocrSmoothCues([
+    { start: 1, end: 1.3, text: 'A'.repeat(45), confidence: 95, samples: 3 }
+  ], 10);
+  const cps = Array.from(longCue[0].text).length / (longCue[0].end - longCue[0].start);
+  assert.ok(cps <= 18.001);
+  assert.ok(longCue[0].end - longCue[0].start >= 2.49);
+
+  const adjacent = helpers.ocrSmoothCues([
+    { start: 1, end: 2.8, text: 'B'.repeat(45), confidence: 95, samples: 3 },
+    { start: 2.5, end: 3, text: 'Tiếp theo', confidence: 95, samples: 2 }
+  ], 10);
+  assert.ok(adjacent[0].end <= adjacent[1].start);
+  assert.ok(adjacent.every((cue) => cue.end <= 10 && cue.start >= 0));
 });
