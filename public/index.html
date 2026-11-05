@@ -239,7 +239,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
   <header class="topbar">
     <div class="brand">
       <div class="logo-mark" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 5.5C4 4.67 4.67 4 5.5 4h13c.83 0 1.5.67 1.5 1.5v9c0 .83-.67 1.5-1.5 1.5H11l-4.5 4v-4H5.5C4.67 16 4 15.33 4 14.5v-9Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 8.5h8M8 11.5h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
-      <div><div class="brand-name">SubLingo</div><div class="brand-sub">SUBTITLE WORKSPACE · SRT TRANSLATOR · v1.2.13</div></div>
+      <div><div class="brand-name">SubLingo</div><div class="brand-sub">SUBTITLE WORKSPACE · SRT TRANSLATOR · v1.2.14</div></div>
     </div>
     <div class="top-actions">
       <div class="google-login-wrap" id="googleSignInButton"></div>
@@ -1229,19 +1229,33 @@ textarea.field { resize: vertical; line-height: 1.55; }
     return { x, y, width, height };
   }
 
+  function ocrExpandSourceRect(source, videoWidth, videoHeight, paddingRatio = 0.008) {
+    const padX = Math.max(2, Math.round(videoWidth * paddingRatio));
+    const padY = Math.max(2, Math.round(videoHeight * paddingRatio));
+    const left = Math.max(0, source.x - padX);
+    const top = Math.max(0, source.y - padY);
+    const right = Math.min(videoWidth, source.x + source.width + padX);
+    const bottom = Math.min(videoHeight, source.y + source.height + padY);
+    return { x: left, y: top, width: Math.max(1, right - left), height: Math.max(1, bottom - top) };
+  }
+
   function ocrPrepareFrame(video, canvas, crop, binarize = true) {
-    const source = ocrCropToSourceRect(crop, video.videoWidth, video.videoHeight);
+    const selected = ocrCropToSourceRect(crop, video.videoWidth, video.videoHeight);
+    const source = ocrExpandSourceRect(selected, video.videoWidth, video.videoHeight);
     const scale = Math.min(2.2, 1600 / source.width, 1000 / source.height);
     canvas.width = Math.max(1, Math.round(source.width * scale));
     canvas.height = Math.max(1, Math.round(source.height * scale));
     const context = canvas.getContext('2d', { willReadFrequently: true });
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = 'high';
     context.drawImage(video, source.x, source.y, source.width, source.height, 0, 0, canvas.width, canvas.height);
     const image = context.getImageData(0, 0, canvas.width, canvas.height);
     const threshold = binarize ? ocrOtsuThreshold(image) : 0;
+    const useBinary = binarize && threshold >= 35 && threshold <= 225;
     for (let i = 0; i < image.data.length; i += 4) {
       let gray = image.data[i] * 0.299 + image.data[i + 1] * 0.587 + image.data[i + 2] * 0.114;
-      if (binarize) gray = gray >= threshold ? 255 : 0;
-      else gray = Math.max(0, Math.min(255, 128 + (gray - 128) * 1.25));
+      if (useBinary) gray = gray >= threshold ? 255 : 0;
+      else gray = Math.max(0, Math.min(255, 128 + (gray - 128) * 1.35));
       image.data[i] = gray;
       image.data[i + 1] = gray;
       image.data[i + 2] = gray;
@@ -1249,18 +1263,70 @@ textarea.field { resize: vertical; line-height: 1.55; }
     context.putImageData(image, 0, 0);
     return canvas;
   }
+
+  function ocrCleanSampleText(value, confidence = 0) {
+    const quality = Number.isFinite(Number(confidence)) ? Number(confidence) : 0;
+    const seen = new Set();
+    return String(value || '')
+      .replace(/\r/g, '')
+      .split('\n')
+      .map((line) => line.replace(/\s+/g, ' ').trim())
+      .filter((line) => {
+        const normalized = ocrNormalize(line);
+        if (!normalized || quality < 10) return false;
+        const singleGlyphScript = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Thai}\p{Script=Arabic}\p{Script=Devanagari}]/u.test(line);
+        const tokens = line.split(/\s+/);
+        const fragmentedLatin = tokens.length >= 3 && tokens.every((token) => /^[A-Za-z]$/.test(token));
+        if (fragmentedLatin && quality < 82) return false;
+        if (normalized.length === 1 && !singleGlyphScript && quality < 65) return false;
+        if (normalized.length <= 2 && !singleGlyphScript && quality < 30) return false;
+        if (seen.has(normalized)) return false;
+        seen.add(normalized);
+        return true;
+      })
+      .join('\n');
+  }
+
+  function ocrMergeAdjacentCues(cues, interval, duration) {
+    const merged = [];
+    const maximumGap = Math.max(0.15, interval * 1.35);
+    for (const cue of cues) {
+      const previous = merged[merged.length - 1];
+      if (previous) {
+        const left = ocrNormalize(previous.text);
+        const right = ocrNormalize(cue.text);
+        const sameText = left === right ||
+          (Math.min(left.length, right.length) >= 8 && ocrSimilarity(previous.text, cue.text) >= 0.98);
+        const gap = cue.start - previous.end;
+        if (sameText && gap <= maximumGap) {
+          previous.end = Math.min(duration, Math.max(previous.end, cue.end));
+          previous.samples += Number(cue.samples) || 0;
+          if ((Number(cue.confidence) || 0) > previous.confidence) {
+            previous.text = cue.text;
+            previous.confidence = cue.confidence;
+          }
+          continue;
+        }
+      }
+      merged.push({ ...cue });
+    }
+    return merged;
+  }
+
   function ocrBuildCues(samples, interval, duration) {
     const groups = [];
     let current = null;
     let blankStarted = null;
+    const halfInterval = interval / 2;
 
     const close = (boundary) => {
       if (!current) return;
-      const end = Math.min(duration, Math.max(current.start + 0.1, boundary));
-      const survivesNoiseFilter =
-        current.count >= 2 ||
-        (interval <= 0.25 && current.count === 1 && current.bestConfidence >= 90 && end - current.start >= interval * 0.75);
-      if (survivesNoiseFilter) {
+      const end = Math.min(duration, Math.max(current.start, Number(boundary) || 0));
+      const visibleDuration = end - current.start;
+      const stableEnough = current.count >= 2 ||
+        (current.count === 1 && current.bestConfidence >= 86 &&
+          visibleDuration >= Math.max(0.1, interval * 0.4));
+      if (stableEnough && visibleDuration >= 0.1) {
         groups.push({
           start: Math.max(0, current.start),
           end,
@@ -1272,11 +1338,13 @@ textarea.field { resize: vertical; line-height: 1.55; }
       current = null;
       blankStarted = null;
     };
+
     const begin = (sample, text) => {
+      const time = Math.max(0, Math.min(duration, Number(sample.time) || 0));
       current = {
-        start: sample.time,
-        lastSeen: sample.time,
-        end: Math.min(duration, sample.time + interval),
+        start: Math.max(0, time - halfInterval),
+        lastSeen: time,
+        end: Math.min(duration, time + halfInterval),
         text,
         bestConfidence: Math.max(0, Number(sample.confidence) || 0),
         count: 1
@@ -1285,27 +1353,26 @@ textarea.field { resize: vertical; line-height: 1.55; }
     };
 
     for (const sample of samples) {
-      const text = String(sample.text || '')
-        .replace(/\r/g, '')
-        .split('\n')
-        .map((line) => line.trim())
-        .filter(Boolean)
-        .join('\n');
+      const time = Math.max(0, Math.min(duration, Number(sample.time) || 0));
+      const text = ocrCleanSampleText(sample.text, sample.confidence);
       if (!ocrNormalize(text)) {
-        if (current && blankStarted === null) blankStarted = sample.time;
+        if (current && blankStarted === null) blankStarted = time;
         continue;
       }
 
       if (!current) {
-        begin(sample, text);
+        begin({ ...sample, time }, text);
         continue;
       }
 
-      const gap = sample.time - current.lastSeen;
-      const similar = ocrSimilarity(current.text, text) >= 0.78;
-      if (similar && gap <= interval * 2.05) {
-        current.lastSeen = sample.time;
-        current.end = Math.min(duration, sample.time + interval);
+      const gap = time - current.lastSeen;
+      const left = ocrNormalize(current.text);
+      const right = ocrNormalize(text);
+      const threshold = Math.max(left.length, right.length) <= 4 ? 1 : 0.86;
+      const similar = ocrSimilarity(current.text, text) >= threshold;
+      if (similar && gap <= interval * 3.1) {
+        current.lastSeen = time;
+        current.end = Math.min(duration, time + halfInterval);
         current.count += 1;
         const confidence = Math.max(0, Number(sample.confidence) || 0);
         if (confidence >= current.bestConfidence) {
@@ -1314,14 +1381,25 @@ textarea.field { resize: vertical; line-height: 1.55; }
         }
         blankStarted = null;
       } else {
-        close(blankStarted === null ? sample.time : blankStarted);
-        begin(sample, text);
+        const boundary = blankStarted === null
+          ? (current.lastSeen + time) / 2
+          : Math.max(current.start, blankStarted - halfInterval);
+        close(boundary);
+        begin({ ...sample, time }, text);
       }
     }
 
-    if (current) close(blankStarted === null ? current.lastSeen + interval : blankStarted);
-    return groups.filter((cue) => cue.end > cue.start && cue.text.trim());
+    if (current) {
+      const boundary = blankStarted === null
+        ? current.lastSeen + halfInterval
+        : Math.max(current.start, blankStarted - halfInterval);
+      close(boundary);
+    }
+
+    return ocrMergeAdjacentCues(groups.filter((cue) =>
+      cue.end - cue.start >= 0.1 && cue.text.trim()), interval, duration);
   }
+
   function ocrParseCorrectionRules(rawRules) {
     return String(rawRules || '').split(/\r?\n/).map((line) => {
       const splitAt = line.indexOf('=>');
@@ -1483,6 +1561,9 @@ textarea.field { resize: vertical; line-height: 1.55; }
     cropObserver.observe($('ocrVideo'));
     cropObserver.observe($('ocrVideoStage'));
   }
+  window.addEventListener('beforeunload', () => {
+    if (ocrVideoUrl) URL.revokeObjectURL(ocrVideoUrl);
+  });
   $('ocrVideoInput').addEventListener('change', () => {
     const file = $('ocrVideoInput').files && $('ocrVideoInput').files[0];
     if (!file) return;
@@ -1566,7 +1647,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
     if (!video.src || !Number.isFinite(video.duration) || !video.videoWidth) return;
     const interval = Number($('ocrInterval').value);
     const duration = video.duration;
-    const totalFrames = Math.ceil(duration / interval);
+    const totalFrames = Math.max(1, Math.ceil(duration / interval));
     if (duration > 10800 || totalFrames > 20000) {
       toast('Video quá dài cho OCR trên trình duyệt. Hãy chia video thành các đoạn ngắn hơn.');
       return;
@@ -1575,6 +1656,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
       toast('Không tải được thư viện OCR. Kiểm tra kết nối Internet rồi thử lại.');
       return;
     }
+
     ocrCancelled = false;
     ocrSetBusy(true);
     $('ocrProgressBar').value = 0;
@@ -1582,7 +1664,11 @@ textarea.field { resize: vertical; line-height: 1.55; }
     $('ocrSrtOutput').value = '';
     const samples = [];
     let processed = 0;
+    let skippedFrames = 0;
+    let consecutiveFrameErrors = 0;
     const originalTime = video.currentTime;
+    const wasPlaying = !video.paused && !video.ended;
+    video.pause();
     const language = $('ocrLanguage').value;
     const crop = { ...ocrCrop };
     const binarize = $('ocrBinarize').checked;
@@ -1613,6 +1699,20 @@ textarea.field { resize: vertical; line-height: 1.55; }
       }, 12000);
     });
 
+    const seekWithRetry = async (time) => {
+      let lastError;
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        try {
+          await seek(time);
+          return;
+        } catch (error) {
+          lastError = error;
+          if (attempt === 0) await new Promise((resolve) => setTimeout(resolve, 120));
+        }
+      }
+      throw lastError || new Error('Không thể tua đến khung hình cần quét.');
+    };
+
     try {
       ocrWorker = await window.Tesseract.createWorker(language, 1, {
         workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/worker.min.js',
@@ -1620,24 +1720,43 @@ textarea.field { resize: vertical; line-height: 1.55; }
         langPath: 'https://tessdata.projectnaptha.com/4.0.0',
         logger: (message) => {
           if (message.status === 'loading tesseract core') $('ocrProgress').textContent = 'Đang tải bộ máy OCR…';
-          else if (message.status === 'loading language traineddata') $('ocrProgress').textContent = 'Đang tải dữ liệu ngôn ngữ…';
+          else if (message.status === 'loading language traineddata') $('ocrProgress').textContent = 'Đang tải dữ liệu ngôn ngữ ' + language + '…';
         }
       });
-      await ocrWorker.setParameters({ tessedit_pageseg_mode: '6', preserve_interword_spaces: '1' });
+      await ocrWorker.setParameters({
+        tessedit_pageseg_mode: '6',
+        preserve_interword_spaces: '1',
+        user_defined_dpi: '300'
+      });
 
       for (let index = 0; index < totalFrames; index += 1) {
         if (ocrCancelled) break;
         const time = Math.min(index * interval, Math.max(0, duration - 0.04));
-        await seek(time);
-        if (ocrCancelled) break;
-        ocrPrepareFrame(video, canvas, crop, binarize);
-        const result = await ocrWorker.recognize(canvas);
-        samples.push({ time, text: result.data.text || '', confidence: result.data.confidence || 0 });
+        let frameText = '';
+        let frameConfidence = 0;
+        try {
+          await seekWithRetry(time);
+          if (ocrCancelled) break;
+          ocrPrepareFrame(video, canvas, crop, binarize);
+          const result = await ocrWorker.recognize(canvas);
+          frameConfidence = Number(result.data.confidence) || 0;
+          frameText = ocrCleanSampleText(result.data.text || '', frameConfidence);
+          consecutiveFrameErrors = 0;
+        } catch (error) {
+          if (ocrCancelled) break;
+          skippedFrames += 1;
+          consecutiveFrameErrors += 1;
+          if (consecutiveFrameErrors >= 3) {
+            throw new Error('OCR liên tục không đọc được khung hình. Hãy thử video MP4 (H.264) hoặc kiểm tra file video.');
+          }
+        }
+        samples.push({ time, text: frameText, confidence: frameConfidence });
         processed += 1;
         const percent = Math.round(processed / totalFrames * 100);
         $('ocrProgressBar').value = percent;
         $('ocrProgress').textContent = 'Đã quét ' + processed + '/' + totalFrames +
-          ' khung hình (' + percent + '%)…';
+          ' khung hình (' + percent + '%)' +
+          (skippedFrames ? ' · bỏ qua ' + skippedFrames + ' khung hình lỗi' : '') + '…';
         if (index % 5 === 0) await new Promise((resolve) => setTimeout(resolve, 0));
       }
 
@@ -1645,16 +1764,21 @@ textarea.field { resize: vertical; line-height: 1.55; }
       const corrected = ocrApplyCorrectionsToCues(cues, $('ocrCorrections').value);
       $('ocrSrtOutput').value = ocrToSrt(corrected.cues);
       $('ocrResultMeta').textContent = corrected.cues.length + ' câu phụ đề · ' + processed +
-        ' khung hình đã quét' + (ocrCancelled ? ' · Đã dừng theo yêu cầu' : '') +
+        ' khung hình đã quét' + (skippedFrames ? ' · bỏ qua ' + skippedFrames + ' khung hình lỗi' : '') +
+        (ocrCancelled ? ' · Đã dừng theo yêu cầu' : '') +
         (corrected.replacements ? ' · Quy tắc sửa: ' + corrected.replacements + ' lần thay thế' : '');
       $('ocrDownloadBtn').disabled = corrected.cues.length === 0;
       $('ocrApplyCorrectionsBtn').disabled = corrected.cues.length === 0;
       $('ocrResetBtn').disabled = corrected.cues.length === 0;
       $('ocrProgress').textContent = ocrCancelled
         ? 'Đã dừng. Kết quả một phần đã được giữ lại.'
-        : 'Hoàn tất trích xuất. Hãy rà soát SRT trước khi tải xuống.';
+        : skippedFrames
+          ? 'Hoàn tất với ' + skippedFrames + ' khung hình bị bỏ qua. Hãy rà soát SRT trước khi tải xuống.'
+          : 'Hoàn tất trích xuất. Hãy rà soát SRT trước khi tải xuống.';
       $('ocrProgressBar').value = totalFrames ? processed / totalFrames * 100 : 0;
-      if (!cues.length) toast('Chưa nhận diện được câu phụ đề ổn định. Thử tăng vùng OCR hoặc chọn đúng ngôn ngữ.');
+      if (!corrected.cues.length) {
+        toast('Chưa nhận diện được câu phụ đề ổn định. Hãy kiểm tra ngôn ngữ, vùng xanh OCR và thử khoảng quét 0,25 giây.');
+      }
     } catch (error) {
       console.error('Hardsub OCR failed:', error);
       $('ocrProgress').textContent = error && error.message ? error.message : 'Có lỗi khi xử lý OCR.';
@@ -1664,7 +1788,19 @@ textarea.field { resize: vertical; line-height: 1.55; }
         try { await ocrWorker.terminate(); } catch (_) {}
         ocrWorker = null;
       }
-      try { video.currentTime = originalTime; } catch (_) {}
+      samples.length = 0;
+      canvas.width = 0;
+      canvas.height = 0;
+      try {
+        video.currentTime = originalTime;
+        if (wasPlaying) {
+          const resumeVideo = () => {
+            if (video.paused) video.play().catch(() => {});
+          };
+          video.addEventListener('seeked', resumeVideo, { once: true });
+          window.setTimeout(resumeVideo, 1200);
+        }
+      } catch (_) {}
       ocrSetBusy(false);
       $('ocrStartBtn').disabled = !video.src || !video.videoWidth;
       ocrSyncCropOverlay();

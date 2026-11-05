@@ -201,10 +201,10 @@ test('Hardsub OCR merges a single missed frame, filters one-frame noise and pres
 
   assert.equal(cues.length, 2);
   assert.equal(cues[0].start, 0);
-  assert.equal(cues[0].end, 2);
+  assert.equal(cues[0].end, 1.75);
   assert.equal(cues[0].text, 'Xin chào\nmọi người');
-  assert.equal(cues[1].start, 2);
-  assert.equal(cues[1].end, 3);
+  assert.equal(cues[1].start, 1.75);
+  assert.equal(cues[1].end, 2.75);
 
   const srt = helpers.ocrToSrt(cues);
   assert.match(srt, /00:00:00,000 --> 00:00:02,000/);
@@ -311,8 +311,8 @@ test('index HTML is not cached so fixes appear without stale frontend code', () 
 });
 
 test('package and visible UI expose the same semantic version', () => {
-  assert.equal(pkg.version, '1.2.13');
-  assert.match(html, //SRT TRANSLATOR · v1\\.2\\.13//);
+  assert.equal(pkg.version, '1.2.14');
+  assert.match(html, /SRT TRANSLATOR · v1\\.2\\.14/);
   assert.match(server, /APP_VERSION/);
 });
 
@@ -561,4 +561,73 @@ test('Hardsub OCR cropper exposes eight mouse/touch resize handles and editable 
   assert.ok(html.includes('pointerdown'));
   assert.ok(html.includes('pointermove'));
   assert.ok(html.includes('#20A7FF'));
+});
+
+
+test('Hardsub OCR deduplicates repeated lines, bridges two missed samples and keeps short clear captions', () => {
+  const start = html.indexOf('  function ocrNormalize(');
+  const end = html.indexOf('  function ocrSetBusy(', start);
+  assert.ok(start >= 0 && end > start);
+  const helpers = new Function(html.slice(start, end) +
+    '; return { ocrCleanSampleText, ocrBuildCues, ocrMergeAdjacentCues };')();
+
+  assert.equal(helpers.ocrCleanSampleText('Xin chào\\nXin chào\\n|||\\n___', 95), 'Xin chào');
+  assert.equal(helpers.ocrCleanSampleText('P a t', 35), '');
+
+  const stable = helpers.ocrBuildCues([
+    { time: 0, text: 'Xin chào mọi người', confidence: 94 },
+    { time: 0.5, text: 'Xin chào mọi người', confidence: 94 },
+    { time: 1, text: '', confidence: 0 },
+    { time: 1.5, text: '', confidence: 0 },
+    { time: 2, text: 'Xin chào mọi người', confidence: 93 },
+    { time: 2.5, text: 'Xin chào mọi người', confidence: 94 }
+  ], 0.5, 3);
+  assert.equal(stable.length, 1);
+  assert.equal(stable[0].samples, 4);
+
+  const brief = helpers.ocrBuildCues([
+    { time: 0.5, text: 'Câu ngắn', confidence: 92 },
+    { time: 1, text: '', confidence: 0 }
+  ], 0.5, 2);
+  assert.equal(brief.length, 1);
+  assert.ok(brief[0].end - brief[0].start >= 0.1);
+  assert.equal(helpers.ocrBuildCues([
+    { time: 0, text: 'Chữ nhiễu', confidence: 55 }
+  ], 0.5, 1).length, 0);
+});
+
+test('Hardsub OCR centers timestamps, rejects micro-duration noise and pads the selected crop edges', () => {
+  const start = html.indexOf('  function ocrClampCrop(');
+  const end = html.indexOf('  function ocrCleanSampleText(', start);
+  assert.ok(start >= 0 && end > start);
+  const helpers = new Function(html.slice(start, end) +
+    '; return { ocrCropToSourceRect, ocrExpandSourceRect };')();
+  const raw = helpers.ocrCropToSourceRect({ x: 25, y: 50, w: 40, h: 30 }, 1920, 1080);
+  assert.deepEqual(raw, { x: 480, y: 540, width: 768, height: 324 });
+  assert.deepEqual(helpers.ocrExpandSourceRect(raw, 1920, 1080),
+    { x: 465, y: 531, width: 798, height: 342 });
+
+  const cues = new Function(
+    html.slice(html.indexOf('  function ocrNormalize('), html.indexOf('  function ocrSetBusy(')) +
+    '; return ocrBuildCues;'
+  )();
+  const centered = cues([
+    { time: 0.5, text: 'Xin chào', confidence: 95 },
+    { time: 1, text: '', confidence: 0 }
+  ], 0.5, 2);
+  assert.equal(centered.length, 1);
+  assert.equal(centered[0].start, 0.25);
+  assert.equal(centered[0].end, 0.75);
+  assert.ok(centered.every((cue) => cue.end - cue.start >= 0.1));
+});
+
+test('Hardsub OCR passes the selected language, retries transient seeks and releases browser memory', () => {
+  assert.match(html, /createWorker\\(language, 1/);
+  assert.match(html, /const seekWithRetry = async \\(time\\)/);
+  assert.match(html, /await ocrWorker\\.terminate\\(\\)/);
+  assert.match(html, /samples\\.length = 0/);
+  assert.match(html, /canvas\\.width = 0/);
+  assert.match(html, /URL\\.revokeObjectURL\\(ocrVideoUrl\\)/);
+  assert.match(html, /user_defined_dpi: '300'/);
+  assert.match(html, /ocrCleanSampleText\\(result\\.data\\.text \\|\\| '', frameConfidence\\)/);
 });
