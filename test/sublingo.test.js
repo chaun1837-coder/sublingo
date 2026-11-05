@@ -261,8 +261,8 @@ test('index HTML is not cached so fixes appear without stale frontend code', () 
 });
 
 test('package and visible UI expose the same semantic version', () => {
-  assert.equal(pkg.version, '1.2.21');
-  assert.match(html, /SRT TRANSLATOR · v1\.2\.21/);
+  assert.equal(pkg.version, '1.2.22');
+  assert.match(html, /SRT TRANSLATOR · v1\.2\.22/);
   assert.match(server, /APP_VERSION/);
 });
 
@@ -451,6 +451,8 @@ test('Page 3 social optimizer supports customizable title length and video-aware
   assert.match(html, /value="auto" selected>✨ Tự động theo nội dung video/);
   assert.match(html, /value="3">/);
   assert.match(html, /value="7">/);
+  assert.match(html, /Độ dài tiêu đề \(số từ\)/);
+  assert.doesNotMatch(html, /Độ dài tiêu đề YouTube \(số từ\)/);
   assert.match(html, /minTitleWords,maxTitleWords/);
   assert.match(server, /app\.post\('\/api\/social-optimize'/);
   assert.match(server, /gemini-3\.8-flash:generateContent/);

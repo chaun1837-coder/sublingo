@@ -1,6 +1,6 @@
-# SubLingo 1.2.21 — Tùy chỉnh độ dài và phong cách tiêu đề Trang 3
+# SubLingo 1.2.22 — Hoàn thiện nhãn tùy chỉnh độ dài tiêu đề
 
-**Phiên bản hiện tại:** 1.2.21 — *Tùy chỉnh số từ tiêu đề và tự nhận diện phong cách theo video*.
+**Phiên bản hiện tại:** 1.2.22 — *Hoàn thiện nhãn tùy chỉnh số từ tiêu đề*.
 
 SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT, tạo phụ đề tự động và tối ưu nội dung mạng xã hội bằng Gemini và OpenAI.
 
