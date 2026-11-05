@@ -239,7 +239,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
   <header class="topbar">
     <div class="brand">
       <div class="logo-mark" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 5.5C4 4.67 4.67 4 5.5 4h13c.83 0 1.5.67 1.5 1.5v9c0 .83-.67 1.5-1.5 1.5H11l-4.5 4v-4H5.5C4.67 16 4 15.33 4 14.5v-9Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 8.5h8M8 11.5h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
-      <div><div class="brand-name">SubLingo</div><div class="brand-sub">SUBTITLE WORKSPACE · SRT TRANSLATOR · v1.2.14</div></div>
+      <div><div class="brand-name">SubLingo</div><div class="brand-sub">SUBTITLE WORKSPACE · SRT TRANSLATOR · v1.2.15</div></div>
     </div>
     <div class="top-actions">
       <div class="google-login-wrap" id="googleSignInButton"></div>
@@ -488,11 +488,12 @@ textarea.field { resize: vertical; line-height: 1.55; }
 <div class="ocr-video-actions"><button class="btn btn-ghost" id="ocrZoomBtn" type="button" aria-expanded="false" disabled>⤢ Phóng to video để căn chữ</button><span class="ocr-video-zoom-help">Mở rộng video để nhìn rõ phụ đề và căn khung xanh chính xác hơn.</span></div>
 <div class="stt-field-group"><label class="form-label">Vùng OCR trên video · X, Y, W, H (%)</label><div class="ocr-coordinate-grid"><label for="ocrCropX">X · Trái<input id="ocrCropX" type="number" min="0" max="96" step="0.5" value="0" disabled></label><label for="ocrCropY">Y · Trên<input id="ocrCropY" type="number" min="0" max="96" step="0.5" value="75" disabled></label><label for="ocrCropW">W · Rộng<input id="ocrCropW" type="number" min="4" max="100" step="0.5" value="100" disabled></label><label for="ocrCropH">H · Cao<input id="ocrCropH" type="number" min="4" max="100" step="0.5" value="25" disabled></label></div><small class="ocr-help">Mặc định tự chọn 25% phía dưới. Kéo bên trong khung để di chuyển; kéo 8 nút tròn ở góc/cạnh để thay đổi vùng. X, Y, W, H tính theo phần trăm kích thước video.</small></div>
           <div class="stt-field-group"><label class="form-label" for="ocrLanguage">Ngôn ngữ phụ đề trong video</label><select class="field" id="ocrLanguage"><option value="vie">Tiếng Việt</option><option value="eng">Tiếng Anh</option><option value="vie+eng">Tiếng Việt + Anh</option><option value="chi_sim">Tiếng Trung giản thể</option><option value="chi_tra">Tiếng Trung phồn thể</option><option value="jpn">Tiếng Nhật</option><option value="kor">Tiếng Hàn</option><option value="tha">Tiếng Thái</option><option value="fra">Tiếng Pháp</option><option value="spa">Tiếng Tây Ban Nha</option><option value="deu">Tiếng Đức</option></select></div>
-          <div class="stt-field-group"><label class="form-label" for="ocrInterval">Khoảng cách quét khung hình</label><select class="field" id="ocrInterval"><option value="0.25">0,25 giây · chính xác hơn, xử lý lâu hơn</option><option value="0.5" selected>0,5 giây · khuyến nghị</option><option value="1">1 giây · nhanh hơn</option></select></div>
-          <div class="stt-field-group"></div>
+          <div class="stt-field-group"><label class="form-label" for="ocrInterval">Khoảng cách quét khung hình</label><select class="field" id="ocrInterval"><option value="0.25">0,25 giây · chi tiết hơn, chậm hơn</option><option value="0.5" selected>0,5 giây · cân bằng</option><option value="1">1 giây · nhanh hơn</option></select></div>
+          <div class="stt-field-group"><label class="form-label" for="ocrSpeedProfile">Tốc độ và độ nét OCR</label><select class="field" id="ocrSpeedProfile"><option value="fast">Nhanh · ảnh 1280px + mô hình gọn</option><option value="balanced" selected>Cân bằng · khuyến nghị</option><option value="quality">Ưu tiên chữ nhỏ · ảnh 1920px</option></select><small class="ocr-help">Chế độ Nhanh tải mô hình tessdata_fast nhẹ hơn; có thể giảm độ chính xác ở chữ nhỏ hoặc font khó.</small></div>
+          <div class="stt-field-group"><label class="form-label" for="ocrThresholdMode">Làm sạch nền video</label><select class="field" id="ocrThresholdMode"><option value="adaptive" selected>Ngưỡng thích nghi · nền sáng/tối không đều</option><option value="otsu">Ngưỡng toàn ảnh · Otsu</option></select><small class="ocr-help">Ngưỡng thích nghi xử lý theo vùng nhỏ để hạn chế ảnh hưởng của nền sáng/tối thay đổi.</small></div>
           <div class="stt-field-group"><label class="form-label" for="ocrCorrections">Quy tắc sửa lỗi OCR (không bắt buộc)</label><textarea class="field" id="ocrCorrections" rows="3" maxlength="3000" placeholder="em dít =&gt; edit&#10;teh =&gt; the"></textarea><small class="ocr-help">Mỗi dòng một quy tắc: chữ OCR sai =&gt; chữ đúng. Quy tắc được tự áp dụng khi tạo SRT; chỉ thay cụm khớp trọn từ/cụm từ, tối đa 50 quy tắc. Không tự đổi các ký tự dễ nhầm như 0/O hoặc 1/l.</small></div>
-          <label class="ocr-check"><input id="ocrBinarize" type="checkbox" checked> Nhị phân hóa trắng/đen và tăng tương phản</label>
-          <small class="ocr-help">Bỏ chọn nếu chữ có màu, nền phức tạp hoặc ảnh nhị phân làm mất nét chữ.</small>
+          <label class="ocr-check"><input id="ocrBinarize" type="checkbox" checked> Tăng tương phản / nhị phân hóa ảnh</label>
+          <small class="ocr-help">Bỏ chọn để giữ sắc độ ảnh gốc và chỉ tăng tương phản. Có thể đổi kiểu ngưỡng nếu nền phức tạp.</small>
           <div class="ocr-actions"><button class="btn btn-primary" id="ocrStartBtn" type="button" disabled>✦ Bắt đầu trích xuất</button><button class="btn btn-ghost" id="ocrCancelBtn" type="button" disabled>Hủy</button></div>
           <div class="ocr-progress" id="ocrProgress" role="status" aria-live="polite">Chọn video để bắt đầu.</div><progress id="ocrProgressBar" max="100" value="0"></progress>
           <small class="ocr-help">Lần đầu sử dụng, trình duyệt sẽ tải mô hình OCR theo ngôn ngữ đã chọn. Thời gian xử lý phụ thuộc độ dài video và cấu hình máy tính.</small>
@@ -1127,6 +1128,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
   let ocrVideoUrl = '';
   let ocrCancelled = false;
   let ocrWorker = null;
+  let ocrRunActive = false;
 
   function ocrNormalize(value) {
     return String(value || '').normalize('NFKC').toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
@@ -1188,6 +1190,90 @@ textarea.field { resize: vertical; line-height: 1.55; }
     }
     return threshold;
   }
+
+  function ocrGetProcessingProfile(value) {
+    const profiles = {
+      fast: { maxWidth: 1280, maxHeight: 760, langPath: 'https://tessdata.projectnaptha.com/4.0.0_fast' },
+      balanced: { maxWidth: 1440, maxHeight: 900, langPath: 'https://tessdata.projectnaptha.com/4.0.0' },
+      quality: { maxWidth: 1920, maxHeight: 1100, langPath: 'https://tessdata.projectnaptha.com/4.0.0' }
+    };
+    return profiles[value] || profiles.balanced;
+  }
+
+  function ocrAdaptiveThreshold(image, width, height, blockSize = 31, offset = 7) {
+    const data = image.data;
+    const stride = width + 1;
+    const integral = new Uint32Array(stride * (height + 1));
+    let total = 0;
+    for (let y = 1; y <= height; y += 1) {
+      let rowSum = 0;
+      for (let x = 1; x <= width; x += 1) {
+        const index = ((y - 1) * width + x - 1) * 4;
+        const gray = Math.round(data[index] * 0.299 + data[index + 1] * 0.587 + data[index + 2] * 0.114);
+        rowSum += gray;
+        total += gray;
+        integral[y * stride + x] = integral[(y - 1) * stride + x] + rowSum;
+      }
+    }
+    const radius = Math.max(5, Math.floor(Math.min(blockSize, Math.max(11, Math.min(width, height) - 1)) / 2));
+    const brightBackground = total / Math.max(1, width * height) >= 128;
+    for (let y = 0; y < height; y += 1) {
+      const top = Math.max(0, y - radius);
+      const bottom = Math.min(height, y + radius + 1);
+      for (let x = 0; x < width; x += 1) {
+        const left = Math.max(0, x - radius);
+        const right = Math.min(width, x + radius + 1);
+        const area = (right - left) * (bottom - top);
+        const sum = integral[bottom * stride + right] - integral[top * stride + right] -
+          integral[bottom * stride + left] + integral[top * stride + left];
+        const mean = sum / Math.max(1, area);
+        const index = (y * width + x) * 4;
+        const gray = data[index] * 0.299 + data[index + 1] * 0.587 + data[index + 2] * 0.114;
+        const isText = brightBackground ? gray < mean + offset : gray > mean - offset;
+        const value = isText ? 0 : 255;
+        data[index] = value;
+        data[index + 1] = value;
+        data[index + 2] = value;
+      }
+    }
+    return image;
+  }
+
+  function ocrFrameSignature(imageData, width, height, columns = 96, rows = 32) {
+    const signature = new Uint8Array(columns * rows);
+    const data = imageData.data || imageData;
+    for (let row = 0; row < rows; row += 1) {
+      const centerY = Math.min(height - 1, Math.floor((row + 0.5) * height / rows));
+      for (let column = 0; column < columns; column += 1) {
+        const centerX = Math.min(width - 1, Math.floor((column + 0.5) * width / columns));
+        let sum = 0;
+        let count = 0;
+        for (let dy = -1; dy <= 1; dy += 1) {
+          const y = Math.max(0, Math.min(height - 1, centerY + dy));
+          for (let dx = -1; dx <= 1; dx += 1) {
+            const x = Math.max(0, Math.min(width - 1, centerX + dx));
+            sum += data[(y * width + x) * 4];
+            count += 1;
+          }
+        }
+        signature[row * columns + column] = Math.round(sum / count);
+      }
+    }
+    return signature;
+  }
+
+  function ocrFramesNearlyEqual(left, right, meanLimit = 2, changedLimit = 0.01) {
+    if (!left || !right || left.length !== right.length || !left.length) return false;
+    let totalDifference = 0;
+    let changed = 0;
+    for (let i = 0; i < left.length; i += 1) {
+      const difference = Math.abs(left[i] - right[i]);
+      totalDifference += difference;
+      if (difference > 18) changed += 1;
+    }
+    return totalDifference / left.length <= meanLimit && changed / left.length <= changedLimit;
+  }
+
   let ocrCrop = { x: 0, y: 75, w: 100, h: 25 };
 
   function ocrClampCrop(rect) {
@@ -1239,10 +1325,11 @@ textarea.field { resize: vertical; line-height: 1.55; }
     return { x: left, y: top, width: Math.max(1, right - left), height: Math.max(1, bottom - top) };
   }
 
-  function ocrPrepareFrame(video, canvas, crop, binarize = true) {
+  function ocrPrepareFrame(video, canvas, crop, binarize = true, profile = 'balanced', thresholdMode = 'adaptive') {
     const selected = ocrCropToSourceRect(crop, video.videoWidth, video.videoHeight);
     const source = ocrExpandSourceRect(selected, video.videoWidth, video.videoHeight);
-    const scale = Math.min(2.2, 1600 / source.width, 1000 / source.height);
+    const limits = ocrGetProcessingProfile(profile);
+    const scale = Math.min(2.2, limits.maxWidth / source.width, limits.maxHeight / source.height);
     canvas.width = Math.max(1, Math.round(source.width * scale));
     canvas.height = Math.max(1, Math.round(source.height * scale));
     const context = canvas.getContext('2d', { willReadFrequently: true });
@@ -1250,16 +1337,21 @@ textarea.field { resize: vertical; line-height: 1.55; }
     context.imageSmoothingQuality = 'high';
     context.drawImage(video, source.x, source.y, source.width, source.height, 0, 0, canvas.width, canvas.height);
     const image = context.getImageData(0, 0, canvas.width, canvas.height);
-    const threshold = binarize ? ocrOtsuThreshold(image) : 0;
-    const useBinary = binarize && threshold >= 35 && threshold <= 225;
-    for (let i = 0; i < image.data.length; i += 4) {
-      let gray = image.data[i] * 0.299 + image.data[i + 1] * 0.587 + image.data[i + 2] * 0.114;
-      if (useBinary) gray = gray >= threshold ? 255 : 0;
-      else gray = Math.max(0, Math.min(255, 128 + (gray - 128) * 1.35));
-      image.data[i] = gray;
-      image.data[i + 1] = gray;
-      image.data[i + 2] = gray;
+    if (binarize && thresholdMode === 'adaptive') {
+      ocrAdaptiveThreshold(image, canvas.width, canvas.height);
+    } else {
+      const threshold = binarize ? ocrOtsuThreshold(image) : 0;
+      const useBinary = binarize && threshold >= 35 && threshold <= 225;
+      for (let i = 0; i < image.data.length; i += 4) {
+        let gray = image.data[i] * 0.299 + image.data[i + 1] * 0.587 + image.data[i + 2] * 0.114;
+        if (useBinary) gray = gray >= threshold ? 255 : 0;
+        else gray = Math.max(0, Math.min(255, 128 + (gray - 128) * 1.35));
+        image.data[i] = gray;
+        image.data[i + 1] = gray;
+        image.data[i + 2] = gray;
+      }
     }
+    canvas.__ocrSignature = ocrFrameSignature(image, canvas.width, canvas.height);
     context.putImageData(image, 0, 0);
     return canvas;
   }
@@ -1464,6 +1556,8 @@ textarea.field { resize: vertical; line-height: 1.55; }
     $('ocrVideoInput').disabled = busy;
     $('ocrLanguage').disabled = busy;
     $('ocrInterval').disabled = busy;
+    $('ocrSpeedProfile').disabled = busy;
+    $('ocrThresholdMode').disabled = busy;
     $('ocrBinarize').disabled = busy;
     $('ocrCorrections').disabled = busy;
     ['X', 'Y', 'W', 'H'].forEach((axis) => {
@@ -1643,6 +1737,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   });
   $('ocrStartBtn').addEventListener('click', async () => {
+    if (ocrRunActive) return;
     const video = $('ocrVideo');
     if (!video.src || !Number.isFinite(video.duration) || !video.videoWidth) return;
     const interval = Number($('ocrInterval').value);
@@ -1657,6 +1752,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
       return;
     }
 
+    ocrRunActive = true;
     ocrCancelled = false;
     ocrSetBusy(true);
     $('ocrProgressBar').value = 0;
@@ -1666,12 +1762,20 @@ textarea.field { resize: vertical; line-height: 1.55; }
     let processed = 0;
     let skippedFrames = 0;
     let consecutiveFrameErrors = 0;
+    let reusedFrames = 0;
+    let recognizedFrames = 0;
+    let previousSignature = null;
+    let cachedText = '';
+    let cachedConfidence = 0;
     const originalTime = video.currentTime;
     const wasPlaying = !video.paused && !video.ended;
     video.pause();
     const language = $('ocrLanguage').value;
     const crop = { ...ocrCrop };
     const binarize = $('ocrBinarize').checked;
+    const processingProfileName = $('ocrSpeedProfile').value;
+    const processingProfile = ocrGetProcessingProfile(processingProfileName);
+    const thresholdMode = $('ocrThresholdMode').value;
     const canvas = $('ocrCanvas');
 
     const seek = (time) => new Promise((resolve, reject) => {
@@ -1717,7 +1821,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
       ocrWorker = await window.Tesseract.createWorker(language, 1, {
         workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/worker.min.js',
         corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@5',
-        langPath: 'https://tessdata.projectnaptha.com/4.0.0',
+        langPath: processingProfile.langPath,
         logger: (message) => {
           if (message.status === 'loading tesseract core') $('ocrProgress').textContent = 'Đang tải bộ máy OCR…';
           else if (message.status === 'loading language traineddata') $('ocrProgress').textContent = 'Đang tải dữ liệu ngôn ngữ ' + language + '…';
@@ -1737,10 +1841,21 @@ textarea.field { resize: vertical; line-height: 1.55; }
         try {
           await seekWithRetry(time);
           if (ocrCancelled) break;
-          ocrPrepareFrame(video, canvas, crop, binarize);
-          const result = await ocrWorker.recognize(canvas);
-          frameConfidence = Number(result.data.confidence) || 0;
-          frameText = ocrCleanSampleText(result.data.text || '', frameConfidence);
+          ocrPrepareFrame(video, canvas, crop, binarize, processingProfileName, thresholdMode);
+          const currentSignature = canvas.__ocrSignature;
+          if (previousSignature && ocrFramesNearlyEqual(previousSignature, currentSignature)) {
+            frameText = cachedText;
+            frameConfidence = cachedConfidence;
+            reusedFrames += 1;
+          } else {
+            const result = await ocrWorker.recognize(canvas);
+            frameConfidence = Number(result.data.confidence) || 0;
+            frameText = ocrCleanSampleText(result.data.text || '', frameConfidence);
+            previousSignature = currentSignature;
+            cachedText = frameText;
+            cachedConfidence = frameConfidence;
+            recognizedFrames += 1;
+          }
           consecutiveFrameErrors = 0;
         } catch (error) {
           if (ocrCancelled) break;
@@ -1756,7 +1871,8 @@ textarea.field { resize: vertical; line-height: 1.55; }
         $('ocrProgressBar').value = percent;
         $('ocrProgress').textContent = 'Đã quét ' + processed + '/' + totalFrames +
           ' khung hình (' + percent + '%)' +
-          (skippedFrames ? ' · bỏ qua ' + skippedFrames + ' khung hình lỗi' : '') + '…';
+          (skippedFrames ? ' · bỏ qua ' + skippedFrames + ' khung hình lỗi' : '') +
+          (reusedFrames ? ' · tái sử dụng ' + reusedFrames + ' khung hình tĩnh' : '') + '…';
         if (index % 5 === 0) await new Promise((resolve) => setTimeout(resolve, 0));
       }
 
@@ -1764,7 +1880,9 @@ textarea.field { resize: vertical; line-height: 1.55; }
       const corrected = ocrApplyCorrectionsToCues(cues, $('ocrCorrections').value);
       $('ocrSrtOutput').value = ocrToSrt(corrected.cues);
       $('ocrResultMeta').textContent = corrected.cues.length + ' câu phụ đề · ' + processed +
-        ' khung hình đã quét' + (skippedFrames ? ' · bỏ qua ' + skippedFrames + ' khung hình lỗi' : '') +
+        ' khung hình đã quét · OCR thực tế ' + recognizedFrames + ' lần' +
+        (reusedFrames ? ' · tái sử dụng ' + reusedFrames + ' khung hình tĩnh' : '') +
+        (skippedFrames ? ' · bỏ qua ' + skippedFrames + ' khung hình lỗi' : '') +
         (ocrCancelled ? ' · Đã dừng theo yêu cầu' : '') +
         (corrected.replacements ? ' · Quy tắc sửa: ' + corrected.replacements + ' lần thay thế' : '');
       $('ocrDownloadBtn').disabled = corrected.cues.length === 0;
@@ -1791,6 +1909,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
       samples.length = 0;
       canvas.width = 0;
       canvas.height = 0;
+      canvas.__ocrSignature = null;
       try {
         video.currentTime = originalTime;
         if (wasPlaying) {
@@ -1801,6 +1920,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
           window.setTimeout(resumeVideo, 1200);
         }
       } catch (_) {}
+      ocrRunActive = false;
       ocrSetBusy(false);
       $('ocrStartBtn').disabled = !video.src || !video.videoWidth;
       ocrSyncCropOverlay();

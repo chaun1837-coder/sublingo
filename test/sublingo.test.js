@@ -223,7 +223,7 @@ test('Hardsub OCR uses a selectable binarization mode, a 150 MB browser limit an
   assert.match(html, /id="ocrBinarize" type="checkbox" checked/);
   assert.ok(html.includes("file.size > 150 * 1024 * 1024"));
   assert.ok(html.includes("corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@5'"));
-  assert.ok(html.includes('ocrPrepareFrame(video, canvas, crop, binarize)'));
+  assert.ok(html.includes('ocrPrepareFrame(video, canvas, crop, binarize, processingProfileName, thresholdMode)'));
   assert.match(html, /Hãy rà soát SRT trước khi tải xuống/);
 });
 
@@ -311,8 +311,8 @@ test('index HTML is not cached so fixes appear without stale frontend code', () 
 });
 
 test('package and visible UI expose the same semantic version', () => {
-  assert.equal(pkg.version, '1.2.14');
-  assert.match(html, /SRT TRANSLATOR · v1\.2\.14/);
+  assert.equal(pkg.version, '1.2.15');
+  assert.match(html, /SRT TRANSLATOR · v1\.2\.15/);
   assert.match(server, /APP_VERSION/);
 });
 
@@ -630,4 +630,86 @@ test('Hardsub OCR passes the selected language, retries transient seeks and rele
   assert.match(html, /URL\.revokeObjectURL\(ocrVideoUrl\)/);
   assert.match(html, /user_defined_dpi: '300'/);
   assert.match(html, /ocrCleanSampleText\(result\.data\.text \|\| '', frameConfidence\)/);
+});
+
+
+test('Hardsub OCR exposes selectable fast, balanced and quality profiles plus adaptive thresholding', () => {
+  for (const id of ['ocrSpeedProfile', 'ocrThresholdMode']) assert.ok(html.includes('id="' + id + '"'));
+  assert.ok(html.includes("value=\"fast\""));
+  assert.ok(html.includes("value=\"balanced\" selected"));
+  assert.ok(html.includes("value=\"quality\""));
+  assert.ok(html.includes("value=\"adaptive\" selected"));
+  assert.ok(html.includes("value=\"otsu\""));
+  assert.ok(html.includes("4.0.0_fast"));
+  assert.ok(html.includes("ocrAdaptiveThreshold(image, canvas.width, canvas.height)"));
+});
+
+test('Hardsub OCR reuses near-identical frame OCR results and prevents overlapping jobs', () => {
+  assert.ok(html.includes('function ocrFrameSignature('));
+  assert.ok(html.includes('function ocrFramesNearlyEqual('));
+  assert.ok(html.includes('if (previousSignature && ocrFramesNearlyEqual(previousSignature, currentSignature))'));
+  assert.ok(html.includes('let ocrRunActive = false'));
+  assert.ok(html.includes('if (ocrRunActive) return'));
+  assert.ok(html.includes('recognizedFrames'));
+  assert.ok(html.includes('reusedFrames'));
+});
+
+test('Hardsub OCR adaptive thresholding normalizes both dark and bright backgrounds', () => {
+  const start = html.indexOf('  function ocrAdaptiveThreshold(');
+  const end = html.indexOf('  function ocrFrameSignature(', start);
+  assert.ok(start >= 0 && end > start);
+  const adaptive = new Function(html.slice(start, end) + '; return ocrAdaptiveThreshold;')();
+  const makeImage = (background, foreground) => {
+    const width = 31, height = 31;
+    const data = new Uint8ClampedArray(width * height * 4);
+    for (let i = 0; i < width * height; i += 1) {
+      const x = i % width, y = Math.floor(i / width);
+      const inText = x >= 13 && x <= 17 && y >= 13 && y <= 17;
+      const value = inText ? foreground : background;
+      data[i * 4] = value; data[i * 4 + 1] = value; data[i * 4 + 2] = value; data[i * 4 + 3] = 255;
+    }
+    return { data };
+  };
+  for (const [background, foreground] of [[35, 225], [225, 35]]) {
+    const image = makeImage(background, foreground);
+    adaptive(image, 31, 31);
+    const center = (15 * 31 + 15) * 4;
+    const corner = 0;
+    assert.equal(image.data[center], 0);
+    assert.equal(image.data[corner], 255);
+  }
+});
+
+test('Hardsub OCR frame fingerprints distinguish changed subtitle regions but reuse static frames', () => {
+  const start = html.indexOf('  function ocrFrameSignature(');
+  const end = html.indexOf('  function ocrPrepareFrame(', start);
+  assert.ok(start >= 0 && end > start);
+  const helpers = new Function(html.slice(start, end) +
+    '; return { ocrFrameSignature, ocrFramesNearlyEqual };')();
+  const width = 192, height = 64;
+  const make = (changed) => {
+    const data = new Uint8ClampedArray(width * height * 4);
+    data.fill(0);
+    for (let i = 3; i < data.length; i += 4) data[i] = 255;
+    if (changed) {
+      for (let y = 45; y < 55; y += 1) for (let x = 35; x < 150; x += 1) {
+        const i = (y * width + x) * 4;
+        data[i] = 255; data[i + 1] = 255; data[i + 2] = 255;
+      }
+    }
+    return helpers.ocrFrameSignature({ data }, width, height);
+  };
+  const stillA = make(false);
+  const stillB = make(false);
+  const subtitleChanged = make(true);
+  assert.equal(helpers.ocrFramesNearlyEqual(stillA, stillB), true);
+  assert.equal(helpers.ocrFramesNearlyEqual(stillA, subtitleChanged), false);
+});
+
+test('Hardsub OCR keeps video processing local and only sends sampled frames to one Web Worker', () => {
+  assert.ok(html.includes('Video được xử lý ngay trên trình duyệt, không tải lên máy chủ'));
+  assert.ok(html.includes('createWorker(language, 1'));
+  assert.ok(html.includes('canvas.width = 0'));
+  assert.ok(html.includes('samples.length = 0'));
+  assert.ok(html.includes('langPath: processingProfile.langPath'));
 });
