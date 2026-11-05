@@ -141,7 +141,7 @@ test('three-page navigation keeps Page 3 intentionally blank and contains no Har
     assert.ok(html.includes('id="' + id + '"'));
   }
   assert.match(html, /<button class="page-tab" id="pageThreeTab" type="button" aria-controls="pageThreeContent">Trang 3<\/button>/);
-  assert.match(html, /<section id="pageThreeContent" hidden aria-label="Trang 3"><\/section>/);
+  assert.match(html, /id="socialTranscript"/);
   assert.match(html, /const isPageThree = pageNumber === 3/);
   assert.match(html, /\$\('pageThreeContent'\)\.hidden = !isPageThree/);
   assert.match(html, /\$\('pageThreeTab'\)\.addEventListener\('click', \(\) => showPage\(3\)\)/);
@@ -445,3 +445,5 @@ test('FFmpeg audio encoding is limited to one worker thread', () => {
 });
 
 
+
+test('Page 3 social optimizer includes Gemini Flash and platform controls',()=>{assert.match(html,/id="socialSyncBtn"/);assert.match(html,/id="socialReferenceTitles"/);assert.match(html,/id="socialTemperature"/);assert.match(html,/id="socialYoutubeTab"/);assert.match(html,/id="socialTiktokTab"/);assert.match(html,/id="socialFacebookTab"/);assert.match(server,/app\.post\('\/api\/social-optimize'/);assert.match(server,/gemini-3\.8-flash:generateContent/);assert.match(server,/temperature:input\.temperature/);});

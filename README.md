@@ -1,8 +1,8 @@
-# SubLingo 1.2.19 — Dịch phụ đề SRT & tạo phụ đề tự động
+# SubLingo 1.2.20 — Dịch phụ đề, tạo phụ đề & tối ưu mạng xã hội
 
-**Phiên bản hiện tại:** 1.2.19 — *Three-tab navigation; Page 3 intentionally blank*.
+**Phiên bản hiện tại:** 1.2.20 — *Gemini Flash social content optimizer on Page 3*.
 
-SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT bằng Google Gemini hoặc OpenAI.
+SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT, tạo phụ đề tự động và tối ưu nội dung mạng xã hội bằng Gemini và OpenAI.
 
 ## Tính năng
 
@@ -10,7 +10,7 @@ SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT bằn
 - Đăng xuất xóa hai API key đã lưu trong trình duyệt, dữ liệu phụ đề tạm và hủy lượt dịch đang chạy.
 - Gửi lời thoại theo từng nhóm tới Google Gemini hoặc OpenAI.
 - Người dùng tự chọn mức suy luận Gemini: MINIMAL, LOW, MEDIUM hoặc HIGH; lựa chọn được lưu trên trình duyệt. Mặc định là MINIMAL.
-- Trang 2 tạo phụ đề tự động từ video bằng Google Gemini 3.5 Transcribe, có xem trước video, sửa lời thoại, tùy chỉnh kiểu chữ xem trước và xuất SRT.
+- Trang 2 tạo phụ đề tự động từ video bằng Google Gemini 3.5 Transcribe, có xem trước video, sửa lời thoại, tùy chỉnh kiểu chữ xem trước và xuất SRT.\n- Trang 3 dùng Gemini 3.8 Flash tạo tiêu đề YouTube Shorts, mô tả, hashtag, hook TikTok và caption Facebook Reels; hỗ trợ đồng bộ lời thoại, tiêu đề tham khảo, preset Anime, Temperature và sao chép nhanh.\n- Bộ quét từ khóa chỉ cảnh báo tham khảo, không bảo đảm tránh shadowban.
 - Giữ nguyên số thứ tự, timestamp, metadata, dấu phân cách và kiểu xuống dòng từ file SRT gốc.
 - Có thể chọn lưu API key trên thiết bị bằng localStorage. Tùy chọn này **không mã hóa key**; chỉ nên dùng trên thiết bị cá nhân.
 - Giới hạn file ở 10 MB và 5.000 cue để tránh treo trình duyệt; mỗi cue tối đa 5.000 ký tự.
@@ -174,3 +174,4 @@ GitHub Actions tự chạy bộ test khi có push hoặc pull request vào nhán
 - Giới hạn dung lượng file, số cue và ngăn lỗi đọc file theo thứ tự sai.
 - Cập nhật model OpenAI; tắt lưu Responses phía OpenAI; tránh cache HTML cũ.
 - Bổ sung test và CI.
+\n\n### 1.2.20\n- Thêm trợ lý tối ưu nội dung mạng xã hội bằng Gemini 3.8 Flash ở Trang 3.\n- Bổ sung đồng bộ transcript, tiêu đề tham khảo, phong cách Anime, Temperature, ba nền tảng, sao chép nhanh và cảnh báo từ khóa.\n
