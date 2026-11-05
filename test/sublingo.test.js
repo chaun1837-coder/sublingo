@@ -312,7 +312,7 @@ test('index HTML is not cached so fixes appear without stale frontend code', () 
 
 test('package and visible UI expose the same semantic version', () => {
   assert.equal(pkg.version, '1.2.14');
-  assert.match(html, /SRT TRANSLATOR · v1\\.2\\.14/);
+  assert.match(html, /SRT TRANSLATOR · v1\.2\.14/);
   assert.match(server, /APP_VERSION/);
 });
 
@@ -571,7 +571,7 @@ test('Hardsub OCR deduplicates repeated lines, bridges two missed samples and ke
   const helpers = new Function(html.slice(start, end) +
     '; return { ocrCleanSampleText, ocrBuildCues, ocrMergeAdjacentCues };')();
 
-  assert.equal(helpers.ocrCleanSampleText('Xin chào\\nXin chào\\n|||\\n___', 95), 'Xin chào');
+  assert.equal(helpers.ocrCleanSampleText('Xin chào\nXin chào\n|||\n___', 95), 'Xin chào');
   assert.equal(helpers.ocrCleanSampleText('P a t', 35), '');
 
   const stable = helpers.ocrBuildCues([
@@ -622,12 +622,12 @@ test('Hardsub OCR centers timestamps, rejects micro-duration noise and pads the 
 });
 
 test('Hardsub OCR passes the selected language, retries transient seeks and releases browser memory', () => {
-  assert.match(html, /createWorker\\(language, 1/);
-  assert.match(html, /const seekWithRetry = async \\(time\\)/);
-  assert.match(html, /await ocrWorker\\.terminate\\(\\)/);
-  assert.match(html, /samples\\.length = 0/);
-  assert.match(html, /canvas\\.width = 0/);
-  assert.match(html, /URL\\.revokeObjectURL\\(ocrVideoUrl\\)/);
+  assert.match(html, /createWorker\(language, 1/);
+  assert.match(html, /const seekWithRetry = async \(time\)/);
+  assert.match(html, /await ocrWorker\.terminate\(\)/);
+  assert.match(html, /samples\.length = 0/);
+  assert.match(html, /canvas\.width = 0/);
+  assert.match(html, /URL\.revokeObjectURL\(ocrVideoUrl\)/);
   assert.match(html, /user_defined_dpi: '300'/);
-  assert.match(html, /ocrCleanSampleText\\(result\\.data\\.text \\|\\| '', frameConfidence\\)/);
+  assert.match(html, /ocrCleanSampleText\(result\.data\.text \|\| '', frameConfidence\)/);
 });
