@@ -544,7 +544,7 @@ test('Hardsub OCR cropper defaults to the bottom quarter and supports bounded po
 
 
 test('Page 3 can expand the video preview across the workspace for accurate OCR crop selection', () => {
-  assert.ok(html.includes('id="ocrGrid" class="ocr-grid"'));
+  assert.match(html, /class="ocr-grid" id="ocrGrid"|id="ocrGrid" class="ocr-grid"/);
   assert.ok(html.includes('id="ocrZoomBtn"'));
   assert.match(html, /\.ocr-grid\.ocr-video-expanded\{grid-template-columns:minmax\(0,1fr\)\}/);
   assert.match(html, /classList\.toggle\('ocr-video-expanded', expanded\)/);
