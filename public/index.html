@@ -236,7 +236,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
   <header class="topbar">
     <div class="brand">
       <div class="logo-mark" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 5.5C4 4.67 4.67 4 5.5 4h13c.83 0 1.5.67 1.5 1.5v9c0 .83-.67 1.5-1.5 1.5H11l-4.5 4v-4H5.5C4.67 16 4 15.33 4 14.5v-9Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 8.5h8M8 11.5h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
-      <div><div class="brand-name">SubLingo</div><div class="brand-sub">SUBTITLE WORKSPACE · SRT TRANSLATOR · v1.2.20</div></div>
+      <div><div class="brand-name">SubLingo</div><div class="brand-sub">SUBTITLE WORKSPACE · SRT TRANSLATOR · v1.2.21</div></div>
     </div>
     <div class="top-actions">
       <div class="google-login-wrap" id="googleSignInButton"></div>
@@ -478,15 +478,16 @@ textarea.field { resize: vertical; line-height: 1.55; }
     </section>
 
 <style>
-.social-layout{display:grid;grid-template-columns:minmax(270px,390px) minmax(0,1fr);gap:18px}.social-intro{margin:4px 0 20px}.social-intro h2{margin:0;font-size:clamp(1.4rem,2.4vw,1.9rem)}.social-intro p,.social-help{font-size:11px;line-height:1.6;color:light-dark(#718096,#AAB8C9)}.social-field{margin-bottom:14px}.social-tabs{display:flex;gap:8px;margin-bottom:14px}.social-tabs button,.social-copy{border:1px solid light-dark(#D8E2EB,#3B4A60);border-radius:8px;padding:8px 10px;background:light-dark(#F7FAFC,#1D2B3F);color:light-dark(#52677F,#C3D0DE);font-size:11px;font-weight:700}.social-tabs button.active{border-color:#65AFA4;background:light-dark(#EAF6F3,#1B3935)}.social-card{border:1px solid light-dark(#E1E8EF,#34445A);border-radius:12px;padding:14px;margin-bottom:10px}.social-copy-row{display:flex;gap:8px;align-items:flex-start;padding:9px 0;border-bottom:1px solid light-dark(#E9EEF3,#2A384B)}.social-copy-row span{flex:1;white-space:pre-wrap;font-size:12px;line-height:1.6}.social-warning{margin-top:12px;padding:10px;border:1px solid #B99C5A;border-radius:9px;font-size:10px;line-height:1.5}@media(max-width:800px){.social-layout{grid-template-columns:1fr}}
+.social-layout{display:grid;grid-template-columns:minmax(270px,390px) minmax(0,1fr);gap:18px}.social-length-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.social-length-grid label{display:grid;gap:6px;font-size:11px;color:light-dark(#718096,#AAB8C9)}.social-intro{margin:4px 0 20px}.social-intro h2{margin:0;font-size:clamp(1.4rem,2.4vw,1.9rem)}.social-intro p,.social-help{font-size:11px;line-height:1.6;color:light-dark(#718096,#AAB8C9)}.social-field{margin-bottom:14px}.social-tabs{display:flex;gap:8px;margin-bottom:14px}.social-tabs button,.social-copy{border:1px solid light-dark(#D8E2EB,#3B4A60);border-radius:8px;padding:8px 10px;background:light-dark(#F7FAFC,#1D2B3F);color:light-dark(#52677F,#C3D0DE);font-size:11px;font-weight:700}.social-tabs button.active{border-color:#65AFA4;background:light-dark(#EAF6F3,#1B3935)}.social-card{border:1px solid light-dark(#E1E8EF,#34445A);border-radius:12px;padding:14px;margin-bottom:10px}.social-copy-row{display:flex;gap:8px;align-items:flex-start;padding:9px 0;border-bottom:1px solid light-dark(#E9EEF3,#2A384B)}.social-copy-row span{flex:1;white-space:pre-wrap;font-size:12px;line-height:1.6}.social-warning{margin-top:12px;padding:10px;border:1px solid #B99C5A;border-radius:9px;font-size:10px;line-height:1.5}@media(max-width:800px){.social-layout{grid-template-columns:1fr}}
 </style>
 <section id="pageThreeContent" hidden aria-labelledby="socialTitle">
- <div class="social-intro"><div class="eyebrow">SOCIAL MEDIA CONTENT STUDIO</div><h2 id="socialTitle">Tối ưu tiêu đề & hashtag bằng AI</h2><p>Tạo nội dung riêng cho YouTube Shorts, TikTok và Facebook Reels bằng Gemini 3.8 Flash.</p></div>
+ <div class="social-intro"><div class="eyebrow">SOCIAL MEDIA CONTENT STUDIO</div><h2 id="socialTitle">Tối ưu tiêu đề & hashtag bằng AI</h2><p>Tạo nội dung riêng cho YouTube Shorts, TikTok và Facebook Reels bằng Gemini 3.8 Flash. AI tự phân tích lời thoại để chọn phong cách tiêu đề phù hợp với video.</p></div>
  <div class="social-layout">
   <section class="panel"><div class="panel-head"><div class="panel-title">01 · Nội dung & cấu hình</div></div><div class="panel-body">
    <div class="social-field"><label class="form-label" for="socialTranscript">Lời thoại / nội dung video</label><button class="social-copy" id="socialSyncBtn" type="button">↻ Đồng bộ Trang 1 & 2</button><textarea class="field" id="socialTranscript" rows="8" maxlength="20000" placeholder="Đồng bộ hoặc dán nội dung..."></textarea><div class="social-help">Ưu tiên bản dịch Trang 1, sau đó đến lời thoại Trang 2. Lưu tạm trong localStorage.</div></div>
    <div class="social-field"><label class="form-label" for="socialReferenceTitles">Tiêu đề tham khảo (mỗi dòng một tiêu đề)</label><textarea class="field" id="socialReferenceTitles" rows="3" maxlength="3000" placeholder="Dán tiêu đề xu hướng để AI học cấu trúc..."></textarea></div>
-   <div class="social-field"><label class="form-label" for="socialStyle">Phong cách</label><select class="field" id="socialStyle"><option value="anime">Anime / hoạt hình · xuyên không, giấu nghề, hệ thống, vả mặt</option><option value="dramatic">Kịch tính, tò mò</option><option value="funny">Hài hước</option><option value="emotional">Cảm xúc</option><option value="custom">Tự nhiên</option></select></div>
+   <div class="social-field"><label class="form-label" for="socialStyle">Phong cách tiêu đề</label><select class="field" id="socialStyle"><option value="auto" selected>✨ Tự động theo nội dung video (khuyên dùng)</option><option value="anime">Anime / hoạt hình · xuyên không, giấu nghề, hệ thống, vả mặt</option><option value="dramatic">Kịch tính, tò mò</option><option value="funny">Hài hước</option><option value="emotional">Cảm xúc</option><option value="custom">Tự nhiên, cân bằng</option></select><div class="social-help">Mặc định, AI phân tích lời thoại và tiêu đề tham khảo để chọn giọng phù hợp; các preset bên dưới dùng khi bạn muốn chỉ định phong cách.</div></div>
+   <div class="social-field"><label class="form-label">Độ dài tiêu đề YouTube (số từ)</label><div class="social-length-grid"><label for="socialMinTitleWords">Tối thiểu<input class="field" id="socialMinTitleWords" type="number" min="2" max="20" step="1" value="3"></label><label for="socialMaxTitleWords">Tối đa<input class="field" id="socialMaxTitleWords" type="number" min="2" max="20" step="1" value="7"></label></div><div class="social-help">Mặc định 3–7 từ. Bạn có thể tăng hoặc giảm theo ý mình; tiêu đề YouTube vẫn phải trong giới hạn 100 ký tự.</div></div>
    <div class="social-field"><label class="form-label" for="socialTemperature">Mức sáng tạo: <span id="socialTemperatureValue">0.7</span></label><input class="field" id="socialTemperature" type="range" min="0.2" max="1.2" step="0.1" value="0.7"></div>
    <div class="social-field"><label class="form-label" for="socialApiKey">Gemini API key</label><input class="field" id="socialApiKey" type="password" placeholder="Dùng chung key đã lưu ở Trang 1"></div>
    <button class="btn btn-primary" id="socialGenerateBtn" type="button" style="width:100%">✦ Tạo nội dung cho 3 nền tảng</button><div class="social-help" id="socialStatus" aria-live="polite">Chưa tạo nội dung.</div>
@@ -1581,7 +1582,38 @@ textarea.field { resize: vertical; line-height: 1.55; }
  $('socialYoutubeTab').addEventListener('click',()=>setSocialPlatform('youtube'));$('socialTiktokTab').addEventListener('click',()=>setSocialPlatform('tiktok'));$('socialFacebookTab').addEventListener('click',()=>setSocialPlatform('facebook'));$('socialSyncBtn').addEventListener('click',syncSocialTranscript);
  $('socialTemperature').addEventListener('input',()=>$('socialTemperatureValue').textContent=Number($('socialTemperature').value).toFixed(1));$('socialTranscript').addEventListener('input',()=>{try{localStorage.setItem(SOCIAL_TRANSCRIPT_KEY,$('socialTranscript').value);}catch(_){}});
  $('socialCopyAllBtn').addEventListener('click',()=>{if(socialResults)socialCopy('YOUTUBE\n'+socialResults.youtube.titles.join('\n')+'\n'+socialResults.youtube.description+'\n'+socialResults.youtube.hashtags.join(' ')+'\n\nTIKTOK\n'+socialResults.tiktok.caption+'\n'+socialResults.tiktok.hashtags.join(' ')+'\n\nFACEBOOK\n'+socialResults.facebook.caption);});
- $('socialGenerateBtn').addEventListener('click',async()=>{const content=$('socialTranscript').value.trim();let saved='';try{saved=localStorage.getItem(savedKeyStorageName('gemini'))||'';}catch(_){}const apiKey=$('socialApiKey').value.trim()||$('apiKey').value.trim()||saved;if(content.length<20){toast('Hãy nhập hoặc đồng bộ ít nhất 20 ký tự.');return;}if(!apiKey){toast('Hãy nhập Gemini API key ở Trang 1 hoặc 3.');return;}$('socialGenerateBtn').disabled=true;$('socialStatus').textContent='Gemini 3.8 Flash đang xử lý...';try{const response=await fetch('/api/social-optimize',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({apiKey,content,referenceTitles:$('socialReferenceTitles').value,style:$('socialStyle').value,temperature:Number($('socialTemperature').value)})});const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||'Không thể tạo nội dung.');socialResults=data.result;renderSocial();$('socialStatus').textContent='Đã tạo nội dung cho cả ba nền tảng.';toast('Đã tạo xong nội dung.');}catch(e){$('socialStatus').textContent=e.message;toast(e.message);}finally{$('socialGenerateBtn').disabled=false;}});
+ $('socialGenerateBtn').addEventListener('click',async()=>{
+  const content=$('socialTranscript').value.trim();
+  const minTitleWords=Number($('socialMinTitleWords').value);
+  const maxTitleWords=Number($('socialMaxTitleWords').value);
+  let saved='';
+  try{saved=localStorage.getItem(savedKeyStorageName('gemini'))||'';}catch(_){}
+  const apiKey=$('socialApiKey').value.trim()||$('apiKey').value.trim()||saved;
+  if(content.length<20){toast('Hãy nhập hoặc đồng bộ ít nhất 20 ký tự.');return;}
+  if(!Number.isInteger(minTitleWords)||!Number.isInteger(maxTitleWords)||minTitleWords<2||maxTitleWords>20||maxTitleWords<2||minTitleWords>maxTitleWords){
+   toast('Độ dài tiêu đề chưa hợp lệ. Hãy chọn số từ tối thiểu và tối đa trong khoảng 2–20, tối thiểu không lớn hơn tối đa.');
+   $('socialMinTitleWords').focus();return;
+  }
+  if(!apiKey){toast('Hãy nhập Gemini API key ở Trang 1 hoặc 3.');return;}
+  $('socialGenerateBtn').disabled=true;
+  $('socialStatus').textContent='Gemini 3.8 Flash đang phân tích nội dung và tạo tiêu đề...';
+  try{
+   const response=await fetch('/api/social-optimize',{
+    method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+     apiKey,content,referenceTitles:$('socialReferenceTitles').value,
+     style:$('socialStyle').value,temperature:Number($('socialTemperature').value),
+     minTitleWords,maxTitleWords
+    })
+   });
+   const data=await response.json().catch(()=>({}));
+   if(!response.ok)throw new Error(data.error||'Không thể tạo nội dung.');
+   socialResults=data.result;renderSocial();
+   $('socialStatus').textContent='Đã tạo nội dung cho cả ba nền tảng.';
+   toast('Đã tạo xong nội dung.');
+  }catch(e){$('socialStatus').textContent=e.message;toast(e.message);}
+  finally{$('socialGenerateBtn').disabled=false;}
+ });
  try{$('socialApiKey').value=localStorage.getItem(savedKeyStorageName('gemini'))||'';}catch(_){}
 
   refreshSession();

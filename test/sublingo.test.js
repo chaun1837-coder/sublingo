@@ -136,7 +136,7 @@ test('all static element references exist and inline JavaScript parses', () => {
   for (const script of scripts) assert.doesNotThrow(() => new Script(script[1]));
 });
 
-test('three-page navigation keeps Page 3 intentionally blank and contains no Hardsub OCR', () => {
+test('three-page navigation keeps Page 3 separate and contains no Hardsub OCR', () => {
   for (const id of ['pageOneTab','pageTwoTab','pageThreeTab','pageOneContent','pageTwoContent','pageThreeContent']) {
     assert.ok(html.includes('id="' + id + '"'));
   }
@@ -144,7 +144,7 @@ test('three-page navigation keeps Page 3 intentionally blank and contains no Har
   assert.match(html, /id="socialTranscript"/);
   assert.match(html, /const isPageThree = pageNumber === 3/);
   assert.match(html, /\$\('pageThreeContent'\)\.hidden = !isPageThree/);
-  assert.match(html, /\$\('pageThreeTab'\)\.addEventListener\('click', \(\) => showPage\(3\)\)/);
+  assert.match(html, /\$\('pageThreeTab'\)\.addEventListener\('click', \(\) => \{ syncSocialTranscript\(\); showPage\(3\); \}\)/);
   assert.doesNotMatch(html, /Hardsub OCR|tesseract\.js|function ocrPrepareFrame/);
   assert.match(html, /function showPage\(pageNumber\)/);
   assert.match(html, /showPage\(1\)/);
@@ -261,8 +261,8 @@ test('index HTML is not cached so fixes appear without stale frontend code', () 
 });
 
 test('package and visible UI expose the same semantic version', () => {
-  assert.equal(pkg.version, '1.2.20');
-  assert.match(html, /SRT TRANSLATOR · v1\.2\.20/);
+  assert.equal(pkg.version, '1.2.21');
+  assert.match(html, /SRT TRANSLATOR · v1\.2\.21/);
   assert.match(server, /APP_VERSION/);
 });
 
@@ -446,4 +446,18 @@ test('FFmpeg audio encoding is limited to one worker thread', () => {
 
 
 
-test('Page 3 social optimizer includes Gemini Flash and platform controls',()=>{assert.match(html,/id="socialSyncBtn"/);assert.match(html,/id="socialReferenceTitles"/);assert.match(html,/id="socialTemperature"/);assert.match(html,/id="socialYoutubeTab"/);assert.match(html,/id="socialTiktokTab"/);assert.match(html,/id="socialFacebookTab"/);assert.match(server,/app\.post\('\/api\/social-optimize'/);assert.match(server,/gemini-3\.8-flash:generateContent/);assert.match(server,/temperature:input\.temperature/);});
+test('Page 3 social optimizer supports customizable title length and video-aware style', () => {
+  for (const id of ['socialSyncBtn','socialReferenceTitles','socialTemperature','socialMinTitleWords','socialMaxTitleWords','socialYoutubeTab','socialTiktokTab','socialFacebookTab']) assert.ok(html.includes('id="' + id + '"'));
+  assert.match(html, /value="auto" selected>✨ Tự động theo nội dung video/);
+  assert.match(html, /value="3">/);
+  assert.match(html, /value="7">/);
+  assert.match(html, /minTitleWords,maxTitleWords/);
+  assert.match(server, /app\.post\('\/api\/social-optimize'/);
+  assert.match(server, /gemini-3\.8-flash:generateContent/);
+  assert.match(server, /temperature: input\.temperature/);
+  assert.match(server, /minTitleWords: z\.number\(\)\.int\(\)\.min\(2\)\.max\(20\)/);
+  assert.match(server, /maxTitleWords: z\.number\(\)\.int\(\)\.min\(2\)\.max\(20\)/);
+  assert.match(server, /input\.minTitleWords \\+ ' đến ' \\+ input\.maxTitleWords/);
+  assert.match(server, /title\.length <= 100/);
+  assert.doesNotMatch(server, /slice\(0,70\)/);
+});
