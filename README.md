@@ -1,6 +1,6 @@
-# SubLingo 1.2.23 — Bổ sung nhận diện thể loại video cho Trang 3
+# SubLingo 1.2.24 — Làm rõ nhóm thể loại tình cảm / ngôn tình
 
-**Phiên bản hiện tại:** 1.2.23 — *Bổ sung lựa chọn thể loại video cho AI tối ưu tiêu đề*.
+**Phiên bản hiện tại:** 1.2.24 — *Làm rõ lựa chọn tình cảm / lãng mạn / ngôn tình*.
 
 SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT, tạo phụ đề tự động và tối ưu nội dung mạng xã hội bằng Gemini và OpenAI.
 
@@ -10,7 +10,7 @@ SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT, tạ
 - Đăng xuất xóa hai API key đã lưu trong trình duyệt, dữ liệu phụ đề tạm và hủy lượt dịch đang chạy.
 - Gửi lời thoại theo từng nhóm tới Google Gemini hoặc OpenAI.
 - Người dùng tự chọn mức suy luận Gemini: MINIMAL, LOW, MEDIUM hoặc HIGH; lựa chọn được lưu trên trình duyệt. Mặc định là MINIMAL.
-- Trang 2 tạo phụ đề tự động từ video bằng Google Gemini 3.5 Transcribe, có xem trước video, sửa lời thoại, tùy chỉnh kiểu chữ xem trước và xuất SRT.\n- Trang 3 dùng Gemini 3.8 Flash tạo tiêu đề YouTube Shorts, mô tả, hashtag, hook TikTok và caption Facebook Reels; mặc định AI tự nhận diện thể loại từ lời thoại hoặc người dùng chọn thể loại định hướng, có thể chọn preset phong cách riêng, tùy chỉnh số từ tiêu đề từ 2–20 từ (mặc định 3–7), kiểm tra giới hạn 100 ký tự của YouTube và không cắt cụt tiêu đề bằng cách cắt chuỗi.\n- Bộ quét từ khóa chỉ cảnh báo tham khảo, không bảo đảm tránh shadowban.
+- Trang 2 tạo phụ đề tự động từ video bằng Google Gemini 3.5 Transcribe, có xem trước video, sửa lời thoại, tùy chỉnh kiểu chữ xem trước và xuất SRT.\n- Trang 3 dùng Gemini 3.8 Flash tạo tiêu đề YouTube Shorts, mô tả, hashtag, hook TikTok và caption Facebook Reels; mặc định AI tự nhận diện thể loại từ lời thoại hoặc người dùng chọn thể loại định hướng; nhóm tình cảm bao gồm phim ngôn tình, có thể chọn preset phong cách riêng, tùy chỉnh số từ tiêu đề từ 2–20 từ (mặc định 3–7), kiểm tra giới hạn 100 ký tự của YouTube và không cắt cụt tiêu đề bằng cách cắt chuỗi.\n- Bộ quét từ khóa chỉ cảnh báo tham khảo, không bảo đảm tránh shadowban.
 - Giữ nguyên số thứ tự, timestamp, metadata, dấu phân cách và kiểu xuống dòng từ file SRT gốc.
 - Có thể chọn lưu API key trên thiết bị bằng localStorage. Tùy chọn này **không mã hóa key**; chỉ nên dùng trên thiết bị cá nhân.
 - Giới hạn file ở 10 MB và 5.000 cue để tránh treo trình duyệt; mỗi cue tối đa 5.000 ký tự.
