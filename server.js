@@ -20,7 +20,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = Number(process.env.PORT || 10000);
-const APP_VERSION = process.env.npm_package_version || '1.2.21';
+const APP_VERSION = process.env.npm_package_version || '1.2.23';
 const isProduction = process.env.NODE_ENV === 'production';
 const SESSION_SECRET = process.env.SESSION_SECRET || (isProduction ? '' : crypto.randomBytes(48).toString('hex'));
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
@@ -853,6 +853,7 @@ const socialOptimizeSchema = z.object({
   apiKey: z.string().min(12).max(500),
   content: z.string().min(20).max(20000),
   referenceTitles: z.string().max(3000).default(''),
+  genre: z.enum(['auto', 'anime', 'romance', 'action', 'isekai', 'fantasy', 'horror', 'comedy', 'drama', 'other']).default('auto'),
   style: z.enum(['auto', 'anime', 'dramatic', 'funny', 'emotional', 'custom']).default('auto'),
   temperature: z.number().min(0.2).max(1.2).default(0.7),
   minTitleWords: z.number().int().min(2).max(20).default(3),
@@ -883,6 +884,7 @@ app.post('/api/social-optimize', requireSameOrigin, noStore, socialOptimizeLimit
     'TIKTOK: câu hook phải xuất hiện ngay đầu caption; caption tối đa 150 ký tự, không tính phần hashtag riêng. Bắt buộc có #fyp #xuhuong #learnontiktok và hashtag phim/chủ đề nếu biết.',
     'FACEBOOK REELS: caption vừa phải, câu ngắn, ngắt dòng dễ đọc, emoji vừa đủ.',
     'Học cấu trúc từ tiêu đề tham khảo nhưng không sao chép câu chữ hoặc tên riêng của họ. Không bịa tình tiết, danh tính nhân vật hay cam kết viral. keywordWarnings liệt kê từ nhạy cảm cần người dùng rà soát hoặc [].',
+    'Thể loại video: ' + ({ auto: 'Tự động nhận diện từ lời thoại; xác định thể loại chính và yếu tố phụ nếu có.', anime: 'Anime / hoạt hình.', romance: 'Tình cảm / lãng mạn.', action: 'Hành động / võ thuật.', isekai: 'Xuyên không / trọng sinh.', fantasy: 'Tu tiên / huyền huyễn.', horror: 'Kinh dị / bí ẩn.', comedy: 'Hài hước.', drama: 'Đời sống / tâm lý.', other: 'Thể loại khác; hãy tự xác định từ nội dung.' })[input.genre] + ' Nếu thể loại người dùng chọn không khớp tình tiết trong lời thoại, phải ưu tiên nội dung thực tế và không bịa.',
     'Phong cách được yêu cầu: ' + styles[input.style],
     'Mức sáng tạo: ' + input.temperature,
     'Khoảng độ dài tiêu đề được người dùng chọn: ' + input.minTitleWords + '–' + input.maxTitleWords + ' từ.',

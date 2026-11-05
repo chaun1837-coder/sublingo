@@ -261,8 +261,8 @@ test('index HTML is not cached so fixes appear without stale frontend code', () 
 });
 
 test('package and visible UI expose the same semantic version', () => {
-  assert.equal(pkg.version, '1.2.22');
-  assert.match(html, /SRT TRANSLATOR · v1\.2\.22/);
+  assert.equal(pkg.version, '1.2.23');
+  assert.match(html, /SRT TRANSLATOR · v1\.2\.23/);
   assert.match(server, /APP_VERSION/);
 });
 
@@ -447,8 +447,11 @@ test('FFmpeg audio encoding is limited to one worker thread', () => {
 
 
 test('Page 3 social optimizer supports customizable title length and video-aware style', () => {
-  for (const id of ['socialSyncBtn','socialReferenceTitles','socialTemperature','socialMinTitleWords','socialMaxTitleWords','socialYoutubeTab','socialTiktokTab','socialFacebookTab']) assert.ok(html.includes('id="' + id + '"'));
-  assert.match(html, /value="auto" selected>✨ Tự động theo nội dung video/);
+  for (const id of ['socialSyncBtn','socialGenre','socialReferenceTitles','socialTemperature','socialMinTitleWords','socialMaxTitleWords','socialYoutubeTab','socialTiktokTab','socialFacebookTab']) assert.ok(html.includes('id="' + id + '"'));
+  assert.match(html, /value="auto" selected>✨ Tự động nhận diện/);
+  assert.match(html, /genre:\$\('socialGenre'\)\.value/);
+  assert.match(server, /genre: z\.enum\(\['auto', 'anime', 'romance', 'action', 'isekai', 'fantasy', 'horror', 'comedy', 'drama', 'other'\]\)/);
+  assert.match(server, /Thể loại video:/);
   assert.match(html, /value="3">/);
   assert.match(html, /value="7">/);
   assert.match(html, /Độ dài tiêu đề \(số từ\)/);
