@@ -261,8 +261,8 @@ test('index HTML is not cached so fixes appear without stale frontend code', () 
 });
 
 test('package and visible UI expose the same semantic version', () => {
-  assert.equal(pkg.version, '1.2.25');
-  assert.match(html, /SRT TRANSLATOR · v1\.2\.24/);
+  assert.equal(pkg.version, '1.2.26');
+  assert.match(html, /SRT TRANSLATOR · v1\.2\.26/);
   assert.match(server, /APP_VERSION/);
 });
 
@@ -478,4 +478,21 @@ test('Page 3 social optimizer supports customizable title length and video-aware
   assert.ok(server.includes("else if (char === '\\\\') escaped = true;"));
   assert.ok(html.includes('syncSocialTranscript(); syncSocialApiKey(); showPage(3)'));
   assert.ok(html.includes('max-height:min(65vh,560px);overflow-y:auto'));
+});
+
+
+test('Page 3 caches platform outputs, compacts long transcripts, and shows loading skeletons', () => {
+  assert.ok(html.includes('const SOCIAL_ANALYSIS_CHAR_LIMIT=9000'));
+  assert.ok(html.includes('const SOCIAL_CACHE_LIMIT=4'));
+  assert.ok(html.includes('const socialResultsCache=new Map()'));
+  assert.ok(html.includes('function compactSocialTranscript(value,limit=SOCIAL_ANALYSIS_CHAR_LIMIT)'));
+  assert.ok(html.includes('function renderSocialSkeleton()'));
+  assert.ok(html.includes('socialResultsCache.has(cacheKey)'));
+  assert.ok(html.includes('cacheSocialResult(cacheKey,socialResults)'));
+  assert.ok(html.includes('aria-busy'));
+  assert.ok(html.includes('@keyframes socialSkeletonShimmer'));
+  assert.ok(server.includes('const MAX_SOCIAL_ANALYSIS_CHARS = 9000'));
+  assert.ok(server.includes('function compactSocialTranscript(value)'));
+  assert.ok(server.includes('const analysisContent = compactSocialTranscript(input.content)'));
+  assert.ok(server.includes('analysisContent'));
 });

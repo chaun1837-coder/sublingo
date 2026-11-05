@@ -20,7 +20,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = Number(process.env.PORT || 10000);
-const APP_VERSION = process.env.npm_package_version || '1.2.25';
+const APP_VERSION = process.env.npm_package_version || '1.2.26';
 const isProduction = process.env.NODE_ENV === 'production';
 const SESSION_SECRET = process.env.SESSION_SECRET || (isProduction ? '' : crypto.randomBytes(48).toString('hex'));
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
@@ -883,6 +883,30 @@ const socialOptimizeSchema = z.object({
   (value) => value.minTitleWords <= value.maxTitleWords,
   { message: 'Số từ tối thiểu không được lớn hơn số từ tối đa.' }
 );
+const MAX_SOCIAL_ANALYSIS_CHARS = 9000;
+function compactSocialTranscript(value) {
+  const text = String(value ?? '').trim();
+  if (text.length <= MAX_SOCIAL_ANALYSIS_CHARS) return text;
+  const marker = '\n[… một phần lời thoại ở giữa đã được rút gọn …]\n';
+  const budget = MAX_SOCIAL_ANALYSIS_CHARS - marker.length * 2 - 2;
+  const headLength = Math.floor(budget * 0.36);
+  const middleLength = Math.floor(budget * 0.28);
+  const tailLength = budget - headLength - middleLength;
+  let headEnd = headLength;
+  const headBoundary = text.lastIndexOf(' ', headEnd);
+  if (headBoundary > headEnd - 100) headEnd = headBoundary;
+  let middleStart = Math.max(headEnd, Math.floor((text.length - middleLength) / 2));
+  const middleBoundary = text.indexOf(' ', middleStart);
+  if (middleBoundary >= 0 && middleBoundary < middleStart + 100) middleStart = middleBoundary + 1;
+  let middleEnd = Math.min(text.length, middleStart + middleLength);
+  const middleEndBoundary = text.lastIndexOf(' ', middleEnd);
+  if (middleEndBoundary > middleStart) middleEnd = middleEndBoundary;
+  let tailStart = Math.max(middleEnd, text.length - tailLength);
+  const tailBoundary = text.indexOf(' ', tailStart);
+  if (tailBoundary >= 0 && tailBoundary < tailStart + 100) tailStart = tailBoundary + 1;
+  return [text.slice(0, headEnd).trim(), text.slice(middleStart, middleEnd).trim(), text.slice(tailStart).trim()]
+    .filter(Boolean).join(marker);
+}
 function normalizeSocialHashtags(values, limit) {
   const normalized = (Array.isArray(values) ? values : []).map((value) => {
     const tag = String(value ?? '')
@@ -901,6 +925,7 @@ app.post('/api/social-optimize', requireSameOrigin, noStore, socialOptimizeLimit
   const parsed = socialOptimizeSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'Dữ liệu tối ưu nội dung hoặc độ dài tiêu đề chưa hợp lệ.' });
   const input = parsed.data;
+  const analysisContent = compactSocialTranscript(input.content);
   const styles = {
     auto: 'Tự động nhận diện phong cách theo chính nội dung video/lời thoại và tiêu đề tham khảo. Trước khi viết, suy luận thể loại, bối cảnh, xung đột, mối quan hệ nhân vật và cảm xúc chủ đạo. Chọn lối đặt tiêu đề phù hợp nhất với video; tuyệt đối không mặc định video nào cũng là anime, xuyên không, hệ thống hay tình cảm. Nếu dữ liệu chưa đủ rõ, ưu tiên cách viết tự nhiên, cụ thể, không bịa.',
     anime: 'Anime/hoạt hình: khai thác xuyên không, giấu nghề, hệ thống, vả mặt, bá đạo chỉ khi thật sự phù hợp nội dung; không tự bịa.',
@@ -923,7 +948,7 @@ app.post('/api/social-optimize', requireSameOrigin, noStore, socialOptimizeLimit
     'Mức sáng tạo: ' + input.temperature,
     'Khoảng độ dài tiêu đề được người dùng chọn: ' + input.minTitleWords + '–' + input.maxTitleWords + ' từ.',
     'Tiêu đề tham khảo (chỉ dùng làm ví dụ về cấu trúc): ' + input.referenceTitles,
-    'Nội dung/lời thoại video: ' + input.content
+    'Nội dung/lời thoại video (có thể gồm các đoạn trích đại diện theo trình tự): ' + analysisContent
   ].join('\n\n');
 
   const ctrl = new AbortController();

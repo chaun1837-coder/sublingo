@@ -236,7 +236,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
   <header class="topbar">
     <div class="brand">
       <div class="logo-mark" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 5.5C4 4.67 4.67 4 5.5 4h13c.83 0 1.5.67 1.5 1.5v9c0 .83-.67 1.5-1.5 1.5H11l-4.5 4v-4H5.5C4.67 16 4 15.33 4 14.5v-9Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 8.5h8M8 11.5h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
-      <div><div class="brand-name">SubLingo</div><div class="brand-sub">SUBTITLE WORKSPACE · SRT TRANSLATOR · v1.2.25</div></div>
+      <div><div class="brand-name">SubLingo</div><div class="brand-sub">SUBTITLE WORKSPACE · SRT TRANSLATOR · v1.2.26</div></div>
     </div>
     <div class="top-actions">
       <div class="google-login-wrap" id="googleSignInButton"></div>
@@ -478,13 +478,19 @@ textarea.field { resize: vertical; line-height: 1.55; }
     </section>
 
 <style>
-.social-layout{display:grid;grid-template-columns:minmax(270px,390px) minmax(0,1fr);gap:18px}.social-length-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.social-length-grid label{display:grid;gap:6px;font-size:11px;color:light-dark(#718096,#AAB8C9)}.social-intro{margin:4px 0 20px}.social-intro h2{margin:0;font-size:clamp(1.4rem,2.4vw,1.9rem)}.social-intro p,.social-help{font-size:11px;line-height:1.6;color:light-dark(#718096,#AAB8C9)}.social-field{margin-bottom:14px}.social-tabs{display:flex;gap:8px;margin-bottom:14px}.social-tabs button,.social-copy{border:1px solid light-dark(#D8E2EB,#3B4A60);border-radius:8px;padding:8px 10px;background:light-dark(#F7FAFC,#1D2B3F);color:light-dark(#52677F,#C3D0DE);font-size:11px;font-weight:700}.social-tabs button.active{border-color:#65AFA4;background:light-dark(#EAF6F3,#1B3935)}.social-card{border:1px solid light-dark(#E1E8EF,#34445A);border-radius:12px;padding:14px;margin-bottom:10px;max-height:min(65vh,560px);overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable}.social-copy-row{display:flex;gap:8px;align-items:flex-start;padding:9px 0;border-bottom:1px solid light-dark(#E9EEF3,#2A384B)}.social-copy-row span{flex:1;min-width:0;overflow-wrap:anywhere;white-space:pre-wrap;font-size:12px;line-height:1.6}.social-copy-row .social-copy{flex-shrink:0}.social-warning{margin-top:12px;padding:10px;border:1px solid #B99C5A;border-radius:9px;font-size:10px;line-height:1.5}@media(max-width:800px){.social-layout{grid-template-columns:1fr}}
+.social-layout{display:grid;grid-template-columns:minmax(270px,390px) minmax(0,1fr);gap:18px}.social-length-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.social-length-grid label{display:grid;gap:6px;font-size:11px;color:light-dark(#718096,#AAB8C9)}.social-intro{margin:4px 0 20px}.social-intro h2{margin:0;font-size:clamp(1.4rem,2.4vw,1.9rem)}.social-intro p,.social-help{font-size:11px;line-height:1.6;color:light-dark(#718096,#AAB8C9)}.social-field{margin-bottom:14px}.social-tabs{display:flex;gap:8px;margin-bottom:14px}.social-tabs button,.social-copy{border:1px solid light-dark(#D8E2EB,#3B4A60);border-radius:8px;padding:8px 10px;background:light-dark(#F7FAFC,#1D2B3F);color:light-dark(#52677F,#C3D0DE);font-size:11px;font-weight:700}.social-tabs button.active{border-color:#65AFA4;background:light-dark(#EAF6F3,#1B3935)}.social-card{border:1px solid light-dark(#E1E8EF,#34445A);border-radius:12px;padding:14px;margin-bottom:10px;max-height:min(65vh,560px);overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable}.social-copy-row{display:flex;gap:8px;align-items:flex-start;padding:9px 0;border-bottom:1px solid light-dark(#E9EEF3,#2A384B)}.social-copy-row span{flex:1;min-width:0;overflow-wrap:anywhere;white-space:pre-wrap;font-size:12px;line-height:1.6}.social-copy-row .social-copy{flex-shrink:0}.social-warning{margin-top:12px;padding:10px;border:1px solid #B99C5A;border-radius:9px;font-size:10px;line-height:1.5}
+.social-skeleton{display:grid;gap:12px}
+.social-skeleton-group{display:grid;gap:9px;padding:12px 0;border-bottom:1px solid light-dark(#E9EEF3,#2A384B)}
+.social-skeleton-line{height:11px;border-radius:7px;background:linear-gradient(90deg,light-dark(#E8EDF3,#29384C) 20%,light-dark(#F5F7FA,#3A4A60) 45%,light-dark(#E8EDF3,#29384C) 70%);background-size:220% 100%;animation:socialSkeletonShimmer 1.25s ease-in-out infinite}
+@keyframes socialSkeletonShimmer{0%{background-position:100% 0}100%{background-position:-120% 0}}
+@media(prefers-reduced-motion:reduce){.social-skeleton-line{animation:none}}
+@media(max-width:800px){.social-layout{grid-template-columns:1fr}}
 </style>
 <section id="pageThreeContent" hidden aria-labelledby="socialTitle">
  <div class="social-intro"><div class="eyebrow">SOCIAL MEDIA CONTENT STUDIO</div><h2 id="socialTitle">Tối ưu tiêu đề & hashtag bằng AI</h2><p>Tạo nội dung riêng cho YouTube Shorts, TikTok và Facebook Reels bằng Gemini 3.8 Flash. AI tự phân tích lời thoại để chọn phong cách tiêu đề phù hợp với video.</p></div>
  <div class="social-layout">
   <section class="panel"><div class="panel-head"><div class="panel-title">01 · Nội dung & cấu hình</div></div><div class="panel-body">
-   <div class="social-field"><label class="form-label" for="socialTranscript">Lời thoại / nội dung video</label><button class="social-copy" id="socialSyncBtn" type="button">↻ Đồng bộ Trang 1 & 2</button><textarea class="field" id="socialTranscript" rows="8" maxlength="20000" placeholder="Đồng bộ hoặc dán nội dung..."></textarea><div class="social-help">Ưu tiên bản dịch Trang 1, sau đó đến lời thoại Trang 2. AI phân tích nội dung này để nhận diện thể loại và tạo tiêu đề phù hợp.</div></div>
+   <div class="social-field"><label class="form-label" for="socialTranscript">Lời thoại / nội dung video</label><button class="social-copy" id="socialSyncBtn" type="button">↻ Đồng bộ Trang 1 & 2</button><textarea class="field" id="socialTranscript" rows="8" maxlength="20000" placeholder="Đồng bộ hoặc dán nội dung..."></textarea><div class="social-help">Ưu tiên bản dịch Trang 1, sau đó đến lời thoại Trang 2. Với lời thoại dài, SubLingo tự trích các đoạn đầu – giữa – cuối để giữ mạch nội dung mà giảm lượng chữ gửi AI.</div></div>
    <div class="social-field"><label class="form-label" for="socialReferenceTitles">Tiêu đề tham khảo (mỗi dòng một tiêu đề)</label><textarea class="field" id="socialReferenceTitles" rows="3" maxlength="3000" placeholder="Dán tiêu đề xu hướng để AI học cấu trúc..."></textarea></div>
    <div class="social-field"><label class="form-label" for="socialGenre">Thể loại video</label><select class="field" id="socialGenre"><option value="auto" selected>✨ Tự động nhận diện</option><option value="anime">Anime / hoạt hình</option><option value="romance">Tình cảm / lãng mạn / ngôn tình</option><option value="action">Hành động / võ thuật</option><option value="isekai">Xuyên không / trọng sinh</option><option value="fantasy">Tu tiên / huyền huyễn</option><option value="horror">Kinh dị / bí ẩn</option><option value="comedy">Hài hước</option><option value="drama">Đời sống / tâm lý</option><option value="other">Thể loại khác</option></select><div class="social-help">Mặc định AI tự nhận diện từ lời thoại. Bạn có thể chọn thể loại để định hướng; AI vẫn ưu tiên tình tiết thực tế trong nội dung.</div></div>
    <div class="social-field"><label class="form-label" for="socialStyle">Phong cách tiêu đề</label><select class="field" id="socialStyle"><option value="auto" selected>✨ Tự động theo nội dung video (khuyên dùng)</option><option value="anime">Anime / hoạt hình · xuyên không, giấu nghề, hệ thống, vả mặt</option><option value="dramatic">Kịch tính, tò mò</option><option value="funny">Hài hước</option><option value="emotional">Cảm xúc</option><option value="custom">Tự nhiên, cân bằng</option></select><div class="social-help">Preset này điều chỉnh cách diễn đạt; thể loại video được chọn riêng ở mục bên trên.</div></div>
@@ -495,7 +501,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
   </div></section>
   <section class="panel"><div class="panel-head"><div class="panel-title">02 · Nội dung theo nền tảng</div></div><div class="panel-body">
    <div class="social-tabs" role="tablist"><button class="active" id="socialYoutubeTab" type="button">▶ YouTube</button><button id="socialTiktokTab" type="button">♪ TikTok</button><button id="socialFacebookTab" type="button">f Facebook</button></div>
-   <div id="socialOutput" class="social-card">Kết quả sẽ xuất hiện ở đây.</div><button class="btn btn-ghost" id="socialCopyAllBtn" type="button" disabled>📋 Sao chép toàn bộ</button>
+   <div id="socialOutput" class="social-card" aria-live="polite">Kết quả sẽ xuất hiện ở đây.</div><div class="social-help">Kết quả của cả ba nền tảng được giữ tạm trong phiên; đổi tab không cần gọi AI lại.</div><button class="btn btn-ghost" id="socialCopyAllBtn" type="button" disabled>📋 Sao chép toàn bộ</button>
    <div class="social-warning">Bộ lọc từ khóa chỉ cảnh báo một số cụm từ nhạy cảm, không thể bảo đảm tránh shadowban vì thuật toán và chính sách nền tảng thay đổi.</div>
   </div></section>
  </div>
@@ -1574,47 +1580,116 @@ textarea.field { resize: vertical; line-height: 1.55; }
   });
 
 
- const SOCIAL_TRANSCRIPT_KEY='sublingo_social_transcript',SOCIAL_WARN_TERMS=['đánh bom','tự sát','ma túy','lừa đảo','hack tài khoản','vũ khí'];let socialResults=null,socialPlatform='youtube';
+ const SOCIAL_TRANSCRIPT_KEY='sublingo_social_transcript';
+ const SOCIAL_WARN_TERMS=['đánh bom','tự sát','ma túy','lừa đảo','hack tài khoản','vũ khí'];
+ const SOCIAL_ANALYSIS_CHAR_LIMIT=9000, SOCIAL_CACHE_LIMIT=4;
+ let socialResults=null,socialPlatform='youtube',socialLoading=false;
+ const socialResultsCache=new Map();
+
+ function compactSocialTranscript(value,limit=SOCIAL_ANALYSIS_CHAR_LIMIT){
+  const text=String(value||'').trim();
+  if(text.length<=limit)return {text,originalLength:text.length,wasCompacted:false};
+  const marker='\n[… một phần lời thoại ở giữa đã được rút gọn …]\n';
+  const budget=Math.max(3000,limit-marker.length*2-2);
+  const headLength=Math.floor(budget*.36);
+  const middleLength=Math.floor(budget*.28);
+  const tailLength=budget-headLength-middleLength;
+  let headEnd=headLength;
+  const headBoundary=text.lastIndexOf(' ',headEnd);
+  if(headBoundary>headEnd-100)headEnd=headBoundary;
+  let middleStart=Math.max(headEnd,Math.floor((text.length-middleLength)/2));
+  const middleBoundary=text.indexOf(' ',middleStart);
+  if(middleBoundary>=0&&middleBoundary<middleStart+100)middleStart=middleBoundary+1;
+  let middleEnd=Math.min(text.length,middleStart+middleLength);
+  const middleEndBoundary=text.lastIndexOf(' ',middleEnd);
+  if(middleEndBoundary>middleStart)middleEnd=middleEndBoundary;
+  let tailStart=Math.max(middleEnd,text.length-tailLength);
+  const tailBoundary=text.indexOf(' ',tailStart);
+  if(tailBoundary>=0&&tailBoundary<tailStart+100)tailStart=tailBoundary+1;
+  const compacted=[text.slice(0,headEnd).trim(),text.slice(middleStart,middleEnd).trim(),text.slice(tailStart).trim()].filter(Boolean).join(marker);
+  return {text:compacted,originalLength:text.length,wasCompacted:true};
+ }
+
  function syncSocialTranscript(){let value='';if(cues.length){const translated=cues.some(c=>c.translated&&String(c.translation||'').trim());value=cues.map(c=>String(translated?c.translation:c.source||'').trim()).filter(Boolean).join('\n');}if(!value&&sttCaptions.length)value=sttCaptions.map(c=>String(c.text||'').trim()).filter(Boolean).join('\n');if(!value){try{value=localStorage.getItem(SOCIAL_TRANSCRIPT_KEY)||'';}catch(_){}}if(value){$('socialTranscript').value=value.slice(0,20000);try{localStorage.setItem(SOCIAL_TRANSCRIPT_KEY,$('socialTranscript').value);}catch(_){}$('socialStatus').textContent='Đã đồng bộ nội dung phụ đề.';return true;}$('socialStatus').textContent='Chưa có phụ đề. Hãy nhập hoặc dán nội dung.';return false;}
  function syncSocialApiKey(){const key=$('sttApiKey').value.trim()||$('apiKey').value.trim()||$('socialApiKey').value.trim()||loadSavedKey('gemini');if(key)$('socialApiKey').value=key;}
  function socialCopy(v){v=String(v||'');if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(v).then(()=>toast('Đã sao chép.')).catch(()=>socialCopyFallback(v));else socialCopyFallback(v);}
  function socialCopyFallback(v){const a=document.createElement('textarea');a.value=v;document.body.appendChild(a);a.select();try{document.execCommand('copy');toast('Đã sao chép.');}catch(_){toast('Không thể sao chép tự động.');}a.remove();}
- function renderSocial(){const root=$('socialOutput');if(!socialResults){root.textContent='Kết quả sẽ xuất hiện ở đây.';$('socialCopyAllBtn').disabled=true;return;}let parts=[];if(socialPlatform==='youtube')parts=[...socialResults.youtube.titles.map((v,i)=>(i+1)+'. '+v),socialResults.youtube.description,socialResults.youtube.hashtags.join(' ')];if(socialPlatform==='tiktok')parts=[socialResults.tiktok.caption,socialResults.tiktok.hashtags.join(' ')];if(socialPlatform==='facebook')parts=[socialResults.facebook.caption];root.replaceChildren();for(const value of parts){const row=document.createElement('div');row.className='social-copy-row';const span=document.createElement('span');span.textContent=value;const btn=document.createElement('button');btn.className='social-copy';btn.type='button';btn.textContent='📋 Sao chép';btn.addEventListener('click',()=>socialCopy(value));row.append(span,btn);root.append(row);}const flagged=[...(socialResults.keywordWarnings||[]),...SOCIAL_WARN_TERMS.filter(term=>parts.join(' ').toLocaleLowerCase('vi').includes(term))];if(flagged.length){const warning=document.createElement('div');warning.className='social-warning';warning.textContent='⚠ Từ khóa cần rà soát: '+[...new Set(flagged)].join(', ');root.append(warning);}$('socialCopyAllBtn').disabled=false;}
+ function renderSocialSkeleton(){
+  const root=$('socialOutput');root.replaceChildren();root.setAttribute('aria-busy','true');
+  const wrap=document.createElement('div');wrap.className='social-skeleton';
+  for(const widths of [[78,92,56],[66,88],[84,48]]){
+   const group=document.createElement('div');group.className='social-skeleton-group';
+   for(const width of widths){const line=document.createElement('div');line.className='social-skeleton-line';line.style.width=width+'%';group.append(line);}
+   wrap.append(group);
+  }
+  root.append(wrap);$('socialCopyAllBtn').disabled=true;
+ }
+ function renderSocial(){
+  const root=$('socialOutput');
+  if(socialLoading){renderSocialSkeleton();return;}
+  root.removeAttribute('aria-busy');
+  if(!socialResults){root.textContent='Kết quả sẽ xuất hiện ở đây.';$('socialCopyAllBtn').disabled=true;return;}
+  let parts=[];
+  if(socialPlatform==='youtube')parts=[...socialResults.youtube.titles.map((v,i)=>(i+1)+'. '+v),socialResults.youtube.description,socialResults.youtube.hashtags.join(' ')];
+  if(socialPlatform==='tiktok')parts=[socialResults.tiktok.caption,socialResults.tiktok.hashtags.join(' ')];
+  if(socialPlatform==='facebook')parts=[socialResults.facebook.caption];
+  root.replaceChildren();
+  for(const value of parts){const row=document.createElement('div');row.className='social-copy-row';const span=document.createElement('span');span.textContent=value;const btn=document.createElement('button');btn.className='social-copy';btn.type='button';btn.textContent='📋 Sao chép';btn.addEventListener('click',()=>socialCopy(value));row.append(span,btn);root.append(row);}
+  const flagged=[...(socialResults.keywordWarnings||[]),...SOCIAL_WARN_TERMS.filter(term=>parts.join(' ').toLocaleLowerCase('vi').includes(term))];
+  if(flagged.length){const warning=document.createElement('div');warning.className='social-warning';warning.textContent='⚠ Từ khóa cần rà soát: '+[...new Set(flagged)].join(', ');root.append(warning);}
+  $('socialCopyAllBtn').disabled=false;
+ }
  function setSocialPlatform(p){socialPlatform=p;for(const [key,id] of [['youtube','socialYoutubeTab'],['tiktok','socialTiktokTab'],['facebook','socialFacebookTab']])$(id).classList.toggle('active',key===p);renderSocial();}
+ function cacheSocialResult(key,result){if(socialResultsCache.has(key))socialResultsCache.delete(key);socialResultsCache.set(key,result);while(socialResultsCache.size>SOCIAL_CACHE_LIMIT)socialResultsCache.delete(socialResultsCache.keys().next().value);}
  $('socialYoutubeTab').addEventListener('click',()=>setSocialPlatform('youtube'));$('socialTiktokTab').addEventListener('click',()=>setSocialPlatform('tiktok'));$('socialFacebookTab').addEventListener('click',()=>setSocialPlatform('facebook'));$('socialSyncBtn').addEventListener('click',syncSocialTranscript);
- $('socialTemperature').addEventListener('input',()=>$('socialTemperatureValue').textContent=Number($('socialTemperature').value).toFixed(1));$('socialTranscript').addEventListener('input',()=>{try{localStorage.setItem(SOCIAL_TRANSCRIPT_KEY,$('socialTranscript').value);}catch(_){}});
+ $('socialTemperature').addEventListener('input',()=>$('socialTemperatureValue').textContent=Number($('socialTemperature').value).toFixed(1));
+ $('socialTranscript').addEventListener('input',()=>{try{localStorage.setItem(SOCIAL_TRANSCRIPT_KEY,$('socialTranscript').value);}catch(_){}});
  $('socialCopyAllBtn').addEventListener('click',()=>{if(socialResults)socialCopy('YOUTUBE\n'+socialResults.youtube.titles.join('\n')+'\n'+socialResults.youtube.description+'\n'+socialResults.youtube.hashtags.join(' ')+'\n\nTIKTOK\n'+socialResults.tiktok.caption+'\n'+socialResults.tiktok.hashtags.join(' ')+'\n\nFACEBOOK\n'+socialResults.facebook.caption);});
  $('socialGenerateBtn').addEventListener('click',async()=>{
-  const content=$('socialTranscript').value.trim();
+  const rawContent=$('socialTranscript').value.trim();
+  const compacted=compactSocialTranscript(rawContent);
+  const content=compacted.text;
   const minTitleWords=Number($('socialMinTitleWords').value);
   const maxTitleWords=Number($('socialMaxTitleWords').value);
+  const referenceTitles=$('socialReferenceTitles').value;
   let saved='';
   try{saved=localStorage.getItem(savedKeyStorageName('gemini'))||'';}catch(_){}
   const apiKey=$('socialApiKey').value.trim()||$('apiKey').value.trim()||saved;
-  if(content.length<20){toast('Hãy nhập hoặc đồng bộ ít nhất 20 ký tự.');return;}
+  if(rawContent.length<20){toast('Hãy nhập hoặc đồng bộ ít nhất 20 ký tự.');return;}
   if(!Number.isInteger(minTitleWords)||!Number.isInteger(maxTitleWords)||minTitleWords<2||maxTitleWords>20||maxTitleWords<2||minTitleWords>maxTitleWords){
    toast('Độ dài tiêu đề chưa hợp lệ. Hãy chọn số từ tối thiểu và tối đa trong khoảng 2–20, tối thiểu không lớn hơn tối đa.');
    $('socialMinTitleWords').focus();return;
   }
   if(!apiKey){toast('Hãy nhập Gemini API key ở Trang 1 hoặc 3.');return;}
+  const requestOptions={content,referenceTitles,genre:$('socialGenre').value,style:$('socialStyle').value,temperature:Number($('socialTemperature').value),minTitleWords,maxTitleWords};
+  const cacheKey=JSON.stringify(requestOptions);
+  if(socialResultsCache.has(cacheKey)){
+   socialResults=socialResultsCache.get(cacheKey);
+   socialResultsCache.delete(cacheKey);socialResultsCache.set(cacheKey,socialResults);
+   renderSocial();
+   $('socialStatus').textContent='Đã khôi phục kết quả đã lưu tạm cho nội dung và cấu hình này.';
+   toast('Hiển thị kết quả đã lưu — không cần gọi AI lại.');
+   return;
+  }
   $('socialGenerateBtn').disabled=true;
-  $('socialStatus').textContent='Gemini 3.8 Flash đang phân tích nội dung và tạo tiêu đề...';
+  socialLoading=true;renderSocial();
+  $('socialStatus').textContent=compacted.wasCompacted
+   ?'Đang phân tích bản rút gọn '+compacted.originalLength.toLocaleString('vi-VN')+' → '+content.length.toLocaleString('vi-VN')+' ký tự...'
+   :'Gemini đang phân tích nội dung và tạo tiêu đề...';
   try{
    const response=await fetch('/api/social-optimize',{
     method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-     apiKey,content,referenceTitles:$('socialReferenceTitles').value,
-     genre:$('socialGenre').value,style:$('socialStyle').value,temperature:Number($('socialTemperature').value),
-     minTitleWords,maxTitleWords
-    })
+    body:JSON.stringify({apiKey,...requestOptions})
    });
    const data=await response.json().catch(()=>({}));
    if(!response.ok)throw new Error(data.error||'Không thể tạo nội dung.');
-   socialResults=data.result;renderSocial();
-   $('socialStatus').textContent='Đã tạo nội dung cho cả ba nền tảng.';
+   socialResults=data.result;cacheSocialResult(cacheKey,socialResults);
+   $('socialStatus').textContent=compacted.wasCompacted
+    ?'Đã tạo nội dung cho cả ba nền tảng. Đã lấy mẫu đầu – giữa – cuối ('+compacted.originalLength.toLocaleString('vi-VN')+' → '+content.length.toLocaleString('vi-VN')+' ký tự).'
+    :'Đã tạo nội dung cho cả ba nền tảng.';
    toast('Đã tạo xong nội dung.');
   }catch(e){$('socialStatus').textContent=e.message;toast(e.message);}
-  finally{$('socialGenerateBtn').disabled=false;}
+  finally{socialLoading=false;$('socialGenerateBtn').disabled=false;renderSocial();}
  });
  $('socialApiKey').value=loadSavedKey('gemini');
 
