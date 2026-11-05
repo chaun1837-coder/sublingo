@@ -496,3 +496,14 @@ test('Page 3 caches platform outputs, compacts long transcripts, and shows loadi
   assert.ok(server.includes('const analysisContent = compactSocialTranscript(input.content)'));
   assert.ok(server.includes('analysisContent'));
 });
+
+
+test('Page 3 shows an accessible indeterminate progress bar while AI is generating', () => {
+  assert.ok(html.includes('id="socialProgress"'));
+  assert.ok(html.includes('id="socialProgressStatus"'));
+  assert.ok(html.includes('role="progressbar" aria-label="Tiến độ tạo nội dung AI"'));
+  assert.ok(html.includes('function setSocialProgress(active,message)'));
+  assert.ok(html.includes('setSocialProgress(true,compacted.wasCompacted'));
+  assert.ok(html.includes('finally{setSocialProgress(false)'));
+  assert.ok(html.includes('@keyframes socialProgressMove'));
+});
