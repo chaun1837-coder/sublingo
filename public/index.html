@@ -239,7 +239,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
   <header class="topbar">
     <div class="brand">
       <div class="logo-mark" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 5.5C4 4.67 4.67 4 5.5 4h13c.83 0 1.5.67 1.5 1.5v9c0 .83-.67 1.5-1.5 1.5H11l-4.5 4v-4H5.5C4.67 16 4 15.33 4 14.5v-9Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 8.5h8M8 11.5h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
-      <div><div class="brand-name">SubLingo</div><div class="brand-sub">SUBTITLE WORKSPACE · SRT TRANSLATOR · v1.2.15</div></div>
+      <div><div class="brand-name">SubLingo</div><div class="brand-sub">SUBTITLE WORKSPACE · SRT TRANSLATOR · v1.2.16</div></div>
     </div>
     <div class="top-actions">
       <div class="google-login-wrap" id="googleSignInButton"></div>
@@ -501,7 +501,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
         <section class="panel"><div class="panel-head"><div class="panel-title"><span class="step">02</span> Kết quả phụ đề SRT</div></div><div class="panel-body">
           <div class="ocr-result-meta" id="ocrResultMeta">Chưa có kết quả</div><textarea class="field ocr-output" id="ocrSrtOutput" rows="22" spellcheck="false" placeholder="Phụ đề OCR sẽ xuất hiện ở đây. Bạn có thể chỉnh sửa nội dung và mốc thời gian trước khi tải xuống." aria-label="Nội dung SRT có thể chỉnh sửa"></textarea>
           <div class="ocr-actions"><button class="btn btn-ghost" id="ocrApplyCorrectionsBtn" type="button" disabled>✓ Áp dụng sửa lỗi</button><button class="btn btn-primary" id="ocrDownloadBtn" type="button" disabled>↓ Tải file SRT</button><button class="btn btn-ghost" id="ocrResetBtn" type="button" disabled>Xóa kết quả</button></div>
-          <small class="ocr-help">Mốc đầu/cuối được suy ra từ các khung hình đã quét, nên độ phân giải thời gian phụ thuộc bước 0,25 / 0,5 / 1 giây; không thể bảo đảm chính xác tuyệt đối từng mili-giây. Hãy rà soát câu ngắn, chữ hiệu ứng và mốc thời gian trước khi dùng.</small>
+          <small class="ocr-help">Mốc thời gian được làm mượt tự động: bù đầu 120 ms, giữ câu tối thiểu 1,1 giây khi không bị câu kế tiếp chặn, nối khoảng trống ≤ 250 ms và nhắm tốc độ đọc 18 ký tự/giây. Độ chính xác vẫn phụ thuộc bước quét 0,25 / 0,5 / 1 giây; hãy rà soát câu ngắn và mốc thời gian trước khi dùng.</small>
         </div></section>
       </div><canvas id="ocrCanvas" hidden></canvas>
     </section>
@@ -1492,6 +1492,55 @@ textarea.field { resize: vertical; line-height: 1.55; }
       cue.end - cue.start >= 0.1 && cue.text.trim()), interval, duration);
   }
 
+  function ocrSmoothCues(cues, duration, options = {}) {
+    const settings = {
+      startPadding: 0.12,
+      minDuration: 1.1,
+      gapClose: 0.25,
+      maxCps: 18,
+      ...options
+    };
+    const videoDuration = Number.isFinite(Number(duration)) ? Math.max(0, Number(duration)) : 0;
+    const ordered = (cues || [])
+      .filter((cue) => cue && String(cue.text || '').trim())
+      .map((cue) => {
+        const start = Math.max(0, Math.min(videoDuration, Number(cue.start) || 0));
+        const rawEnd = Number(cue.end);
+        const end = Math.max(start, Math.min(videoDuration, Number.isFinite(rawEnd) ? rawEnd : start));
+        return { ...cue, start, end, text: String(cue.text) };
+      })
+      .sort((left, right) => left.start - right.start);
+
+    const smoothed = ordered.map((cue) => ({
+      ...cue,
+      start: Math.max(0, cue.start - settings.startPadding)
+    }));
+
+    for (let index = 0; index < smoothed.length; index += 1) {
+      const cue = smoothed[index];
+      const next = smoothed[index + 1];
+      const nextStart = next ? next.start : videoDuration;
+      if (next) {
+        const gap = nextStart - cue.end;
+        if (gap >= 0 && gap <= settings.gapClose) {
+          cue.end = nextStart;
+        } else if (gap < 0) {
+          cue.end = Math.max(cue.start, nextStart);
+        }
+      }
+
+      const characters = Array.from(cue.text.replace(/\s+/gu, ' ').trim()).length;
+      const targetDuration = Math.max(settings.minDuration, characters / Math.max(1, settings.maxCps));
+      const latestEnd = Math.max(cue.start, Math.min(videoDuration, nextStart));
+      cue.end = Math.min(latestEnd, Math.max(cue.end, cue.start + targetDuration));
+      cue.end = Math.max(cue.start, Math.min(videoDuration, cue.end));
+    }
+
+    return smoothed
+      .filter((cue) => cue.end - cue.start >= 0.1)
+      .map((cue) => ({ ...cue }));
+  }
+
   function ocrParseCorrectionRules(rawRules) {
     return String(rawRules || '').split(/\r?\n/).map((line) => {
       const splitAt = line.indexOf('=>');
@@ -1876,7 +1925,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
         if (index % 5 === 0) await new Promise((resolve) => setTimeout(resolve, 0));
       }
 
-      const cues = ocrBuildCues(samples, interval, duration);
+      const cues = ocrSmoothCues(ocrBuildCues(samples, interval, duration), duration);
       const corrected = ocrApplyCorrectionsToCues(cues, $('ocrCorrections').value);
       $('ocrSrtOutput').value = ocrToSrt(corrected.cues);
       $('ocrResultMeta').textContent = corrected.cues.length + ' câu phụ đề · ' + processed +
