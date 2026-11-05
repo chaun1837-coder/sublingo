@@ -140,7 +140,7 @@ test('three-page navigation keeps Page 3 separate and contains no Hardsub OCR', 
   for (const id of ['pageOneTab','pageTwoTab','pageThreeTab','pageOneContent','pageTwoContent','pageThreeContent']) {
     assert.ok(html.includes('id="' + id + '"'));
   }
-  assert.match(html, /<button class="page-tab" id="pageThreeTab" type="button" aria-controls="pageThreeContent">Trang 3<\/button>/);
+  assert.match(html, /<button class="page-tab" id="pageThreeTab" type="button" aria-controls="pageThreeContent">Tối ưu nội dung<\/button>/);
   assert.match(html, /id="socialTranscript"/);
   assert.match(html, /const isPageThree = pageNumber === 3/);
   assert.match(html, /\$\('pageThreeContent'\)\.hidden = !isPageThree/);
@@ -447,6 +447,8 @@ test('FFmpeg audio encoding is limited to one worker thread', () => {
 
 
 test('Page 3 social optimizer supports customizable title length and video-aware style', () => {
+  assert.match(html, /<h2 id="socialTitle">Trợ lý nội dung đa nền tảng<\/h2>/);
+  assert.match(html, /tạo tiêu đề, mô tả, hashtag và caption phù hợp cho YouTube Shorts, TikTok và Facebook Reels/);
   for (const id of ['socialSyncBtn','socialGenre','socialReferenceTitles','socialTemperature','socialMinTitleWords','socialMaxTitleWords','socialYoutubeTab','socialTiktokTab','socialFacebookTab']) assert.ok(html.includes('id="' + id + '"'));
   assert.match(html, /value="auto" selected>✨ Tự động nhận diện/);
   assert.match(html, /value="auto" selected>✨ Tự động theo nội dung video/);
