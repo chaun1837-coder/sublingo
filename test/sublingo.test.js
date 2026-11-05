@@ -261,7 +261,7 @@ test('index HTML is not cached so fixes appear without stale frontend code', () 
 });
 
 test('package and visible UI expose the same semantic version', () => {
-  assert.equal(pkg.version, '1.2.24');
+  assert.equal(pkg.version, '1.2.25');
   assert.match(html, /SRT TRANSLATOR · v1\.2\.24/);
   assert.match(server, /APP_VERSION/);
 });
@@ -469,4 +469,11 @@ test('Page 3 social optimizer supports customizable title length and video-aware
   assert.match(server, /input\.minTitleWords \\+ ' đến ' \\+ input\.maxTitleWords/);
   assert.match(server, /title\.length <= 100/);
   assert.doesNotMatch(server, /slice\(0,70\)/);
+  assert.ok(server.includes('function parseJsonResponse(text)'));
+  assert.ok(server.includes('function normalizeSocialHashtags(values, limit)'));
+  assert.ok(server.includes('HASHTAG: mỗi hashtag phải bắt đầu bằng #'));
+  assert.ok(server.includes('normalizeSocialHashtags(result.youtube.hashtags, 5)'));
+  assert.ok(html.includes('function syncSocialApiKey()'));
+  assert.ok(html.includes('syncSocialTranscript(); syncSocialApiKey(); showPage(3)'));
+  assert.ok(html.includes('max-height:min(65vh,560px);overflow-y:auto'));
 });

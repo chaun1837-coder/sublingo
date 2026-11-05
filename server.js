@@ -20,7 +20,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = Number(process.env.PORT || 10000);
-const APP_VERSION = process.env.npm_package_version || '1.2.24';
+const APP_VERSION = process.env.npm_package_version || '1.2.25';
 const isProduction = process.env.NODE_ENV === 'production';
 const SESSION_SECRET = process.env.SESSION_SECRET || (isProduction ? '' : crypto.randomBytes(48).toString('hex'));
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
@@ -235,11 +235,32 @@ function buildPrompt({ sourceLang, targetLang, style, cues }) {
 }
 
 function parseJsonResponse(text) {
-  const trimmed = String(text || '').trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
-  try { return JSON.parse(trimmed); } catch {
-    const start = trimmed.indexOf('{');
-    const end = trimmed.lastIndexOf('}');
-    if (start >= 0 && end > start) return JSON.parse(trimmed.slice(start, end + 1));
+  const source = String(text || '').replace(/^\uFEFF/, '').trim();
+  const cleaned = source
+    .replace(/^\s*\x60{3}[a-z0-9_-]*\s*(?:\r?\n)?/i, '')
+    .replace(/\s*\x60{3}\s*$/, '')
+    .trim();
+  try { return JSON.parse(cleaned); } catch {
+    const start = cleaned.indexOf('{');
+    if (start < 0) throw new Error('AI response was not valid JSON');
+    let depth = 0;
+    let inString = false;
+    let escaped = false;
+    for (let i = start; i < cleaned.length; i += 1) {
+      const char = cleaned[i];
+      if (inString) {
+        if (escaped) escaped = false;
+        else if (char === '\\\\') escaped = true;
+        else if (char === '"') inString = false;
+        continue;
+      }
+      if (char === '"') inString = true;
+      else if (char === '{') depth += 1;
+      else if (char === '}') {
+        depth -= 1;
+        if (depth === 0) return JSON.parse(cleaned.slice(start, i + 1));
+      }
+    }
     throw new Error('AI response was not valid JSON');
   }
 }
@@ -862,6 +883,18 @@ const socialOptimizeSchema = z.object({
   (value) => value.minTitleWords <= value.maxTitleWords,
   { message: 'Số từ tối thiểu không được lớn hơn số từ tối đa.' }
 );
+function normalizeSocialHashtags(values, limit) {
+  const normalized = (Array.isArray(values) ? values : []).map((value) => {
+    const tag = String(value ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/gi, 'd')
+      .replace(/[^\p{L}\p{N}_]/gu, '')
+      .toLowerCase();
+    return tag ? '#' + tag : '';
+  }).filter(Boolean);
+  return [...new Set(normalized)].slice(0, limit);
+}
 const socialOptimizeLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 12, standardHeaders: 'draft-8', legacyHeaders: false });
 
 app.post('/api/social-optimize', requireSameOrigin, noStore, socialOptimizeLimiter, async (req, res) => {
@@ -883,6 +916,7 @@ app.post('/api/social-optimize', requireSameOrigin, noStore, socialOptimizeLimit
     'YOUTUBE: tạo đúng 3 tiêu đề khác nhau. Mỗi tiêu đề bắt buộc có từ ' + input.minTitleWords + ' đến ' + input.maxTitleWords + ' từ (đếm theo các cụm ngăn cách bằng dấu cách), và không vượt quá 100 ký tự. Giữ nguyên ý nghĩa, không cắt ngang từ, không thêm chi tiết không có trong nội dung. Nếu khoảng số từ dài, hãy viết câu gọn và tự nhiên trong giới hạn 100 ký tự. Ưu tiên cụm từ gây chú ý nhất ở đầu tiêu đề. Mô tả ngắn và 3–5 hashtag đúng chủ đề.',
     'TIKTOK: câu hook phải xuất hiện ngay đầu caption; caption tối đa 150 ký tự, không tính phần hashtag riêng. Bắt buộc có #fyp #xuhuong #learnontiktok và hashtag phim/chủ đề nếu biết.',
     'FACEBOOK REELS: caption vừa phải, câu ngắn, ngắt dòng dễ đọc, emoji vừa đủ.',
+    'HASHTAG: mỗi hashtag phải bắt đầu bằng #, viết liền thành một từ, không dấu, tuyệt đối không có khoảng trắng hoặc dấu câu bên trong. Ví dụ đúng: #hoathinh, #ngontinh; ví dụ sai: #hoat hinh. Trả mỗi hashtag thành một phần tử riêng trong mảng.',
     'Học cấu trúc từ tiêu đề tham khảo nhưng không sao chép câu chữ hoặc tên riêng của họ. Không bịa tình tiết, danh tính nhân vật hay cam kết viral. keywordWarnings liệt kê từ nhạy cảm cần người dùng rà soát hoặc [].',
     'Thể loại video: ' + ({ auto: 'Tự động nhận diện từ lời thoại; xác định thể loại chính và yếu tố phụ nếu có.', anime: 'Anime / hoạt hình.', romance: 'Tình cảm / lãng mạn / ngôn tình; có thể bao gồm chuyện tình yêu hiện đại, cổ trang, thanh xuân, ngọt ngào hoặc ngược tâm. Chỉ dùng yếu tố ngôn tình khi phù hợp lời thoại.', action: 'Hành động / võ thuật.', isekai: 'Xuyên không / trọng sinh.', fantasy: 'Tu tiên / huyền huyễn.', horror: 'Kinh dị / bí ẩn.', comedy: 'Hài hước.', drama: 'Đời sống / tâm lý.', other: 'Thể loại khác; hãy tự xác định từ nội dung.' })[input.genre] + ' Nếu thể loại người dùng chọn không khớp tình tiết trong lời thoại, phải ưu tiên nội dung thực tế và không bịa.',
     'Phong cách được yêu cầu: ' + styles[input.style],
@@ -933,9 +967,9 @@ app.post('/api/social-optimize', requireSameOrigin, noStore, socialOptimizeLimit
       throw new Error('Gemini chưa đáp ứng đúng số từ bạn chọn hoặc tiêu đề vượt 100 ký tự. Hãy thử tạo lại hoặc nới khoảng số từ.');
     }
     result.youtube.titles = titles;
-    result.youtube.hashtags = result.youtube.hashtags.slice(0, 5);
+    result.youtube.hashtags = normalizeSocialHashtags(result.youtube.hashtags, 5);
     result.tiktok.caption = result.tiktok.caption.slice(0, 150);
-    result.tiktok.hashtags = [...new Set(['#fyp', '#xuhuong', '#learnontiktok', ...result.tiktok.hashtags])].slice(0, 12);
+    result.tiktok.hashtags = [...new Set(['#fyp', '#xuhuong', '#learnontiktok', ...normalizeSocialHashtags(result.tiktok.hashtags, 12)])].slice(0, 12);
     result.keywordWarnings = Array.isArray(result.keywordWarnings) ? result.keywordWarnings.slice(0, 12) : [];
     return res.json({ result });
   } catch (error) {
