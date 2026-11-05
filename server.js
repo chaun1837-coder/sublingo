@@ -20,7 +20,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = Number(process.env.PORT || 10000);
-const APP_VERSION = process.env.npm_package_version || '1.2.29';
+const APP_VERSION = process.env.npm_package_version || '1.2.30';
 const isProduction = process.env.NODE_ENV === 'production';
 const SESSION_SECRET = process.env.SESSION_SECRET || (isProduction ? '' : crypto.randomBytes(48).toString('hex'));
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
@@ -363,7 +363,7 @@ async function fetchGeminiWithRetry(url, options, clientSignal, onRetry) {
     const retryable = response.status === 503 || (response.status === 429 && !isDailyQuotaExceeded(data));
     if (!retryable || attempt === maxAttempts) geminiTranscribeApiError(response.status, data, response);
     const retryAfterMs = parseRetryAfterMs(response, data);
-    const waitMs = retryAfterMs || Math.min(60000, 3000 * (2 ** (attempt - 1)));
+    const waitMs = retryAfterMs || Math.min(60000, 10000 * (2 ** (attempt - 1)));
     if (onRetry) await onRetry(waitMs, attempt, response.status);
     await waitForRetry(waitMs, clientSignal);
   }
@@ -812,9 +812,10 @@ app.post('/api/transcribe', requireSameOrigin, noStore, transcribeLimiter, handl
       });
       const result = await transcribeAudioChunk(
         parsed.data.apiKey, path.join(workDir, chunkFiles[index]), parsed.data.language, clientController.signal,
-        async (waitMs, attempt) => sendEvent({
+        async (waitMs, attempt, status) => sendEvent({
           type: 'progress', stage: 'recognizing', percent,
-          message: 'Google đang giới hạn tốc độ. SubLingo sẽ tự thử lại sau ' + Math.ceil(waitMs / 1000) + ' giây (lần ' + attempt + '/3)...'
+          message: (status === 503 ? 'Gemini đang tạm quá tải. ' : 'Google đang giới hạn tốc độ. ')
+            + 'SubLingo sẽ tự thử lại sau ' + Math.ceil(waitMs / 1000) + ' giây (lần ' + attempt + '/3)...'
         })
       );
       if (!detectedLanguage && typeof result.language === 'string') detectedLanguage = result.language;

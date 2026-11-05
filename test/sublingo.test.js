@@ -194,14 +194,17 @@ test('Gemini Flash-Lite supports user-selectable thinking levels', () => {
 
 test('temporary upstream failures honor Retry-After and use capped exponential backoff', () => {
   assert.match(html, /const retryableStatuses = \[408, 429, 500, 502, 503, 504\]/);
-  assert.match(html, /const fallbackBackoffMs = Math\.min\(60000, 1000 \* \(2 \*\* \(attempt - 1\)\)\)/);
+  assert.match(html, /const fallbackBaseMs = error\.status === 503 \? 10000 : 1000/);
+  assert.match(html, /Math\.min\(60000, fallbackBaseMs \* \(2 \*\* \(attempt - 1\)\)\)/);
   assert.match(html, /requestError\.retryAfterMs = Number\(data\.retryAfterMs\) \|\| 0/);
   assert.match(html, /if \(error\.quotaType === 'daily'\) throw error/);
   assert.match(server, /function parseRetryAfterMs\(response, data\)/);
   assert.match(server, /google\.rpc\.RetryInfo/);
   assert.match(server, /function isDailyQuotaExceeded\(data\)/);
   assert.match(server, /retryAfterMs: error\.retryAfterMs/);
-  assert.match(html, /if \(lastError\?\.status === 429\) break/);
+  assert.match(html, /if \(lastError\?\.status === 429 \|\| lastError\?\.status === 503\) break/);
+  assert.match(html, /Các câu chưa dịch:/);
+  assert.match(html, /SubLingo đã dừng gửi các nhóm còn lại/);
   assert.match(html, /failureMessages\[0\]/);
 });
 
@@ -346,6 +349,8 @@ test('speech-to-text frontend shares Gemini key from Page 1 and supports export'
 test('Gemini Transcribe rate limits use automatic retries but daily quota is not retried', () => {
   assert.match(server, /async function fetchGeminiWithRetry/);
   assert.match(server, /const maxAttempts = 4/);
+  assert.match(server, /Math\.min\(60000, 10000 \* \(2 \*\* \(attempt - 1\)\)\)/);
+  assert.match(server, /status === 503 \? 'Gemini đang tạm quá tải\.'/);
   assert.match(server, /response\.status === 429 && !isDailyQuotaExceeded\(data\)/);
   assert.match(server, /parseRetryAfterMs\(response, data\)/);
   assert.match(server, /await waitForRetry\(waitMs, clientSignal\)/);
@@ -459,8 +464,8 @@ test('Page 3 navigation and content are fully removed', () => {
 });
 
 test('release version is synchronized across package, backend, UI, and README', () => {
-  assert.equal(pkg.version, '1.2.29');
-  assert.match(server, /APP_VERSION = process\.env\.npm_package_version \|\| '1.2.29'/);
+  assert.equal(pkg.version, '1.2.30');
+  assert.match(server, /APP_VERSION = process\.env\.npm_package_version \|\| '1.2.30'/);
   assert.match(html, /v1\.2\.28/);
   assert.match(readme, /Phiên bản hiện tại:\*\* 1\.2\.28/);
 });
