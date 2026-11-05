@@ -221,9 +221,9 @@ test('Hardsub OCR merges a single missed frame, filters one-frame noise and pres
 
 test('Hardsub OCR uses a selectable binarization mode, a 150 MB browser limit and the full Tesseract core directory', () => {
   assert.match(html, /id="ocrBinarize" type="checkbox" checked/);
-  assert.match(html, /file\\.size > 150 \\* 1024 \\* 1024/);
-  assert.match(html, /corePath:'https:\\/\\/cdn\\.jsdelivr\\.net\\/npm\\/tesseract\\.js-core@5'/);
-  assert.match(html, /ocrPrepareFrame\\(video,canvas,roi,binarize\\)/);
+  assert.ok(html.includes("file.size > 150 * 1024 * 1024"));
+  assert.ok(html.includes("corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@5'"));
+  assert.ok(html.includes('ocrPrepareFrame(video, canvas, roi, binarize)'));
   assert.match(html, /Hãy rà soát SRT trước khi tải xuống/);
 });
 
@@ -311,8 +311,8 @@ test('index HTML is not cached so fixes appear without stale frontend code', () 
 });
 
 test('package and visible UI expose the same semantic version', () => {
-  assert.equal(pkg.version, '1.2.9');
-  assert.match(html, /SRT TRANSLATOR · v1\.2\.9/);
+  assert.equal(pkg.version, '1.2.10');
+  assert.match(html, /SRT TRANSLATOR · v1\.2\.10/);
   assert.match(server, /APP_VERSION/);
 });
 
