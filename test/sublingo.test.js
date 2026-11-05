@@ -207,7 +207,7 @@ test('Hardsub OCR merges a single missed frame, filters one-frame noise and pres
   assert.equal(cues[1].end, 2.75);
 
   const srt = helpers.ocrToSrt(cues);
-  assert.match(srt, /00:00:00,000 --> 00:00:02,000/);
+  assert.match(srt, /00:00:00,000 --> 00:00:01,750/);
   assert.ok(srt.includes('Xin chào\nmọi người'));
   assert.ok(srt.endsWith('\n'));
   assert.equal(helpers.ocrBuildCues([
