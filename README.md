@@ -1,6 +1,6 @@
-# SubLingo 1.2.18 — Dịch phụ đề SRT & tạo phụ đề tự động
+# SubLingo 1.2.19 — Dịch phụ đề SRT & tạo phụ đề tự động
 
-**Phiên bản hiện tại:** 1.2.18 — *Two-page SRT translation & AI transcription*.
+**Phiên bản hiện tại:** 1.2.19 — *Three-tab navigation; Page 3 intentionally blank*.
 
 SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT bằng Google Gemini hoặc OpenAI.
 
@@ -61,7 +61,7 @@ Kiểm tra backend:
 curl http://localhost:10000/api/health
 ~~~
 
-Endpoint trả về trạng thái cùng phiên bản hiện tại, ví dụ {"ok":true,"service":"sublingo-api","version":"1.2.18"}.
+Endpoint trả về trạng thái cùng phiên bản hiện tại, ví dụ {"ok":true,"service":"sublingo-api","version":"1.2.19"}.
 
 ## Đưa lên Render
 
@@ -70,7 +70,7 @@ Endpoint trả về trạng thái cùng phiên bản hiện tại, ví dụ {"ok
 3. Trong Google Cloud Console, thêm `https://sublingo-srt-translator.onrender.com` vào **Authorized JavaScript origins** của OAuth Client ID. Ứng dụng dùng Google Identity Services popup nên không cần redirect URI.
 4. Lưu cấu hình và chờ Render khởi động lại service. Khi chưa có `GOOGLE_CLIENT_ID`, nút đăng nhập sẽ hiển thị trạng thái đang chờ cấu hình; đây không phải lỗi tài khoản Google.
 5. Ứng dụng hiện hỗ trợ **đăng nhập bằng Google**, chưa có đăng ký email/mật khẩu riêng. Phiên đăng nhập được lưu bằng cookie HttpOnly trong 7 ngày; ứng dụng chưa lưu hồ sơ người dùng hoặc lịch sử dịch vào database.
-4. Sau khi deploy, kiểm tra /api/health và xác nhận trường version là 1.2.18. Bản cài đặt cần tải thêm binary FFmpeg từ package ffmpeg-static.
+4. Sau khi deploy, kiểm tra /api/health và xác nhận trường version là 1.2.19. Bản cài đặt cần tải thêm binary FFmpeg từ package ffmpeg-static.
 
 ## Cấu hình API key
 
@@ -96,6 +96,11 @@ npm test
 GitHub Actions tự chạy bộ test khi có push hoặc pull request vào nhánh main.
 
 ## Nhật ký phiên bản
+
+### 1.2.19
+- Thêm lại nút Trang 3 trên thanh điều hướng.
+- Trang 3 chỉ là một khung nội dung trống; không khôi phục Hardsub OCR hay các công cụ đã gỡ.
+- Giữ nguyên Trang 1 (dịch SRT) và Trang 2 (tạo phụ đề AI).
 
 ### 1.2.18
 - Gỡ trang 3 Hardsub OCR khỏi giao diện và ứng dụng theo định hướng sản phẩm.
