@@ -1,6 +1,6 @@
-# SubLingo 1.2.2 — Dịch phụ đề SRT & tạo phụ đề tự động
+# SubLingo 1.2.17 — Dịch phụ đề SRT & tạo phụ đề tự động
 
-**Phiên bản hiện tại:** 1.2.2 — *AI Speech-to-Text*.
+**Phiên bản hiện tại:** 1.2.17 — *Hardsub OCR progress & timeline smoothing*.
 
 SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT bằng Google Gemini hoặc OpenAI.
 
@@ -30,6 +30,17 @@ SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT bằn
 - Không gửi API key qua chat; hãy nhập trực tiếp trong giao diện website.
 
 
+## Trích xuất phụ đề cứng (Hardsub OCR · Trang 3)
+
+- Trang 3 đọc phụ đề được đóng trực tiếp trên hình video bằng Tesseract.js chạy trong trình duyệt/Web Worker. Video không được tải lên backend; việc quét khung hình và tạo SRT diễn ra cục bộ trên thiết bị.
+- Cho phép chọn vùng OCR bằng cách kéo khung trên video hoặc nhập tọa độ X, Y, W, H; có thể phóng to vùng xem trước để căn chữ.
+- Chọn ngôn ngữ OCR, khoảng cách lấy mẫu 0,25 / 0,5 / 1 giây, cùng ba cấu hình Nhanh / Cân bằng / Chất lượng.
+- Hỗ trợ ngưỡng thích nghi (adaptive threshold) và Otsu để tăng khả năng đọc chữ trên nền video sáng/tối khác nhau.
+- Tối ưu bằng cách tái sử dụng kết quả OCR cho các khung hình gần như giống nhau; kết quả vẫn được đưa vào timeline để xác định thời gian phụ đề.
+- Làm mượt timeline: lùi thời điểm bắt đầu 120 ms, ưu tiên thời lượng đọc tối thiểu 1,1 giây khi không bị câu tiếp theo chặn, nối khoảng trống không quá 250 ms và nhắm tốc độ đọc 18 ký tự/giây. Mốc thời gian được giới hạn trong độ dài video và tránh chồng lấn câu kế tiếp.
+- Thanh tiến trình đồng bộ giao diện Trang 1: hiển thị phần trăm, số khung hình đã quét / tổng số và số khung hình còn lại; trạng thái tải mô hình, khung lỗi và khung hình được tái sử dụng vẫn được thông báo riêng.
+- Có thể khai báo từ điển sửa lỗi OCR theo mẫu `từ sai => từ đúng`; ứng dụng chỉ thay thế cụm khớp rõ ràng, không tự đoán những ký tự dễ nhầm.
+
 ## Model hiện hỗ trợ
 
 | Nhà cung cấp | Model ID |
@@ -40,13 +51,6 @@ SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT bằn
 
 SubLingo đã tắt Gemini 3.8 Flash; chỉ bật Gemini 3.5 Flash-Lite cho tất cả người dùng. Gemini 3.5 Flash-Lite hỗ trợ bốn mức suy luận MINIMAL, LOW, MEDIUM và HIGH. Mặc định là MINIMAL để ưu tiên tốc độ và tiết kiệm; mức cao hơn có thể cần thêm thời gian và token, đồng thời có thể ảnh hưởng hạn mức hoặc chi phí API theo cấu hình tài khoản Google. Mô hình này có Free Tier trong hạn mức Google, nhưng dự án đã liên kết billing vẫn có thể chịu giá Paid Tier. Muốn tránh phí, hãy xác nhận Google Cloud project/API key đang ở Free Tier và chưa bật billing; theo dõi Usage and Billing trong Google AI Studio.
 
-### Lịch sử phiên bản
-
-#### 1.2.2
-- Chuyển nhận diện giọng nói Trang 2 từ OpenAI sang Google Gemini 3.5 Transcribe.
-- Dùng chung API key Gemini đã lưu ở Trang 1.
-- Tự chờ và thử lại khi Google giới hạn tốc độ; dừng khi hết quota ngày.
-- Xóa tệp âm thanh tạm trên Google sau khi nhận diện.
 
 Third-party license information: see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
@@ -68,7 +72,7 @@ Kiểm tra backend:
 curl http://localhost:10000/api/health
 ~~~
 
-Endpoint trả về trạng thái cùng phiên bản hiện tại, ví dụ {"ok":true,"service":"sublingo-api","version":"1.2.1"}.
+Endpoint trả về trạng thái cùng phiên bản hiện tại, ví dụ {"ok":true,"service":"sublingo-api","version":"1.2.17"}.
 
 ## Đưa lên Render
 
@@ -77,7 +81,7 @@ Endpoint trả về trạng thái cùng phiên bản hiện tại, ví dụ {"ok
 3. Trong Google Cloud Console, thêm `https://sublingo-srt-translator.onrender.com` vào **Authorized JavaScript origins** của OAuth Client ID. Ứng dụng dùng Google Identity Services popup nên không cần redirect URI.
 4. Lưu cấu hình và chờ Render khởi động lại service. Khi chưa có `GOOGLE_CLIENT_ID`, nút đăng nhập sẽ hiển thị trạng thái đang chờ cấu hình; đây không phải lỗi tài khoản Google.
 5. Ứng dụng hiện hỗ trợ **đăng nhập bằng Google**, chưa có đăng ký email/mật khẩu riêng. Phiên đăng nhập được lưu bằng cookie HttpOnly trong 7 ngày; ứng dụng chưa lưu hồ sơ người dùng hoặc lịch sử dịch vào database.
-4. Sau khi deploy, kiểm tra /api/health và xác nhận trường version là 1.2.1. Bản cài đặt cần tải thêm binary FFmpeg từ package ffmpeg-static.
+4. Sau khi deploy, kiểm tra /api/health và xác nhận trường version là 1.2.17. Bản cài đặt cần tải thêm binary FFmpeg từ package ffmpeg-static.
 
 ## Cấu hình API key
 
@@ -103,6 +107,27 @@ npm test
 GitHub Actions tự chạy bộ test khi có push hoặc pull request vào nhánh main.
 
 ## Nhật ký phiên bản
+
+### 1.2.17
+- Đồng bộ thanh tiến trình OCR Trang 3 với giao diện Trang 1.
+- Hiển thị phần trăm, số khung hình đã quét / tổng số và số khung hình còn lại.
+- Bổ sung trạng thái truy cập được cho trình đọc màn hình; giữ thông báo tải mô hình, khung hình lỗi và khung hình tĩnh được tái sử dụng.
+
+### 1.2.16
+- Làm mượt mốc thời gian phụ đề OCR: bù đầu câu 120 ms, thời lượng đọc mục tiêu tối thiểu 1,1 giây khi không bị câu sau chặn.
+- Nối khoảng trống nhỏ tối đa 250 ms và điều chỉnh theo mục tiêu 18 ký tự/giây; không để câu trước chồng lên câu kế tiếp hoặc vượt độ dài video.
+
+### 1.2.15
+- Thêm cấu hình OCR Nhanh / Cân bằng / Chất lượng, điều chỉnh kích thước ảnh xử lý theo cấu hình.
+- Bổ sung ngưỡng thích nghi và Otsu để xử lý nền video sáng/tối.
+- Nhận diện khung hình gần như trùng lặp để tái sử dụng kết quả OCR, giảm số lần gọi nhận dạng; giữ xử lý trong một Web Worker để hạn chế chiếm dụng bộ nhớ.
+
+### 1.2.2
+- Chuyển nhận diện giọng nói Trang 2 từ OpenAI sang Google Gemini 3.5 Transcribe.
+- Dùng chung API key Gemini đã lưu ở Trang 1.
+- Tự chờ và thử lại khi Google giới hạn tốc độ; dừng khi hết quota ngày.
+- Xóa tệp âm thanh tạm trên Google sau khi nhận diện.
+
 
 ### 1.2.1
 - Chuyển mô hình nhận diện giọng nói sang gpt-transcribe, vẫn giữ timestamp từng từ.
