@@ -1229,7 +1229,7 @@ textarea.field { resize: vertical; line-height: 1.55; }
         const mean = sum / Math.max(1, area);
         const index = (y * width + x) * 4;
         const gray = data[index] * 0.299 + data[index + 1] * 0.587 + data[index + 2] * 0.114;
-        const isText = brightBackground ? gray < mean + offset : gray > mean - offset;
+        const isText = brightBackground ? gray < mean - offset : gray > mean + offset;
         const value = isText ? 0 : 255;
         data[index] = value;
         data[index + 1] = value;
