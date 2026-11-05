@@ -1,6 +1,6 @@
-# SubLingo 1.2.28 — Dịch SRT và tạo phụ đề
+# SubLingo 1.2.29 — Dịch SRT và tạo phụ đề
 
-**Phiên bản hiện tại:** 1.2.28 — *Gỡ tính năng thử nghiệm ở Trang 3, tập trung vào dịch SRT và tạo phụ đề*.
+**Phiên bản hiện tại:** 1.2.29 — *Thu gọn giao diện còn hai trang chính: dịch SRT và tạo phụ đề AI*.
 
 SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT và tạo phụ đề tự động từ video bằng Gemini và OpenAI.
 
@@ -11,7 +11,7 @@ SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT và t
 - Gửi lời thoại theo từng nhóm tới Google Gemini hoặc OpenAI.
 - Người dùng tự chọn mức suy luận Gemini: MINIMAL, LOW, MEDIUM hoặc HIGH; lựa chọn được lưu trên trình duyệt. Mặc định là MINIMAL.
 - Trang 2 tạo phụ đề tự động từ video bằng Google Gemini 3.5 Transcribe, có xem trước video, sửa lời thoại, tùy chỉnh kiểu chữ xem trước và xuất SRT.
-- Trang 3 hiện để trống và chỉ giữ nút điều hướng; hai chức năng chính vẫn là dịch phụ đề SRT (Trang 1) và tạo phụ đề tự động từ video (Trang 2).
+- Giao diện hiện chỉ còn hai trang chính: dịch phụ đề SRT (Trang 1) và tạo phụ đề tự động từ video (Trang 2).
 - Giữ nguyên số thứ tự, timestamp, metadata, dấu phân cách và kiểu xuống dòng từ file SRT gốc.
 - Có thể chọn lưu API key trên thiết bị bằng localStorage. Tùy chọn này **không mã hóa key**; chỉ nên dùng trên thiết bị cá nhân.
 - Giới hạn file ở 10 MB và 5.000 cue để tránh treo trình duyệt; mỗi cue tối đa 5.000 ký tự.
@@ -62,7 +62,7 @@ Kiểm tra backend:
 curl http://localhost:10000/api/health
 ~~~
 
-Endpoint trả về trạng thái cùng phiên bản hiện tại, ví dụ {"ok":true,"service":"sublingo-api","version":"1.2.28"}.
+Endpoint trả về trạng thái cùng phiên bản hiện tại, ví dụ {"ok":true,"service":"sublingo-api","version":"1.2.29"}.
 
 ## Đưa lên Render
 
@@ -71,7 +71,7 @@ Endpoint trả về trạng thái cùng phiên bản hiện tại, ví dụ {"ok
 3. Trong Google Cloud Console, thêm `https://sublingo-srt-translator.onrender.com` vào **Authorized JavaScript origins** của OAuth Client ID. Ứng dụng dùng Google Identity Services popup nên không cần redirect URI.
 4. Lưu cấu hình và chờ Render khởi động lại service. Khi chưa có `GOOGLE_CLIENT_ID`, nút đăng nhập sẽ hiển thị trạng thái đang chờ cấu hình; đây không phải lỗi tài khoản Google.
 5. Ứng dụng hiện hỗ trợ **đăng nhập bằng Google**, chưa có đăng ký email/mật khẩu riêng. Phiên đăng nhập được lưu bằng cookie HttpOnly trong 7 ngày; ứng dụng chưa lưu hồ sơ người dùng hoặc lịch sử dịch vào database.
-4. Sau khi deploy, kiểm tra /api/health và xác nhận trường version là 1.2.28. Bản cài đặt cần tải thêm binary FFmpeg từ package ffmpeg-static.
+4. Sau khi deploy, kiểm tra /api/health và xác nhận trường version là 1.2.29. Bản cài đặt cần tải thêm binary FFmpeg từ package ffmpeg-static.
 
 ## Cấu hình API key
 
@@ -97,6 +97,11 @@ npm test
 GitHub Actions tự chạy bộ test khi có push hoặc pull request vào nhánh main.
 
 ## Nhật ký phiên bản
+
+### 1.2.29 — 2026-11-05
+- Gỡ hẳn nút Trang 3 và phần điều hướng/trang nội dung trống; giao diện chỉ còn Trang 1 và Trang 2.
+- Đơn giản hóa logic chuyển trang còn hai trạng thái, không ảnh hưởng chức năng dịch SRT và tạo phụ đề AI.
+- Đồng bộ phiên bản 1.2.29 trong package, backend, giao diện và README.
 
 ### 1.2.28 — 2026-11-05
 - Gỡ trợ lý tối ưu nội dung mạng xã hội khỏi Trang 3 theo định hướng tinh gọn sản phẩm.

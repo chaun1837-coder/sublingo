@@ -137,20 +137,18 @@ test('all static element references exist and inline JavaScript parses', () => {
   for (const script of scripts) assert.doesNotThrow(() => new Script(script[1]));
 });
 
-test('three-page navigation keeps Page 3 as an empty placeholder', () => {
-  for (const id of ['pageOneTab','pageTwoTab','pageThreeTab','pageOneContent','pageTwoContent','pageThreeContent']) {
+test('navigation contains only Page 1 and Page 2', () => {
+  for (const id of ['pageOneTab','pageTwoTab','pageOneContent','pageTwoContent']) {
     assert.ok(html.includes('id="' + id + '"'));
   }
-  assert.match(html, /<button class="page-tab" id="pageThreeTab" type="button" aria-controls="pageThreeContent">Trang 3<\/button>/);
-  assert.match(html, /<section id="pageThreeContent" hidden aria-label="Trang 3"><\/section>/);
-  assert.match(html, /const isPageThree = pageNumber === 3/);
-  assert.match(html, /\$\('pageThreeContent'\)\.hidden = !isPageThree/);
-  assert.match(html, /\$\('pageThreeTab'\)\.addEventListener\('click', \(\) => showPage\(3\)\)/);
-  assert.doesNotMatch(html, /social[A-Z]|social-|social_|Hardsub OCR|tesseract\.js|function ocrPrepareFrame/i);
+  assert.doesNotMatch(html, /pageThreeTab|pageThreeContent|social[A-Z]|social-|social_|Hardsub OCR|tesseract\.js|function ocrPrepareFrame/i);
   assert.match(html, /function showPage\(pageNumber\)/);
-  assert.match(html, /showPage\(1\)/);
-  assert.match(html, /showPage\(2\)/);
-  assert.match(html, /showPage\(3\)/);
+  assert.match(html, /const isPageOne = pageNumber === 1/);
+  assert.match(html, /const isPageTwo = pageNumber === 2/);
+  assert.match(html, /\$\('pageOneContent'\)\.hidden = !isPageOne/);
+  assert.match(html, /\$\('pageTwoContent'\)\.hidden = !isPageTwo/);
+  assert.match(html, /\$\('pageOneTab'\)\.addEventListener\('click', \(\) => showPage\(1\)\)/);
+  assert.match(html, /\$\('pageTwoTab'\)\.addEventListener\('click', \(\) => showPage\(2\)\)/);
 });
 
 
@@ -455,15 +453,14 @@ test('FFmpeg audio encoding is limited to one worker thread', () => {
 
 
 
-test('Page 3 social optimizer UI and backend endpoint are fully removed', () => {
-  assert.doesNotMatch(html, /social[A-Z]|social-|social_|api\/social-optimize/i);
+test('Page 3 navigation and content are fully removed', () => {
+  assert.doesNotMatch(html, /pageThreeTab|pageThreeContent|social[A-Z]|social-|social_|api\/social-optimize/i);
   assert.doesNotMatch(server, /socialOptimize|MAX_SOCIAL_ANALYSIS_CHARS|normalizeSocialHashtags|api\/social-optimize/i);
-  assert.match(html, /<section id="pageThreeContent" hidden aria-label="Trang 3"><\/section>/);
 });
 
 test('release version is synchronized across package, backend, UI, and README', () => {
-  assert.equal(pkg.version, '1.2.28');
-  assert.match(server, /APP_VERSION = process\.env\.npm_package_version \|\| '1.2.28'/);
+  assert.equal(pkg.version, '1.2.29');
+  assert.match(server, /APP_VERSION = process\.env\.npm_package_version \|\| '1.2.29'/);
   assert.match(html, /v1\.2\.28/);
   assert.match(readme, /Phiên bản hiện tại:\*\* 1\.2\.28/);
 });
