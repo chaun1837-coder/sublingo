@@ -20,7 +20,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = Number(process.env.PORT || 10000);
-const APP_VERSION = process.env.npm_package_version || '1.2.31';
+const APP_VERSION = process.env.npm_package_version || '1.2.32';
 const isProduction = process.env.NODE_ENV === 'production';
 const SESSION_SECRET = process.env.SESSION_SECRET || (isProduction ? '' : crypto.randomBytes(48).toString('hex'));
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
@@ -364,9 +364,11 @@ async function fetchGeminiWithRetry(url, options, clientSignal, onRetry) {
     if (!retryable || attempt === maxAttempts) geminiTranscribeApiError(response.status, data, response);
     const retryAfterMs = parseRetryAfterMs(response, data);
     const fallbackRetryDelaysMs = [1000, 6000, 12000];
-    const waitMs = retryAfterMs
+    const baseWaitMs = retryAfterMs
       ? Math.min(12000, retryAfterMs)
       : fallbackRetryDelaysMs[Math.min(attempt - 1, fallbackRetryDelaysMs.length - 1)];
+    const jitterMs = Math.floor(Math.random() * 1000);
+    const waitMs = baseWaitMs + jitterMs;
     if (onRetry) await onRetry(waitMs, attempt, response.status);
     await waitForRetry(waitMs, clientSignal);
   }

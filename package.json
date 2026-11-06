@@ -1,6 +1,6 @@
 {
   "name": "sublingo-srt-translator",
-  "version": "1.2.31",
+  "version": "1.2.32",
   "private": true,
   "type": "module",
   "engines": {

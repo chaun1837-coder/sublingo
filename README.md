@@ -1,6 +1,6 @@
-# SubLingo 1.2.31 — Dịch SRT và tạo phụ đề
+# SubLingo 1.2.32 — Dịch SRT và tạo phụ đề
 
-**Phiên bản hiện tại:** 1.2.31 — *Rút ngắn thời gian chờ thử lại Gemini ở Trang 1/2*.
+**Phiên bản hiện tại:** 1.2.32 — *Thêm jitter ngẫu nhiên vào thời gian thử lại Gemini*.
 
 SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT và tạo phụ đề tự động từ video bằng Gemini và OpenAI.
 
@@ -24,7 +24,7 @@ SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT và t
 - Backend dùng FFmpeg tách âm thanh mono 16 kHz, nén MP3 và áp dụng bộ lọc cơ bản để giảm một phần tiếng ồn nền; đây không phải mô hình tách giọng nói khỏi nhạc.
 - Âm thanh được chia thành từng đoạn 9 phút để gửi đến Google Gemini 3.5 Transcribe qua Files API và Interactions API. Model trả về timestamp từng từ; SubLingo gom các từ gần nhau thành câu phụ đề.
 - Model giới hạn âm thanh tối đa 30 phút mỗi yêu cầu khi bật timestamp từng từ; các đoạn 9 phút của SubLingo nằm trong giới hạn đó.
-- Khi Google trả về lỗi 429 hoặc 503, Trang 1 thử lại sau 1–5–10 giây và Trang 2 sau 1–6–12 giây; thời gian Retry-After/RetryInfo cũng được giới hạn tối đa 10 giây ở Trang 1 và 12 giây ở Trang 2. Nếu Gemini quá tải kéo dài, Trang 1 dừng gửi các nhóm tiếp theo để tránh gọi dồn. Hạn mức theo ngày cần chờ quota được đặt lại.
+- Khi Google trả về lỗi 429 hoặc 503, Trang 1 thử lại theo lịch 1–5–10 giây và Trang 2 theo lịch 1–6–12 giây; cả hai trang cộng jitter ngẫu nhiên 0–999 ms vào mỗi lần thử lại. Thời gian Retry-After/RetryInfo vẫn được giới hạn tối đa 10 giây ở Trang 1 và 12 giây ở Trang 2 trước khi cộng jitter. Nếu Gemini quá tải kéo dài, Trang 1 dừng gửi các nhóm tiếp theo để tránh gọi dồn. Hạn mức theo ngày cần chờ quota được đặt lại.
 - Video và âm thanh gốc tạm được ghi trong thư mục tạm trên máy chủ và xóa sau khi xử lý. Tệp âm thanh tải lên Google Files API được xóa ngay sau khi nhận diện; tệp còn sót sẽ tự hết hạn sau tối đa 48 giờ.
 - Gemini 3.5 Transcribe có Free Tier trong hạn mức được cấp; nếu dự án thuộc Paid Tier hoặc vượt quota, có thể phát sinh phí Google. Không có bảo đảm miễn phí vô hạn.
 - **Lưu ý quyền riêng tư:** Nội dung gửi qua Free Tier/unpaid quota có thể được Google dùng để cải thiện sản phẩm và có thể được người đánh giá xử lý. Không tải video có thông tin nhạy cảm hoặc bí mật nếu không chấp nhận điều khoản này.
@@ -62,7 +62,7 @@ Kiểm tra backend:
 curl http://localhost:10000/api/health
 ~~~
 
-Endpoint trả về trạng thái cùng phiên bản hiện tại, ví dụ {"ok":true,"service":"sublingo-api","version":"1.2.31"}.
+Endpoint trả về trạng thái cùng phiên bản hiện tại, ví dụ {"ok":true,"service":"sublingo-api","version":"1.2.32"}.
 
 ## Đưa lên Render
 
@@ -71,7 +71,7 @@ Endpoint trả về trạng thái cùng phiên bản hiện tại, ví dụ {"ok
 3. Trong Google Cloud Console, thêm `https://sublingo-srt-translator.onrender.com` vào **Authorized JavaScript origins** của OAuth Client ID. Ứng dụng dùng Google Identity Services popup nên không cần redirect URI.
 4. Lưu cấu hình và chờ Render khởi động lại service. Khi chưa có `GOOGLE_CLIENT_ID`, nút đăng nhập sẽ hiển thị trạng thái đang chờ cấu hình; đây không phải lỗi tài khoản Google.
 5. Ứng dụng hiện hỗ trợ **đăng nhập bằng Google**, chưa có đăng ký email/mật khẩu riêng. Phiên đăng nhập được lưu bằng cookie HttpOnly trong 7 ngày; ứng dụng chưa lưu hồ sơ người dùng hoặc lịch sử dịch vào database.
-4. Sau khi deploy, kiểm tra /api/health và xác nhận trường version là 1.2.31. Bản cài đặt cần tải thêm binary FFmpeg từ package ffmpeg-static.
+4. Sau khi deploy, kiểm tra /api/health và xác nhận trường version là 1.2.32. Bản cài đặt cần tải thêm binary FFmpeg từ package ffmpeg-static.
 
 ## Cấu hình API key
 
@@ -83,7 +83,7 @@ Người dùng nhập OpenAI API key hoặc Gemini API key trong giao diện. Ke
 - Không commit .env, API key, OAuth client secret hoặc SESSION_SECRET vào GitHub.
 - Đổi SESSION_SECRET sẽ làm hết hiệu lực các phiên đăng nhập hiện tại.
 - Giao diện chia file thành các nhóm tối đa 60 cue và 24.000 ký tự mỗi request; mỗi cue tối đa 5.000 ký tự. Gemini 3.5 Flash-Lite nhận mức suy luận do người dùng chọn (MINIMAL/LOW/MEDIUM/HIGH), mặc định MINIMAL; giới hạn khoảng cách tối thiểu 4,5 giây giữa thời điểm bắt đầu hai request. Khoảng chờ chỉ được áp dụng khi cần, không cộng thêm sau một phản hồi vốn đã chậm.
-- Khi gặp lỗi tạm thời như 408, 429, 5xx hoặc lỗi mạng, ứng dụng thử lại với exponential backoff và jitter; với Gemini, thời gian Retry-After/RetryInfo từ Google được ưu tiên. Hạn mức theo ngày không bị thử lại liên tục; sau nhiều lần 429, ứng dụng dừng gửi thêm nhóm để tránh làm nặng thêm giới hạn.
+- Khi gặp lỗi tạm thời như 408, 429, 5xx hoặc lỗi mạng, ứng dụng thử lại theo lịch chờ tăng dần; riêng Gemini cộng thêm jitter ngẫu nhiên 0–999 ms để tránh nhiều ứng dụng thử lại cùng lúc. Với Gemini, thời gian Retry-After/RetryInfo từ Google được ưu tiên. Hạn mức theo ngày không bị thử lại liên tục; sau nhiều lần 429, ứng dụng dừng gửi thêm nhóm để tránh làm nặng thêm giới hạn.
 - Hủy lượt dịch ở trình duyệt sẽ đóng request và báo backend hủy tiếp công việc gọi AI nếu kết nối đã bị ngắt.
 - Backend giới hạn 80 cue/request, 30.000 ký tự/request và 120 request/15 phút/IP.
 - Ứng dụng không có database người dùng hoặc lịch sử dịch. Nếu cần lịch sử, phân quyền, gói trả phí hoặc quản trị, cần bổ sung database.
@@ -97,6 +97,12 @@ npm test
 GitHub Actions tự chạy bộ test khi có push hoặc pull request vào nhánh main.
 
 ## Nhật ký phiên bản
+
+### 1.2.32 — 2026-11-06
+- Thêm jitter ngẫu nhiên 0–999 ms vào thời gian thử lại Gemini ở Trang 1 và Trang 2 theo khuyến nghị troubleshooting của Google, giúp phân tán các lần thử lại đồng thời.
+- Giữ nguyên lịch chờ cơ bản Trang 1 (1–5–10 giây), Trang 2 (1–6–12 giây), giới hạn số lần thử, Retry-After/RetryInfo và giới hạn 60 câu/24.000 ký tự của Trang 1.
+- Bổ sung kiểm tra hồi quy để bảo đảm jitter được áp dụng ở cả hai luồng Gemini.
+- Đồng bộ phiên bản 1.2.32 trong package, backend, giao diện và README.
 
 ### 1.2.31 — 2026-11-05
 - Trang 1 giảm lịch chờ thử lại xuống 1–5–10 giây; giới hạn Retry-After/RetryInfo tối đa 10 giây.

@@ -198,6 +198,8 @@ test('temporary upstream failures honor Retry-After and use capped exponential b
   assert.match(html, /const fallbackRetryDelaysMs = \[1000, 5000, 10000\]/);
   assert.match(html, /Math\.min\(10000, error\.retryAfterMs\)/);
   assert.match(html, /fallbackRetryDelaysMs\[Math\.min\(attempt - 1, fallbackRetryDelaysMs\.length - 1\)\]/);
+  assert.match(html, /const retryJitterMs = requestProvider === 'gemini' \? Math\.floor\(Math\.random\(\) \* 1000\) : 0/);
+  assert.match(html, /pendingRetryDelayMs = retryBaseDelayMs \+ retryJitterMs/);
   assert.match(html, /requestError\.retryAfterMs = Number\(data\.retryAfterMs\) \|\| 0/);
   assert.match(html, /if \(error\.quotaType === 'daily'\) throw error/);
   assert.match(server, /function parseRetryAfterMs\(response, data\)/);
@@ -266,12 +268,12 @@ test('index HTML is not cached so fixes appear without stale frontend code', () 
 });
 
 test('package, backend, README and visible UI expose the same semantic version and release notes', () => {
-  assert.equal(pkg.version, '1.2.31');
-  assert.match(html, /SRT TRANSLATOR · v1\.2\.31/);
-  assert.match(server, /APP_VERSION = process\.env\.npm_package_version \|\| '1\.2\.31'/);
-  assert.match(readme, /^# SubLingo 1\.2\.31/m);
-  assert.match(readme, /\*\*Phiên bản hiện tại:\*\* 1\.2\.31/);
-  assert.match(readme, /### 1\.2\.31 — 2026-11-05/);
+  assert.equal(pkg.version, '1.2.32');
+  assert.match(html, /SRT TRANSLATOR · v1\.2\.32/);
+  assert.match(server, /APP_VERSION = process\.env\.npm_package_version \|\| '1\.2\.32'/);
+  assert.match(readme, /^# SubLingo 1\.2\.32/m);
+  assert.match(readme, /\*\*Phiên bản hiện tại:\*\* 1\.2\.32/);
+  assert.match(readme, /### 1\.2\.32 — 2026-11-05/);
   assert.match(readme, /Trang 1 thử lại sau 1–5–10 giây/);
   assert.match(readme, /Trang 2 sau 1–6–12 giây/);
 });
@@ -352,6 +354,8 @@ test('Gemini Transcribe rate limits use automatic retries but daily quota is not
   assert.match(server, /const fallbackRetryDelaysMs = \[1000, 6000, 12000\]/);
   assert.match(server, /Math\.min\(12000, retryAfterMs\)/);
   assert.match(server, /fallbackRetryDelaysMs\[Math\.min\(attempt - 1, fallbackRetryDelaysMs\.length - 1\)\]/);
+  assert.match(server, /const jitterMs = Math\.floor\(Math\.random\(\) \* 1000\)/);
+  assert.match(server, /const waitMs = baseWaitMs \+ jitterMs/);
   assert.match(server, /status === 503 \? 'Gemini đang tạm quá tải\./);
   assert.match(server, /response\.status === 429 && !isDailyQuotaExceeded\(data\)/);
   assert.match(server, /parseRetryAfterMs\(response, data\)/);
@@ -466,8 +470,8 @@ test('Page 3 navigation and content are fully removed', () => {
 });
 
 test('release version is synchronized across package, backend, UI, and README', () => {
-  assert.equal(pkg.version, '1.2.31');
-  assert.match(server, /APP_VERSION = process\.env\.npm_package_version \|\| '1\.2\.31'/);
-  assert.match(html, /v1\.2\.31/);
-  assert.match(readme, /Phiên bản hiện tại:\*\* 1\.2\.31/);
+  assert.equal(pkg.version, '1.2.32');
+  assert.match(server, /APP_VERSION = process\.env\.npm_package_version \|\| '1\.2\.32'/);
+  assert.match(html, /v1\.2\.32/);
+  assert.match(readme, /Phiên bản hiện tại:\*\* 1\.2\.32/);
 });
