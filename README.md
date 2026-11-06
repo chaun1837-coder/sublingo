@@ -1,6 +1,6 @@
-# SubLingo 1.2.32 — Dịch SRT và tạo phụ đề
+# SubLingo 1.2.33 — Dịch SRT và tạo phụ đề
 
-**Phiên bản hiện tại:** 1.2.32 — *Thêm jitter ngẫu nhiên vào thời gian thử lại Gemini*.
+**Phiên bản hiện tại:** 1.2.33 — *Sửa lỗi tự dừng sau một lần thử lại Gemini thành công*.
 
 SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT và tạo phụ đề tự động từ video bằng Gemini và OpenAI.
 
@@ -62,7 +62,7 @@ Kiểm tra backend:
 curl http://localhost:10000/api/health
 ~~~
 
-Endpoint trả về trạng thái cùng phiên bản hiện tại, ví dụ {"ok":true,"service":"sublingo-api","version":"1.2.32"}.
+Endpoint trả về trạng thái cùng phiên bản hiện tại, ví dụ {"ok":true,"service":"sublingo-api","version":"1.2.33"}.
 
 ## Đưa lên Render
 
@@ -71,7 +71,7 @@ Endpoint trả về trạng thái cùng phiên bản hiện tại, ví dụ {"ok
 3. Trong Google Cloud Console, thêm `https://sublingo-srt-translator.onrender.com` vào **Authorized JavaScript origins** của OAuth Client ID. Ứng dụng dùng Google Identity Services popup nên không cần redirect URI.
 4. Lưu cấu hình và chờ Render khởi động lại service. Khi chưa có `GOOGLE_CLIENT_ID`, nút đăng nhập sẽ hiển thị trạng thái đang chờ cấu hình; đây không phải lỗi tài khoản Google.
 5. Ứng dụng hiện hỗ trợ **đăng nhập bằng Google**, chưa có đăng ký email/mật khẩu riêng. Phiên đăng nhập được lưu bằng cookie HttpOnly trong 7 ngày; ứng dụng chưa lưu hồ sơ người dùng hoặc lịch sử dịch vào database.
-4. Sau khi deploy, kiểm tra /api/health và xác nhận trường version là 1.2.32. Bản cài đặt cần tải thêm binary FFmpeg từ package ffmpeg-static.
+4. Sau khi deploy, kiểm tra /api/health và xác nhận trường version là 1.2.33. Bản cài đặt cần tải thêm binary FFmpeg từ package ffmpeg-static.
 
 ## Cấu hình API key
 
@@ -98,11 +98,15 @@ GitHub Actions tự chạy bộ test khi có push hoặc pull request vào nhán
 
 ## Nhật ký phiên bản
 
-### 1.2.32 — 2026-11-06
+### 1.2.33 — 2026-11-06
+- Sửa điều kiện dừng Trang 1: chỉ dừng các nhóm tiếp theo khi nhóm hiện tại thực sự thất bại sau mọi lần thử lại; nếu Gemini lỗi tạm thời nhưng lần thử lại thành công, ứng dụng tự tiếp tục dịch nhóm kế tiếp.
+- Giữ nguyên Jitter 0–999 ms, lịch chờ 1–5–10 giây, giới hạn 60 câu/24.000 ký tự và cơ chế bảo vệ khi lỗi 429/503 kéo dài.
+- Bổ sung kiểm tra hồi quy cho tình huống 429/503 ở lần gọi đầu nhưng lần thử lại thành công.
+- Đồng bộ phiên bản 1.2.33 trong package, backend, giao diện và README.
 - Thêm jitter ngẫu nhiên 0–999 ms vào thời gian thử lại Gemini ở Trang 1 và Trang 2 theo khuyến nghị troubleshooting của Google, giúp phân tán các lần thử lại đồng thời.
 - Giữ nguyên lịch chờ cơ bản Trang 1 (1–5–10 giây), Trang 2 (1–6–12 giây), giới hạn số lần thử, Retry-After/RetryInfo và giới hạn 60 câu/24.000 ký tự của Trang 1.
 - Bổ sung kiểm tra hồi quy để bảo đảm jitter được áp dụng ở cả hai luồng Gemini.
-- Đồng bộ phiên bản 1.2.32 trong package, backend, giao diện và README.
+- Đồng bộ phiên bản 1.2.33 trong package, backend, giao diện và README.
 
 ### 1.2.31 — 2026-11-05
 - Trang 1 giảm lịch chờ thử lại xuống 1–5–10 giây; giới hạn Retry-After/RetryInfo tối đa 10 giây.
