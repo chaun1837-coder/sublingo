@@ -266,11 +266,11 @@ test('index HTML is not cached so fixes appear without stale frontend code', () 
 
 test('package, backend, README and visible UI expose the same semantic version and release notes', () => {
   assert.equal(pkg.version, '1.2.31');
-  assert.match(html, /SRT TRANSLATOR · v1\\.2\\.31/);
-  assert.match(server, /APP_VERSION = process\\.env\\.npm_package_version \\|\\| '1\\.2\\.31'/);
-  assert.match(readme, /^# SubLingo 1\\.2\\.31/m);
-  assert.match(readme, /\\*\\*Phiên bản hiện tại:\\*\\* 1\\.2\\.31/);
-  assert.match(readme, /### 1\\.2\\.31 — 2026-11-05/);
+  assert.match(html, /SRT TRANSLATOR · v1\.2\.31/);
+  assert.match(server, /APP_VERSION = process\.env\.npm_package_version \|\| '1\.2\.31'/);
+  assert.match(readme, /^# SubLingo 1\.2\.31/m);
+  assert.match(readme, /\*\*Phiên bản hiện tại:\*\* 1\.2\.31/);
+  assert.match(readme, /### 1\.2\.31 — 2026-11-05/);
   assert.match(readme, /Trang 1 thử lại sau 1–5–10 giây/);
   assert.match(readme, /Trang 2 sau 1–6–12 giây/);
 });
@@ -466,7 +466,7 @@ test('Page 3 navigation and content are fully removed', () => {
 
 test('release version is synchronized across package, backend, UI, and README', () => {
   assert.equal(pkg.version, '1.2.31');
-  assert.match(server, /APP_VERSION = process\\.env\\.npm_package_version \\|\\| '1\\.2\\.31'/);
-  assert.match(html, /v1\\.2\\.31/);
-  assert.match(readme, /Phiên bản hiện tại:\\*\\* 1\\.2\\.31/);
+  assert.match(server, /APP_VERSION = process\.env\.npm_package_version \|\| '1\.2\.31'/);
+  assert.match(html, /v1\.2\.31/);
+  assert.match(readme, /Phiên bản hiện tại:\*\* 1\.2\.31/);
 });
