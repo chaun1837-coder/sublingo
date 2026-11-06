@@ -155,7 +155,8 @@ test('navigation contains only Page 1 and Page 2', () => {
 test('translation progress uses an explicit completion flag, including for unchanged text', () => {
   assert.match(html, /translated: false/);
   assert.match(html, /const done = cues\.filter\(\(cue\) => cue\.translated\)\.length/);
-  assert.match(html, /const remaining = cues\.filter\(\(cue\) => !cue\.translated\)\.length/);
+  assert.match(html, /const untranslatedCues = cues\.filter\(\(cue\) => !cue\.translated\)/);
+  assert.match(html, /const remaining = untranslatedCues\.length/);
 });
 
 test('manual translation edits are retained and locked while an AI job is running', () => {
@@ -351,7 +352,7 @@ test('Gemini Transcribe rate limits use automatic retries but daily quota is not
   assert.match(server, /const fallbackRetryDelaysMs = \[1000, 6000, 12000\]/);
   assert.match(server, /Math\.min\(12000, retryAfterMs\)/);
   assert.match(server, /fallbackRetryDelaysMs\[Math\.min\(attempt - 1, fallbackRetryDelaysMs\.length - 1\)\]/);
-  assert.match(server, /status === 503 \? 'Gemini đang tạm quá tải\.'/);
+  assert.match(server, /status === 503 \? 'Gemini đang tạm quá tải\./);
   assert.match(server, /response\.status === 429 && !isDailyQuotaExceeded\(data\)/);
   assert.match(server, /parseRetryAfterMs\(response, data\)/);
   assert.match(server, /await waitForRetry\(waitMs, clientSignal\)/);
