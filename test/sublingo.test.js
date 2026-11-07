@@ -269,7 +269,7 @@ test('malformed JSON and oversized bodies return JSON errors', () => {
 });
 
 test('index HTML is not cached so fixes appear without stale frontend code', () => {
-  assert.match(server, /path\.basename\(filePath\) === 'index\.html'/);
+  assert.match(server, /\['index\.html', 'app\.js'\]\.includes\(path\.basename\(filePath\)\)/);
   assert.match(server, /res\.set\('Cache-Control', 'no-store'\)/);
 });
 
