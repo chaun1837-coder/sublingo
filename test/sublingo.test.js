@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { Script } from 'node:vm';
 
-const html = await readFile(new URL('../public/index.html', import.meta.url), 'utf8');
+const indexHtml = await readFile(new URL('../public/index.html', import.meta.url), 'utf8');
+const appJs = await readFile(new URL('../public/app.js', import.meta.url), 'utf8');
+const html = indexHtml + '\n' + appJs;
 const server = await readFile(new URL('../server.js', import.meta.url), 'utf8');
 const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
 const readme = await readFile(new URL('../README.md', import.meta.url), 'utf8');
@@ -132,9 +134,13 @@ test('all static element references exist and inline JavaScript parses', () => {
   const definedIds = new Set([...html.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]));
   const referencedIds = [...html.matchAll(/\$\('([^']+)'\)/g)].map((match) => match[1]);
   for (const id of referencedIds) assert.ok(definedIds.has(id), 'missing element: ' + id);
-  const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];
-  assert.ok(scripts.length > 0, 'expected an inline application script');
-  for (const script of scripts) assert.doesNotThrow(() => new Script(script[1]));
+  const inlineScripts = [...indexHtml.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)]
+    .filter((match) => !/\bsrc\s*=/.test(match[1]));
+  assert.equal(inlineScripts.length, 0, 'application JavaScript must not be inline');
+  assert.match(indexHtml, /<script src="\/app\.js" defer><\/script>/);
+  assert.doesNotThrow(() => new Script(appJs));
+  const scriptSrc = server.split('\n').find((line) => line.includes('scriptSrc:'));
+  assert.ok(scriptSrc && !scriptSrc.includes('unsafe-inline'), 'CSP must not allow inline scripts');
 });
 
 test('navigation contains only Page 1 and Page 2', () => {
@@ -268,7 +274,7 @@ test('index HTML is not cached so fixes appear without stale frontend code', () 
 });
 
 test('package, backend, README and visible UI expose the same semantic version and release notes', () => {
-  assert.equal(pkg.version, '1.2.33');
+  assert.equal(pkg.version, '1.2.34');
   assert.match(html, /SRT TRANSLATOR · v1\.2\.33/);
   assert.match(server, /APP_VERSION = process\.env\.npm_package_version \|\| '1\.2\.33'/);
   assert.match(readme, /^# SubLingo 1\.2\.33/m);
@@ -309,7 +315,10 @@ test('OpenAI Responses JSON mode is enabled and prompt explicitly requests JSON'
 
 test('speech-to-text uploads are bounded and use FFmpeg plus secure multipart upload', () => {
   assert.equal(pkg.dependencies.multer, '^2.5.0');
-  assert.equal(pkg.dependencies['ffmpeg-static'], '^5.3.0');
+  assert.equal(pkg.dependencies['ffmpeg-static'], undefined);
+  assert.equal(pkg.dependencies['express-rate-limit'], '^8.3.0');
+  assert.equal(pkg.dependencies.zod, '^4.6.6');
+  assert.match(server, /const ffmpegPath = process\.env\.FFMPEG_PATH \|\| 'ffmpeg'/);
   assert.ok(server.includes('MAX_VIDEO_BYTES = 150 * 1024 * 1024'));
   assert.ok(server.includes('MAX_AUDIO_CHUNK_BYTES = 24 * 1024 * 1024'));
   assert.ok(server.includes('transcribeLimiter = rateLimit'));
@@ -470,7 +479,7 @@ test('Page 3 navigation and content are fully removed', () => {
 });
 
 test('release version is synchronized across package, backend, UI, and README', () => {
-  assert.equal(pkg.version, '1.2.33');
+  assert.equal(pkg.version, '1.2.34');
   assert.match(server, /APP_VERSION = process\.env\.npm_package_version \|\| '1\.2\.33'/);
   assert.match(html, /v1\.2\.33/);
   assert.match(readme, /Phiên bản hiện tại:\*\* 1\.2\.33/);
