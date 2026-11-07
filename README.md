@@ -1,6 +1,6 @@
-# SubLingo 1.2.33 — Dịch SRT và tạo phụ đề
+# SubLingo 1.2.34 — Dịch SRT và tạo phụ đề
 
-**Phiên bản hiện tại:** 1.2.33 — *Sửa lỗi tự dừng sau một lần thử lại Gemini thành công*.
+**Phiên bản hiện tại:** 1.2.34 — *Gia cố bảo mật backend và xử lý video*.
 
 SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT và tạo phụ đề tự động từ video bằng Gemini và OpenAI.
 
@@ -42,11 +42,11 @@ SubLingo là ứng dụng Node.js có backend để dịch phụ đề SRT và t
 SubLingo đã tắt Gemini 3.8 Flash; chỉ bật Gemini 3.5 Flash-Lite cho tất cả người dùng. Gemini 3.5 Flash-Lite hỗ trợ bốn mức suy luận MINIMAL, LOW, MEDIUM và HIGH. Mặc định là MINIMAL để ưu tiên tốc độ và tiết kiệm; mức cao hơn có thể cần thêm thời gian và token, đồng thời có thể ảnh hưởng hạn mức hoặc chi phí API theo cấu hình tài khoản Google. Mô hình này có Free Tier trong hạn mức Google, nhưng dự án đã liên kết billing vẫn có thể chịu giá Paid Tier. Muốn tránh phí, hãy xác nhận Google Cloud project/API key đang ở Free Tier và chưa bật billing; theo dõi Usage and Billing trong Google AI Studio.
 
 
-Third-party license information: see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+Third-party license information: see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). SubLingo gọi FFmpeg do hệ điều hành/runtime cung cấp; ứng dụng không còn đóng gói binary FFmpeg cũ qua npm.
 
 ## Chạy thử trên máy tính
 
-Yêu cầu Node.js 20 trở lên.
+Yêu cầu Node.js 20 trở lên và FFmpeg được cài sẵn, có trong PATH (hoặc đặt biến `FFMPEG_PATH` trỏ tới binary FFmpeg). Render Native Runtime cung cấp FFmpeg hệ thống; local development cần tự cài FFmpeg.
 
 ~~~bash
 cp .env.example .env
@@ -71,7 +71,7 @@ Endpoint trả về trạng thái cùng phiên bản hiện tại, ví dụ {"ok
 3. Trong Google Cloud Console, thêm `https://sublingo-srt-translator.onrender.com` vào **Authorized JavaScript origins** của OAuth Client ID. Ứng dụng dùng Google Identity Services popup nên không cần redirect URI.
 4. Lưu cấu hình và chờ Render khởi động lại service. Khi chưa có `GOOGLE_CLIENT_ID`, nút đăng nhập sẽ hiển thị trạng thái đang chờ cấu hình; đây không phải lỗi tài khoản Google.
 5. Ứng dụng hiện hỗ trợ **đăng nhập bằng Google**, chưa có đăng ký email/mật khẩu riêng. Phiên đăng nhập được lưu bằng cookie HttpOnly trong 7 ngày; ứng dụng chưa lưu hồ sơ người dùng hoặc lịch sử dịch vào database.
-4. Sau khi deploy, kiểm tra /api/health và xác nhận trường version là 1.2.33. Bản cài đặt cần tải thêm binary FFmpeg từ package ffmpeg-static.
+4. Sau khi deploy, kiểm tra /api/health và xác nhận trường version là 1.2.33. Runtime Render cung cấp FFmpeg hệ thống; môi trường local cần tự cài FFmpeg hoặc đặt `FFMPEG_PATH`.
 
 ## Cấu hình API key
 
@@ -85,7 +85,7 @@ Người dùng nhập OpenAI API key hoặc Gemini API key trong giao diện. Ke
 - Giao diện chia file thành các nhóm tối đa 60 cue và 24.000 ký tự mỗi request; mỗi cue tối đa 5.000 ký tự. Gemini 3.5 Flash-Lite nhận mức suy luận do người dùng chọn (MINIMAL/LOW/MEDIUM/HIGH), mặc định MINIMAL; giới hạn khoảng cách tối thiểu 4,5 giây giữa thời điểm bắt đầu hai request. Khoảng chờ chỉ được áp dụng khi cần, không cộng thêm sau một phản hồi vốn đã chậm.
 - Khi gặp lỗi tạm thời như 408, 429, 5xx hoặc lỗi mạng, ứng dụng thử lại theo lịch chờ tăng dần; riêng Gemini cộng thêm jitter ngẫu nhiên 0–999 ms để tránh nhiều ứng dụng thử lại cùng lúc. Với Gemini, thời gian Retry-After/RetryInfo từ Google được ưu tiên. Hạn mức theo ngày không bị thử lại liên tục; sau nhiều lần 429, ứng dụng dừng gửi thêm nhóm để tránh làm nặng thêm giới hạn.
 - Hủy lượt dịch ở trình duyệt sẽ đóng request và báo backend hủy tiếp công việc gọi AI nếu kết nối đã bị ngắt.
-- Backend giới hạn 80 cue/request, 30.000 ký tự/request và 120 request/15 phút/IP.
+- Backend giới hạn 80 cue/request, 30.000 ký tự/request và 120 request/15 phút/IP. CI chạy `npm audit --audit-level=high` để phát hiện dependency có lỗ hổng mức High/Critical.
 - Ứng dụng không có database người dùng hoặc lịch sử dịch. Nếu cần lịch sử, phân quyền, gói trả phí hoặc quản trị, cần bổ sung database.
 
 ## Kiểm tra
@@ -97,6 +97,13 @@ npm test
 GitHub Actions tự chạy bộ test khi có push hoặc pull request vào nhánh main.
 
 ## Nhật ký phiên bản
+
+### 1.2.34 — 2026-11-07
+- Gia cố Content Security Policy: chuyển mã JavaScript chính khỏi HTML nội tuyến sang `public/app.js` và bỏ quyền `unsafe-inline` cho script.
+- Bỏ binary FFmpeg 6.1.1 được đóng gói bởi `ffmpeg-static`; dùng FFmpeg hệ thống do Render Native Runtime duy trì. Có thể đặt `FFMPEG_PATH` để chỉ định binary trong môi trường khác.
+- Nâng mức phiên bản tối thiểu `express-rate-limit` lên 8.3.0 và `zod` lên 4.6.6 để tránh các dải phiên bản có khuyến cáo bảo mật đã công bố.
+- Thêm bước `npm audit --audit-level=high` vào CI để chặn dependency có lỗ hổng mức High/Critical.
+- Không thay đổi giao diện, mô hình AI, lịch chờ, chức năng dịch hoặc tạo phụ đề.
 
 ### 1.2.33 — 2026-11-06
 - Sửa điều kiện dừng Trang 1: chỉ dừng các nhóm tiếp theo khi nhóm hiện tại thực sự thất bại sau mọi lần thử lại; nếu Gemini lỗi tạm thời nhưng lần thử lại thành công, ứng dụng tự tiếp tục dịch nhóm kế tiếp.
