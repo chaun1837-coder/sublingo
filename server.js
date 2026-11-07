@@ -10,17 +10,19 @@ import { spawn } from 'node:child_process';
 import os from 'node:os';
 import { mkdtemp, readdir, readFile, rm, unlink } from 'node:fs/promises';
 import multer from 'multer';
-import ffmpegPath from 'ffmpeg-static';
 import { z } from 'zod';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
+// Use Render's OS-maintained FFmpeg; local installs may override with FFMPEG_PATH.
+const ffmpegPath = process.env.FFMPEG_PATH || 'ffmpeg';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = Number(process.env.PORT || 10000);
-const APP_VERSION = process.env.npm_package_version || '1.2.33';
+const APP_VERSION = process.env.npm_package_version || '1.2.34';
 const isProduction = process.env.NODE_ENV === 'production';
 const SESSION_SECRET = process.env.SESSION_SECRET || (isProduction ? '' : crypto.randomBytes(48).toString('hex'));
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
@@ -45,7 +47,7 @@ app.use(helmet({
       defaultSrc: ["'self'"],
       baseUri: ["'self'"],
       objectSrc: ["'none'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'wasm-unsafe-eval'", 'https://accounts.google.com/gsi/client', 'https://cdn.jsdelivr.net'],
+      scriptSrc: ["'self'", "'wasm-unsafe-eval'", 'https://accounts.google.com/gsi/client', 'https://cdn.jsdelivr.net'],
       styleSrc: ["'self'", "'unsafe-inline'", 'https://accounts.google.com'],
       imgSrc: ["'self'", 'data:', 'blob:', 'https://*.googleusercontent.com'],
       connectSrc: ["'self'", 'https://accounts.google.com/gsi/', 'https://cdn.jsdelivr.net', 'https://tessdata.projectnaptha.com'],
@@ -500,7 +502,6 @@ const transcribeSchema = z.object({
 
 function runFfmpeg(args, signal) {
   return new Promise((resolve, reject) => {
-    if (!ffmpegPath) return reject(new Error('Máy chủ chưa có FFmpeg để xử lý video.'));
     if (signal.aborted) return reject(new DOMException('Transcription cancelled', 'AbortError'));
     const child = spawn(ffmpegPath, args, { stdio: ['ignore', 'ignore', 'pipe'] });
     let stderr = '';
@@ -762,7 +763,6 @@ app.post('/api/transcribe', requireSameOrigin, noStore, transcribeLimiter, handl
     if (!req.file) return res.status(400).json({ error: 'Hãy chọn video trước khi tạo phụ đề.' });
     const parsed = transcribeSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: 'API key hoặc ngôn ngữ nhận diện chưa hợp lệ.' });
-    if (!ffmpegPath) return res.status(503).json({ error: 'Máy chủ chưa cài công cụ xử lý video.' });
 
     workDir = await mkdtemp(path.join(os.tmpdir(), 'sublingo-stt-'));
     res.status(200)
@@ -881,7 +881,7 @@ app.use(express.static(path.join(__dirname, 'public'), {
   maxAge: isProduction ? '1h' : 0,
   index: 'index.html',
   setHeaders: (res, filePath) => {
-    if (path.basename(filePath) === 'index.html') res.setHeader('Cache-Control', 'no-store');
+    if (['index.html', 'app.js'].includes(path.basename(filePath))) res.setHeader('Cache-Control', 'no-store');
   }
 }));
 app.get('/{*splat}', (_req, res) => {
