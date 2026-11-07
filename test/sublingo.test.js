@@ -279,7 +279,7 @@ test('package, backend, README and visible UI expose the same semantic version a
   assert.match(server, /APP_VERSION = process\.env\.npm_package_version \|\| '1\.2\.34'/);
   assert.match(readme, /^# SubLingo 1\.2\.34/m);
   assert.match(readme, /\*\*Phiên bản hiện tại:\*\* 1\.2\.34/);
-  assert.match(readme, /### 1\.2\.34 — 2026-11-05/);
+  assert.match(readme, /### 1\.2\.34 — 2026-11-07/);
   assert.match(readme, /Trang 1 thử lại sau 1–5–10 giây/);
   assert.match(readme, /Trang 2 sau 1–6–12 giây/);
 });
