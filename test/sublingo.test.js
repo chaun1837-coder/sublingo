@@ -280,8 +280,8 @@ test('package, backend, README and visible UI expose the same semantic version a
   assert.match(readme, /^# SubLingo 1\.2\.34/m);
   assert.match(readme, /\*\*Phiên bản hiện tại:\*\* 1\.2\.34/);
   assert.match(readme, /### 1\.2\.34 — 2026-11-07/);
-  assert.match(readme, /Trang 1 thử lại sau 1–5–10 giây/);
-  assert.match(readme, /Trang 2 sau 1–6–12 giây/);
+  assert.match(readme, /Trang 1 \(1–5–10 giây\)/);
+  assert.match(readme, /Trang 2 \(1–6–12 giây\)/);
 });
 
 test('Google session and translation API responses are never cached', () => {
