@@ -881,7 +881,7 @@ app.use(express.static(path.join(__dirname, 'public'), {
   maxAge: isProduction ? '1h' : 0,
   index: 'index.html',
   setHeaders: (res, filePath) => {
-    if (path.basename(filePath) === 'index.html') res.setHeader('Cache-Control', 'no-store');
+    if (['index.html', 'app.js'].includes(path.basename(filePath))) res.setHeader('Cache-Control', 'no-store');
   }
 }));
 app.get('/{*splat}', (_req, res) => {
